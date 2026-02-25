@@ -585,8 +585,8 @@ async function main() {
 
     const playerInputs = state.players.map((p) => (p.input.value || '').trim());
 
-    if (playerInputs.length < 2 || playerInputs.some((v) => v.length === 0)) {
-      setStatus('Enter a hand or range for every player (at least 2).', 'error');
+    if (playerInputs.length < 2) {
+      setStatus('Need at least 2 players.', 'error');
       return;
     }
 

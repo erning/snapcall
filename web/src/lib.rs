@@ -47,7 +47,8 @@ fn parse_board(board: &str) -> Result<Vec<Card>, SnapError> {
 fn parse_hand_or_range(input: &str) -> Result<Vec<Vec<Card>>, String> {
     let trimmed = input.trim();
     if trimmed.is_empty() {
-        return Err("Empty hand/range".to_string());
+        // Empty string means "any two cards" - generate all 1326 possible starting hands
+        return generate_all_starting_hands();
     }
 
     // Prefer explicit 2-card parsing when possible (e.g., "AsKs" or "Ah Ad").
@@ -76,10 +77,43 @@ fn parse_hand_or_range(input: &str) -> Result<Vec<Vec<Card>>, String> {
     Ok(hands)
 }
 
+/// Generate all 1326 possible starting hands (52 choose 2)
+fn generate_all_starting_hands() -> Result<Vec<Vec<Card>>, String> {
+    use rs_poker::core::{Card as PokerCard, Suit, Value};
+
+    let mut hands = Vec::with_capacity(1326);
+
+    // Generate all 52 cards
+    let suits = [Suit::Spade, Suit::Heart, Suit::Diamond, Suit::Club];
+    let values = [
+        Value::Ace, Value::King, Value::Queen, Value::Jack, Value::Ten,
+        Value::Nine, Value::Eight, Value::Seven, Value::Six, Value::Five,
+        Value::Four, Value::Three, Value::Two,
+    ];
+
+    let mut all_cards: Vec<PokerCard> = Vec::with_capacity(52);
+    for value in &values {
+        for suit in &suits {
+            all_cards.push(PokerCard::new(*value, *suit));
+        }
+    }
+
+    // Generate all combinations of 2 cards
+    for i in 0..all_cards.len() {
+        for j in (i + 1)..all_cards.len() {
+            hands.push(vec![all_cards[i], all_cards[j]]);
+        }
+    }
+
+    Ok(hands)
+}
+
 fn choose_one<'a, T>(rng: &mut impl Rng, items: &'a [T]) -> &'a T {
     let idx = rng.random_range(0..items.len());
     &items[idx]
 }
+
+
 
 #[wasm_bindgen]
 pub fn evaluate_hand(cards: &str) -> String {
