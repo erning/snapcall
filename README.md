@@ -90,7 +90,14 @@ cargo run --bin snapcall -- equity -p "AhKh" -p "AKs-AQs" -b "JcTc9d"
 cargo run --bin snapcall -- equity -p "AhAd" -p "" -i 5000
 # → AA has ~85% equity against random hand
 
+# Multi-player equity with --player-count (-n)
+# AA vs 2 random opponents (3 players total)
+cargo run --bin snapcall -- equity -p "AhAd" -n 3 -i 5000
+# → AA has ~75% equity
 
+# AA vs KK vs 3 random opponents (5 players total)
+cargo run --bin snapcall -- equity -p "AhAd" -p "KhKd" -n 5 -i 5000
+# → AA has ~55% equity in 5-handed
 ### Pot Odds
 
 Calculate pot odds to make better calling decisions:

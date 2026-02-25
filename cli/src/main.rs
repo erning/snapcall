@@ -23,6 +23,10 @@ enum Commands {
         #[arg(short = 'p', long = "player", num_args = 1.., required = true)]
         player: Vec<String>,
 
+        /// Total number of players (fills remaining slots with random hands)
+        #[arg(short = 'n', long = "player-count")]
+        player_count: Option<usize>,
+
         /// Community cards (optional)
         #[arg(short = 'b', long)]
         board: Option<String>,
@@ -31,6 +35,7 @@ enum Commands {
         #[arg(short = 'i', long, default_value = "10000")]
         iterations: u32,
     },
+
     /// Calculate pot odds
     PotOdds {
         /// Current pot size (before opponent's bet)
@@ -178,9 +183,27 @@ fn main() {
         },
         Commands::Equity {
             player,
+            player_count,
             board,
             iterations,
         } => {
+            // Extend player list with empty strings if player_count is specified
+            let mut player = player;
+            if let Some(count) = player_count {
+                if count < player.len() {
+                    eprintln!(
+                        "Error: player-count ({}) cannot be less than number of -p arguments ({})",
+                        count,
+                        player.len()
+                    );
+                    return;
+                }
+                // Fill remaining slots with empty strings (random hands)
+                while player.len() < count {
+                    player.push(String::new());
+                }
+            }
+
             // Parse each player's hand or range
             let player_ranges: Vec<Vec<Vec<Card>>> = match player
                 .iter()
@@ -193,7 +216,6 @@ fn main() {
                     return;
                 }
             };
-
             // Parse board
             let parsed_board = match board {
                 Some(b) => match parse_cards(&b) {
