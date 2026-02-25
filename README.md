@@ -72,6 +72,7 @@ SnapCall supports powerful poker hand range syntax via [rs-poker](https://github
 | `T9o+` | Offsuit connectors+ | T9o, JTo, QJo, KQo, AKo | 48 |
 | `AKs-AQs` | Suited range | AKs, AQs | 8 |
 | `KK+,A2s+` | Multiple ranges | KK+ OR A2s+ | 60 |
+| `''` (empty) | Any two cards | All 1326 combos | 1326 |
 
 ### Range Examples
 
@@ -84,7 +85,10 @@ cargo run --bin snapcall -- equity -p "AKo+,A2s+" -p "JJ+"
 
 # Specific hand vs range on flop
 cargo run --bin snapcall -- equity -p "AhKh" -p "AKs-AQs" -b "JcTc9d"
-```
+
+# Hand vs random (any two cards)
+cargo run --bin snapcall -- equity -p "AhAd" -p "" -i 5000
+# → AA has ~85% equity against random hand
 
 
 ### Pot Odds

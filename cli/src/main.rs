@@ -79,6 +79,13 @@ fn is_range(input: &str) -> bool {
 /// Parse a hand or range into a vector of possible hands
 /// Returns Vec<Vec<Card>> where each inner Vec is a possible hand (2 cards)
 fn parse_hand_or_range(input: &str) -> Result<Vec<Vec<Card>>, String> {
+    let input = input.trim();
+
+    // Empty string means "any two cards" - generate all 1326 possible starting hands
+    if input.is_empty() {
+        return generate_all_starting_hands();
+    }
+
     if is_range(input) {
         // Use rs_poker's RangeParser
         use rs_poker::holdem::RangeParser;
@@ -108,6 +115,47 @@ fn parse_hand_or_range(input: &str) -> Result<Vec<Vec<Card>>, String> {
         }
         Ok(vec![cards])
     }
+}
+
+/// Generate all 1326 possible starting hands (52 choose 2)
+fn generate_all_starting_hands() -> Result<Vec<Vec<Card>>, String> {
+    use rs_poker::core::{Card as PokerCard, Suit, Value};
+
+    let mut hands = Vec::with_capacity(1326);
+
+    // Generate all 52 cards
+    let suits = [Suit::Spade, Suit::Heart, Suit::Diamond, Suit::Club];
+    let values = [
+        Value::Ace,
+        Value::King,
+        Value::Queen,
+        Value::Jack,
+        Value::Ten,
+        Value::Nine,
+        Value::Eight,
+        Value::Seven,
+        Value::Six,
+        Value::Five,
+        Value::Four,
+        Value::Three,
+        Value::Two,
+    ];
+
+    let mut all_cards: Vec<PokerCard> = Vec::with_capacity(52);
+    for value in &values {
+        for suit in &suits {
+            all_cards.push(PokerCard::new(*value, *suit));
+        }
+    }
+
+    // Generate all combinations of 2 cards
+    for i in 0..all_cards.len() {
+        for j in (i + 1)..all_cards.len() {
+            hands.push(vec![all_cards[i], all_cards[j]]);
+        }
+    }
+
+    Ok(hands)
 }
 
 fn main() {
