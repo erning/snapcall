@@ -325,8 +325,8 @@ fn calculate_equity_with_ranges(
             .map(|range| range.choose(&mut rng).unwrap().clone())
             .collect();
 
-        // Check for card collisions (same card used by different players)
-        let mut all_cards = std::collections::HashSet::new();
+        // Check for card collisions (same card used by different players or board)
+        let mut all_cards: std::collections::HashSet<Card> = board.iter().copied().collect();
         let mut collision = false;
         for hand in &sampled_hands {
             for card in hand {
