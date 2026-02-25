@@ -24,10 +24,7 @@
     - [x] `-i` iterations 参数
     - [x] 美观的 Unicode 花色输出 (♠ ♥ ♦ ♣)
     - [x] 范围输入支持 (`AKs`, `TT+`, `AKs-AQs`)
-    - [x] `-p` 多次使用 (每个玩家独立参数)
-    - [x] `-b` board 参数 (支持公共牌)
-    - [x] `-i` iterations 参数
-    - [x] 美观的 Unicode 花色输出 (♠ ♥ ♦ ♣)
+
 ### Phase 2: 架构决策
 - [x] 放弃自定义 evaluator，改用 rs-poker (位运算，<25ns)
 - [x] 放弃自定义 lookup table (复杂，启动慢)
@@ -37,18 +34,36 @@
 
 ## 待完成 ⏳
 
-### Phase 3: UniFFI 绑定生成
+### Phase 3: Web App (WASM)
+基于 Web 的快速原型，验证 UI/UX 设计
+
+- [ ] WASM 模块构建
+  - [ ] 添加 `wasm32-unknown-unknown` target
+  - [ ] 配置 `wasm-bindgen` 暴露 API
+  - [ ] 测试 rs-poker WASM 兼容性
+- [ ] Web 前端
+  - [ ] Two-Tap Poker Keyboard UI
+    - [ ] Rank 行 (A, K, Q...)
+    - [ ] Suit 行 (♠ ♥ ♣ ♦)
+    - [ ] Ghosting (禁用已用牌)
+  - [ ] 13x13 Range Matrix
+    - [ ] Grid layout
+    - [ ] Click-to-select 交互
+  - [ ] Equity 结果显示
+  - [ ] 响应式设计 (移动端适配)
+
+### Phase 4: UniFFI 绑定生成
 - [ ] 配置 `build.rs` 生成绑定
 - [ ] 生成 Swift 绑定 (`SnapCall.swift`)
 - [ ] 生成 Kotlin 绑定 (`SnapCall.kt`)
 - [ ] 测试 FFI 调用
 
-### Phase 4: iOS App
+### Phase 5: iOS App
 - [ ] Xcode 项目设置
 - [ ] 集成 Rust 静态库
 - [ ] Two-Tap Poker Keyboard UI
   - [ ] Rank 行 (A, K, Q...)
-  - [ ] Suit 行 (♠️ ♥️ ♣️ ♦️)
+  - [ ] Suit 行 (♠ ♥ ♣ ♦)
   - [ ] Ghosting (禁用已用牌)
   - [ ] Auto-advance (自动跳转)
 - [ ] 13x13 Range Matrix
@@ -56,14 +71,13 @@
   - [ ] Drag-to-paint 手势
 - [ ] Equity 结果显示
 
-### Phase 5: Android App
+### Phase 6: Android App
 - [ ] Android Studio 项目设置
 - [ ] 集成 Rust 动态库
 - [ ] Compose UI (同 iOS 功能)
 
-### Phase 6: 优化与发布
+### Phase 7: 优化与发布
 - [x] Range 解析完整实现 (`TT+`, `AKs-AQs`, `KK+,A2s+`)
-- [ ] 精确枚举 (Turn/River 时)
 - [ ] 精确枚举 (Turn/River 时)
 - [ ] 性能基准测试
 - [ ] 发布准备
@@ -73,5 +87,32 @@
 ## 技术债务
 - [x] Range 解析 (已实现完整支持)
 - [ ] CLI 需要更好的错误提示
-- [ ] CLI 需要更好的错误提示
 - [ ] 需要更多单元测试
+- [ ] WASM 错误处理
+
+---
+
+## 架构演进
+
+```
+Phase 1: CLI (已完成)
+   │
+   ▼
+Phase 3: Web + WASM (进行中)
+   │    • 快速验证 UI/UX
+   │    • 跨平台访问
+   │    • 无需应用商店
+   │
+   ▼
+Phase 5-6: iOS / Android
+        • 原生体验
+        • 离线使用
+        • 应用商店分发
+```
+
+**Web 优先策略理由：**
+1. 快速迭代 - 无需应用商店审核
+2. 验证设计 - Two-Tap Keyboard 和 Range Matrix 的交互可在 Web 先测试
+3. 用户反馈 - 更容易收集早期用户反馈
+4. 技术验证 - 确保 rs-poker WASM 兼容性
+5. 共享代码 - Web 和移动端 100% 共享 core 逻辑
