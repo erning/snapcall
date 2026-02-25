@@ -24,6 +24,10 @@
     - [x] `-i` iterations 参数
     - [x] 美观的 Unicode 花色输出 (♠ ♥ ♦ ♣)
     - [x] 范围输入支持 (`AKs`, `TT+`, `AKs-AQs`)
+  - [x] `pot-odds` 子命令 - 底池赔率计算
+    - [x] `--pot` 当前底池参数
+    - [x] `--bet` 对手下注参数
+    - [x] `--call` 自定义跟注金额参数
 
 ### Phase 2: 架构决策
 - [x] 放弃自定义 evaluator，改用 rs-poker (位运算，<25ns)

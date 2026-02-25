@@ -86,6 +86,25 @@ cargo run --bin snapcall -- equity -p "AKo+,A2s+" -p "JJ+"
 cargo run --bin snapcall -- equity -p "AhKh" -p "AKs-AQs" -b "JcTc9d"
 ```
 
+
+### Pot Odds
+
+Calculate pot odds to make better calling decisions:
+
+```bash
+# Basic pot odds (calling a half-pot bet)
+cargo run --bin snapcall -- pot-odds --pot 100 --bet 50
+# → Pot Odds: 25.00%
+# → You need at least 25.00% equity to break even
+
+# Custom call amount (e.g., you have less chips than opponent's bet)
+cargo run --bin snapcall -- pot-odds --pot 100 --bet 100 --call 25
+# → Pot Odds: 14.29%
+# → You need at least 14.29% equity to break even
+```
+
+**Formula:** `Pot Odds = Call Amount / (Current Pot + Opponent Bet + Your Call)`
+
 ## How It Works
 
 ### Hand Evaluation

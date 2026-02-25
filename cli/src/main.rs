@@ -31,6 +31,20 @@ enum Commands {
         #[arg(short = 'i', long, default_value = "10000")]
         iterations: u32,
     },
+    /// Calculate pot odds
+    PotOdds {
+        /// Current pot size (before opponent's bet)
+        #[arg(short = 'p', long, required = true)]
+        pot: f64,
+
+        /// Opponent's bet amount
+        #[arg(short = 'b', long, required = true)]
+        bet: f64,
+
+        /// Your call amount (defaults to opponent's bet)
+        #[arg(short = 'c', long)]
+        call: Option<f64>,
+    },
 }
 
 /// Format a card in human-friendly format with Unicode suit symbols (not emoji)
@@ -196,7 +210,30 @@ fn main() {
                 Err(e) => eprintln!("Error calculating equity: {}", e),
             }
         }
+        Commands::PotOdds { pot, bet, call } => {
+            let call_amount = call.unwrap_or(bet);
+            calculate_pot_odds(pot, bet, call_amount);
+        }
     }
+}
+
+/// Calculate pot odds and display result
+fn calculate_pot_odds(pot: f64, bet: f64, call_amount: f64) {
+    let total_pot_after_call = pot + bet + call_amount;
+    let pot_odds_pct = (call_amount / total_pot_after_call) * 100.0;
+
+    println!("Pot Odds Calculation:");
+    println!("  Current Pot: {:.0}", pot);
+    println!("  Opponent Bet: {:.0}", bet);
+    println!("  Amount to Call: {:.0}", call_amount);
+    println!("  Total Pot After Call: {:.0}", total_pot_after_call);
+    println!();
+    println!("  Pot Odds: {:.2}%", pot_odds_pct);
+    println!();
+    println!(
+        "  You need at least {:.2}% equity to break even",
+        pot_odds_pct
+    );
 }
 
 /// Calculate equity with range support
