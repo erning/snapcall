@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use snapcall_core::{calculate_equity, evaluate_hand, hand_type_name, parse_cards};
+use snapcall_core::{calculate_equity, evaluate_hand, hand_type_name, parse_cards, Card, Suit};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -18,9 +18,9 @@ enum Commands {
     },
     /// Calculate equity for multiple players
     Equity {
-        /// Player hole cards, comma-separated for each player (e.g., "Ah Ad,Kh Kd")
-        #[arg(short = 'p', long)]
-        hands: String,
+        /// Player hole cards (e.g., -p "Ah Ad" -p "Kh Kd")
+        #[arg(short = 'p', long = "player", num_args = 1.., required = true)]
+        player: Vec<String>,
 
         /// Community cards (optional)
         #[arg(short = 'b', long)]
@@ -32,6 +32,24 @@ enum Commands {
     },
 }
 
+/// Format a card in human-friendly format with Unicode suit symbols (not emoji)
+///
+/// Examples:
+/// - Ah → "A♥"
+/// - Ks → "K♠"
+/// - Tc → "T♣"
+/// - 8d → "8♦"
+fn format_card(card: &Card) -> String {
+    let suit_symbol = match card.suit {
+        Suit::Spade => '♠',
+        Suit::Heart => '♥',
+        Suit::Club => '♣',
+        Suit::Diamond => '♦',
+    };
+    let value_char = card.value.to_char().to_ascii_uppercase();
+    format!("{}{}", value_char, suit_symbol)
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -41,11 +59,7 @@ fn main() {
                 Ok(rank) => {
                     println!(
                         "Hand: {}",
-                        cards
-                            .iter()
-                            .map(|c| format!("{:?}", c))
-                            .collect::<Vec<_>>()
-                            .join(" ")
+                        cards.iter().map(format_card).collect::<Vec<_>>().join(" ")
                     );
                     println!("Rank: {:?}", rank);
                     println!("Type: {}", hand_type_name(&rank));
@@ -55,18 +69,16 @@ fn main() {
             Err(e) => eprintln!("Error parsing cards: {}", e),
         },
         Commands::Equity {
-            hands,
+            player,
             board,
             iterations,
         } => {
-            let player_hands: Vec<_> = hands.split(',').map(|s| s.to_string()).collect();
-            let parsed_hands: Result<Vec<_>, _> =
-                player_hands.iter().map(|h| parse_cards(h)).collect();
+            let parsed_hands: Result<Vec<_>, _> = player.iter().map(|h| parse_cards(h)).collect();
 
             let parsed_hands = match parsed_hands {
                 Ok(h) => h,
                 Err(e) => {
-                    eprintln!("Error parsing hands: {}", e);
+                    eprintln!("Error parsing player hands: {}", e);
                     return;
                 }
             };
@@ -81,6 +93,26 @@ fn main() {
                 },
                 None => vec![],
             };
+
+            println!("Parsed Cards:");
+            for (i, hand) in parsed_hands.iter().enumerate() {
+                println!(
+                    "  Player {}: {}",
+                    i + 1,
+                    hand.iter().map(format_card).collect::<Vec<_>>().join(" ")
+                );
+            }
+            if !parsed_board.is_empty() {
+                println!(
+                    "  Board: {}",
+                    parsed_board
+                        .iter()
+                        .map(format_card)
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                );
+            }
+            println!();
 
             match calculate_equity(&parsed_hands, &parsed_board, iterations) {
                 Ok(equities) => {

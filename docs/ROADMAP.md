@@ -17,9 +17,12 @@
   - [x] `ffi_evaluate_hand()`
   - [x] `ffi_calculate_equity()`
 - [x] CLI 工具 (`snapcall`)
-  - [x] `eval` 子命令 - 评估手牌
+  - [x] `eval` 子命令 - 评估手牌 (支持无空格格式: "AsKsQsJsTs")
   - [x] `equity` 子命令 - 计算胜率
-
+    - [x] `-p` 多次使用 (每个玩家独立参数)
+    - [x] `-b` board 参数 (支持公共牌)
+    - [x] `-i` iterations 参数
+    - [x] 美观的 Unicode 花色输出 (♠ ♥ ♦ ♣)
 ### Phase 2: 架构决策
 - [x] 放弃自定义 evaluator，改用 rs-poker (位运算，<25ns)
 - [x] 放弃自定义 lookup table (复杂，启动慢)

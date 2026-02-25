@@ -26,14 +26,29 @@ cd snapcall
 # Build
 cargo build --workspace
 
-# Evaluate a hand
-cargo run --bin snapcall -- eval "As Ks Qs Js Ts"
-# → Straight Flush
+# Evaluate a hand (5-7 cards)
+cargo run --bin snapcall -- eval "AsKsQsJsTs"
+# → Hand: A♠ K♠ Q♠ J♠ T♠
+# → Type: Straight Flush
 
 # Calculate equity (AA vs KK)
-cargo run --bin snapcall -- equity -p "Ah Ad,Kh Kd" -i 10000
+cargo run --bin snapcall -- equity -p "AhAd" -p "KhKd" -i 10000
 # → Player 1: 81.83%
 # → Player 2: 18.17%
+
+# With community cards (flop)
+cargo run --bin snapcall -- equity -p "AhAd" -p "KhKd" -b "AsKdQh" -i 10000
+# → Parsed Cards:
+# →   Player 1: A♥ A♦
+# →   Player 2: K♥ K♦
+# →   Board: A♠ K♦ Q♥
+# → Equity Results (10000 iterations):
+# →   Player 1: 95.12%
+# →   Player 2: 4.88%
+
+# Input formats supported:
+# - No space: "AhAd" or "AsKsQsJsTs"
+# - Space separated: "Ah Ad" or "As Ks Qs Js Ts"
 ```
 
 ## How It Works
@@ -53,12 +68,12 @@ println!("{}", hand_type_name(&rank)); // "Straight Flush"
 ```rust
 use snapcall_core::{parse_cards, calculate_equity};
 
-let aa = parse_cards("Ah Ad")?;
-let kk = parse_cards("Kh Kd")?;
-let equities = calculate_equity(&[aa, kk], &[], 10000)?;
-// equities[0] = 81.5% (AA)
-// equities[1] = 18.5% (KK)
-```
+let aa = parse_cards("AhAd")?;  // or "Ah Ad"
+let kk = parse_cards("KhKd")?;
+let board = parse_cards("AsKdQh")?;  // optional board cards
+let equities = calculate_equity(&[aa, kk], &board, 10000)?;
+// equities[0] = 95.1% (AA with board)
+// equities[1] = 4.9% (KK with board)
 
 ## Architecture
 

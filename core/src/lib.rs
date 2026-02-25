@@ -1,10 +1,10 @@
 //! SnapCall Core - Texas Hold'em Equity Calculator
-//! 
+//!
 //! Built on top of rs-poker for high-performance poker calculations.
 
 // Re-export rs-poker core types
-pub use rs_poker::core::{Card, Deck, Rank, Rankable, Suit, Value};
 pub use rs_poker::core::FlatHand;
+pub use rs_poker::core::{Card, Deck, Rank, Rankable, Suit, Value};
 
 // Re-export holdem module
 pub use rs_poker::holdem;
@@ -49,8 +49,43 @@ pub fn parse_card(s: &str) -> Result<Card, SnapError> {
     Ok(Card::new(value, suit))
 }
 
-/// Parse multiple cards from space or comma-separated string
+/// Parse multiple cards from space, comma-separated, or concatenated string (e.g., "Ah Ks", "Ah,Ks", or "AhKs")
 pub fn parse_cards(s: &str) -> Result<Vec<Card>, SnapError> {
+    // Remove all whitespace and commas
+    let cleaned: String = s
+        .chars()
+        .filter(|c| !c.is_whitespace() && *c != ',')
+        .collect();
+
+    // If empty after cleaning, return error
+    if cleaned.is_empty() {
+        return Err(SnapError::InvalidCard("Empty card string".to_string()));
+    }
+
+    // Check if we can parse as concatenated cards (every 2 chars = 1 card)
+    // Valid card format: value char (A, K, Q, J, T, 9-2) + suit char (s, h, d, c)
+    if cleaned.len().is_multiple_of(2) && cleaned.len() >= 2 {
+        // Try to parse as concatenated cards first
+        let mut cards = Vec::new();
+        let mut valid = true;
+
+        for chunk in cleaned.as_bytes().chunks(2) {
+            let card_str = std::str::from_utf8(chunk).unwrap();
+            match parse_card(card_str) {
+                Ok(card) => cards.push(card),
+                Err(_) => {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+
+        if valid && !cards.is_empty() {
+            return Ok(cards);
+        }
+    }
+
+    // Fall back to space/comma separated parsing
     let cleaned = s.replace(',', " ");
     cleaned.split_whitespace().map(parse_card).collect()
 }
@@ -73,14 +108,14 @@ pub fn evaluate_hand(cards: &[Card]) -> Result<Rank, SnapError> {
 ///
 /// # Arguments
 /// * `player_hands` - Each player's hole cards (2 cards each)
-/// * `_board` - Community cards (0-5 cards) - currently unused by rs_poker MonteCarloGame
+/// * `board` - Community cards (0-5 cards) - will be included in simulation
 /// * `iterations` - Number of Monte Carlo iterations
 ///
 /// # Returns
 /// Equity percentages for each player (sum = 100.0)
 pub fn calculate_equity(
     player_hands: &[Vec<Card>],
-    _board: &[Card],
+    board: &[Card],
     iterations: u32,
 ) -> Result<Vec<f64>, SnapError> {
     if player_hands.len() < 2 {
@@ -97,12 +132,26 @@ pub fn calculate_equity(
             )));
         }
     }
+    // Validate board size
+    if board.len() > 5 {
+        return Err(SnapError::InvalidHand(
+            "Board cannot have more than 5 cards".to_string(),
+        ));
+    }
 
-    // Create player hands for simulation
+    // Create player hands for simulation, adding board cards to each hand
     let hands: Vec<rs_poker::core::Hand> = player_hands
         .iter()
-        .map(|cards| rs_poker::core::Hand::new_with_cards(cards.clone()))
+        .map(|cards| {
+            let mut hand = rs_poker::core::Hand::new_with_cards(cards.clone());
+            // Add board cards to each player's hand
+            for card in board {
+                hand.insert(*card);
+            }
+            hand
+        })
         .collect();
+    // Create Monte Carlo game
 
     // Create Monte Carlo game
     let mut game =
@@ -226,7 +275,6 @@ mod tests {
         assert!(has_aks, "Range should include AKs");
     }
 }
-
 
 // UniFFI scaffolding
 #[cfg(feature = "ffi")]
