@@ -38,23 +38,26 @@
 
 ## 待完成 ⏳
 
-### Phase 3: Web App (WASM)
+### Phase 3: Web App (WASM) ✅ COMPLETE
 基于 Web 的快速原型，验证 UI/UX 设计
 
-- [ ] WASM 模块构建
-  - [ ] 添加 `wasm32-unknown-unknown` target
-  - [ ] 配置 `wasm-bindgen` 暴露 API
-  - [ ] 测试 rs-poker WASM 兼容性
-- [ ] Web 前端
-  - [ ] Two-Tap Poker Keyboard UI
-    - [ ] Rank 行 (A, K, Q...)
-    - [ ] Suit 行 (♠ ♥ ♣ ♦)
-    - [ ] Ghosting (禁用已用牌)
-  - [ ] 13x13 Range Matrix
-    - [ ] Grid layout
-    - [ ] Click-to-select 交互
-  - [ ] Equity 结果显示
-  - [ ] 响应式设计 (移动端适配)
+- [x] WASM 模块构建
+  - [x] 添加 `wasm32-unknown-unknown` target
+  - [x] 配置 `wasm-bindgen` 暴露 API
+  - [x] 测试 rs-poker WASM 兼容性
+- [x] Web 前端
+  - [x] Two-Tap Poker Keyboard UI
+    - [x] Rank 行 (A, K, Q...)
+    - [x] Suit 行 (♠ ♥ ♣ ♦)
+    - [x] Ghosting (禁用已用牌)
+  - [x] 13x13 Range Matrix
+    - [x] Grid layout
+    - [x] Click-to-select 交互
+  - [x] Equity 结果显示
+  - [x] 响应式设计 (移动端适配)
+  
+**Build:** `cd web && make build`
+**Dev Server:** `cd web && make dev` (http://localhost:8000)
 
 ### Phase 4: UniFFI 绑定生成
 - [ ] 配置 `build.rs` 生成绑定

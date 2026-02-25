@@ -37,3 +37,7 @@ target
 
 # Project specific
 *.log
+# Web (wasm-pack)
+web/pkg/
+web/target/
+web/Cargo.lock

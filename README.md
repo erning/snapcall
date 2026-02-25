@@ -130,6 +130,27 @@ let equities = calculate_equity(&[aa, kk], &board, 10000)?;
 // equities[1] = 4.9% (KK with board)
 ```
 
+## Web App (WASM)
+
+A minimal browser UI lives in `web/` and calls into the Rust core via WebAssembly.
+
+```bash
+cd web
+# Install wasm-pack if you don't have it
+cargo install wasm-pack
+
+# Build the WASM package into web/pkg
+make build
+
+# Serve the web/ directory
+make dev
+# Open http://localhost:8000
+```
+
+Notes:
+- Use an HTTP server (ES modules + WASM fetch); opening `web/index.html` directly usually fails.
+- Start by entering two hands like `AhAd` and `KhKd`, then click Calculate.
+
 ## Architecture
 
 ```
