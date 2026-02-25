@@ -906,6 +906,8 @@ name = "snapcall-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "rand 0.10.0",
+ "rs_poker",
  "snapcall-core",
 ]
 

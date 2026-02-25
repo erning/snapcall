@@ -13,3 +13,5 @@ path = "src/main.rs"
 [dependencies]
 snapcall-core = { path = "../core" }
 clap = { workspace = true }
+rand = { workspace = true }
+rs_poker = { workspace = true }

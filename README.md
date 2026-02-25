@@ -46,9 +46,44 @@ cargo run --bin snapcall -- equity -p "AhAd" -p "KhKd" -b "AsKdQh" -i 10000
 # →   Player 1: 95.12%
 # →   Player 2: 4.88%
 
+# Range vs Range (AKs vs pocket pairs TT+)
+cargo run --bin snapcall -- equity -p "AKs" -p "TT+" -i 10000
+# → Player Ranges:
+# →   Player 1: 4 combos (AKs range)
+# →   Player 2: 30 combos (TT+ range)
+# → Equity Results (10000 iterations):
+# →   Player 1: 40.5%
+# →   Player 2: 59.5%
+
 # Input formats supported:
 # - No space: "AhAd" or "AsKsQsJsTs"
 # - Space separated: "Ah Ad" or "As Ks Qs Js Ts"
+```
+
+## Range Syntax
+
+SnapCall supports powerful poker hand range syntax via [rs-poker](https://github.com/elliottneilclark/rs-poker):
+
+| Syntax | Description | Example | Combos |
+|--------|-------------|---------|--------|
+| `AKs` | Suited hands | AK same suit | 4 |
+| `AKo` | Offsuit hands | AK different suits | 12 |
+| `TT+` | Pairs and above | TT, JJ, QQ, KK, AA | 30 |
+| `T9o+` | Offsuit connectors+ | T9o, JTo, QJo, KQo, AKo | 48 |
+| `AKs-AQs` | Suited range | AKs, AQs | 8 |
+| `KK+,A2s+` | Multiple ranges | KK+ OR A2s+ | 60 |
+
+### Range Examples
+
+```bash
+# Suited connectors vs pocket pairs
+cargo run --bin snapcall -- equity -p "JTs-87s" -p "88-22"
+
+# AK+ and suited aces
+cargo run --bin snapcall -- equity -p "AKo+,A2s+" -p "JJ+"
+
+# Specific hand vs range on flop
+cargo run --bin snapcall -- equity -p "AhKh" -p "AKs-AQs" -b "JcTc9d"
 ```
 
 ## How It Works
@@ -74,6 +109,7 @@ let board = parse_cards("AsKdQh")?;  // optional board cards
 let equities = calculate_equity(&[aa, kk], &board, 10000)?;
 // equities[0] = 95.1% (AA with board)
 // equities[1] = 4.9% (KK with board)
+```
 
 ## Architecture
 

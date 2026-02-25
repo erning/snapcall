@@ -23,6 +23,11 @@
     - [x] `-b` board 参数 (支持公共牌)
     - [x] `-i` iterations 参数
     - [x] 美观的 Unicode 花色输出 (♠ ♥ ♦ ♣)
+    - [x] 范围输入支持 (`AKs`, `TT+`, `AKs-AQs`)
+    - [x] `-p` 多次使用 (每个玩家独立参数)
+    - [x] `-b` board 参数 (支持公共牌)
+    - [x] `-i` iterations 参数
+    - [x] 美观的 Unicode 花色输出 (♠ ♥ ♦ ♣)
 ### Phase 2: 架构决策
 - [x] 放弃自定义 evaluator，改用 rs-poker (位运算，<25ns)
 - [x] 放弃自定义 lookup table (复杂，启动慢)
@@ -57,7 +62,8 @@
 - [ ] Compose UI (同 iOS 功能)
 
 ### Phase 6: 优化与发布
-- [ ] Range 解析完整实现 ("22+", "JTs-87s")
+- [x] Range 解析完整实现 (`TT+`, `AKs-AQs`, `KK+,A2s+`)
+- [ ] 精确枚举 (Turn/River 时)
 - [ ] 精确枚举 (Turn/River 时)
 - [ ] 性能基准测试
 - [ ] 发布准备
@@ -65,6 +71,7 @@
 ---
 
 ## 技术债务
-- [ ] Range 解析目前只支持简单格式 ("AKs", "AKo")
+- [x] Range 解析 (已实现完整支持)
+- [ ] CLI 需要更好的错误提示
 - [ ] CLI 需要更好的错误提示
 - [ ] 需要更多单元测试

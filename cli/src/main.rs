@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
-use snapcall_core::{calculate_equity, evaluate_hand, hand_type_name, parse_cards, Card, Suit};
+use rand::prelude::IndexedRandom;
+use snapcall_core::{evaluate_hand, hand_type_name, parse_cards, Card, Suit};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -18,7 +19,7 @@ enum Commands {
     },
     /// Calculate equity for multiple players
     Equity {
-        /// Player hole cards (e.g., -p "Ah Ad" -p "Kh Kd")
+        /// Player hole cards or range (e.g., -p "AhAd" -p "AKs" -p "TT+")
         #[arg(short = 'p', long = "player", num_args = 1.., required = true)]
         player: Vec<String>,
 
@@ -50,6 +51,51 @@ fn format_card(card: &Card) -> String {
     format!("{}{}", value_char, suit_symbol)
 }
 
+/// Check if input looks like a range expression
+/// Range indicators: + (TT+), - (AKs-AQs), s/o suit indicators
+fn is_range(input: &str) -> bool {
+    let input = input.trim();
+    // Range indicators
+    input.contains('+')
+        || input.contains('-')
+        || input.contains(',')
+        || (input.len() >= 2 && (input.ends_with('s') || input.ends_with('o')))
+}
+
+/// Parse a hand or range into a vector of possible hands
+/// Returns Vec<Vec<Card>> where each inner Vec is a possible hand (2 cards)
+fn parse_hand_or_range(input: &str) -> Result<Vec<Vec<Card>>, String> {
+    if is_range(input) {
+        // Use rs_poker's RangeParser
+        use rs_poker::holdem::RangeParser;
+
+        let flat_hands = RangeParser::parse_many(input)
+            .map_err(|e| format!("Failed to parse range '{}': {:?}", input, e))?;
+
+        // Convert FlatHand to Vec<Card>
+        let hands: Vec<Vec<Card>> = flat_hands
+            .into_iter()
+            .map(|fh: rs_poker::core::FlatHand| fh.iter().copied().collect())
+            .collect();
+
+        if hands.is_empty() {
+            return Err(format!("Range '{}' produced no valid hands", input));
+        }
+
+        Ok(hands)
+    } else {
+        // Parse as specific cards
+        let cards = parse_cards(input).map_err(|e| format!("{:?}", e))?;
+        if cards.len() != 2 {
+            return Err(format!(
+                "Expected exactly 2 cards for a hand, got {}",
+                cards.len()
+            ));
+        }
+        Ok(vec![cards])
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -73,16 +119,20 @@ fn main() {
             board,
             iterations,
         } => {
-            let parsed_hands: Result<Vec<_>, _> = player.iter().map(|h| parse_cards(h)).collect();
-
-            let parsed_hands = match parsed_hands {
-                Ok(h) => h,
+            // Parse each player's hand or range
+            let player_ranges: Vec<Vec<Vec<Card>>> = match player
+                .iter()
+                .map(|p| parse_hand_or_range(p))
+                .collect::<Result<Vec<_>, _>>()
+            {
+                Ok(ranges) => ranges,
                 Err(e) => {
-                    eprintln!("Error parsing player hands: {}", e);
+                    eprintln!("Error: {}", e);
                     return;
                 }
             };
 
+            // Parse board
             let parsed_board = match board {
                 Some(b) => match parse_cards(&b) {
                     Ok(c) => c,
@@ -94,13 +144,34 @@ fn main() {
                 None => vec![],
             };
 
-            println!("Parsed Cards:");
-            for (i, hand) in parsed_hands.iter().enumerate() {
-                println!(
-                    "  Player {}: {}",
-                    i + 1,
-                    hand.iter().map(format_card).collect::<Vec<_>>().join(" ")
-                );
+            // Print parsed info
+            println!("Player Ranges:");
+            for (i, range) in player_ranges.iter().enumerate() {
+                if range.len() == 1 {
+                    println!(
+                        "  Player {}: {}",
+                        i + 1,
+                        range[0]
+                            .iter()
+                            .map(format_card)
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                    );
+                } else {
+                    println!("  Player {}: {} combos (range)", i + 1, range.len());
+                    // Show first few examples
+                    let examples: Vec<_> = range.iter().take(3).collect();
+                    for (j, hand) in examples.iter().enumerate() {
+                        println!(
+                            "    Example {}: {}",
+                            j + 1,
+                            hand.iter().map(format_card).collect::<Vec<_>>().join(" ")
+                        );
+                    }
+                    if range.len() > 3 {
+                        println!("    ... and {} more", range.len() - 3);
+                    }
+                }
             }
             if !parsed_board.is_empty() {
                 println!(
@@ -114,7 +185,8 @@ fn main() {
             }
             println!();
 
-            match calculate_equity(&parsed_hands, &parsed_board, iterations) {
+            // Calculate equity with range sampling
+            match calculate_equity_with_ranges(&player_ranges, &parsed_board, iterations) {
                 Ok(equities) => {
                     println!("Equity Results ({} iterations):", iterations);
                     for (i, eq) in equities.iter().enumerate() {
@@ -125,4 +197,74 @@ fn main() {
             }
         }
     }
+}
+
+/// Calculate equity with range support
+/// Each iteration randomly samples one hand from each player's range
+fn calculate_equity_with_ranges(
+    player_ranges: &[Vec<Vec<Card>>],
+    board: &[Card],
+    iterations: u32,
+) -> Result<Vec<f64>, String> {
+    let mut rng = rand::rng();
+    let num_players = player_ranges.len();
+    let mut wins: Vec<u64> = vec![0; num_players];
+    let iters = iterations as usize;
+
+    for _ in 0..iters {
+        // Sample one hand from each player's range
+        let sampled_hands: Vec<Vec<Card>> = player_ranges
+            .iter()
+            .map(|range| range.choose(&mut rng).unwrap().clone())
+            .collect();
+
+        // Check for card collisions (same card used by different players)
+        let mut all_cards = std::collections::HashSet::new();
+        let mut collision = false;
+        for hand in &sampled_hands {
+            for card in hand {
+                if !all_cards.insert(*card) {
+                    collision = true;
+                    break;
+                }
+            }
+            if collision {
+                break;
+            }
+        }
+
+        if collision {
+            // Skip this iteration due to card collision
+            continue;
+        }
+
+        // Calculate equity for this sample
+        match snapcall_core::calculate_equity(&sampled_hands, board, 1) {
+            Ok(eq) => {
+                // Add weighted wins
+                for (i, e) in eq.iter().enumerate() {
+                    // e is percentage (0-100), convert to win contribution
+                    if *e > 50.0 {
+                        wins[i] += 1;
+                    } else if (*e - 50.0).abs() < f64::EPSILON {
+                        // Tie - split the win
+                        wins[i] += 1;
+                    }
+                }
+            }
+            Err(_) => continue,
+        }
+    }
+
+    // Convert to percentages
+    let total: u64 = wins.iter().sum();
+    if total == 0 {
+        let n = num_players;
+        return Ok(vec![100.0 / n as f64; n]);
+    }
+
+    Ok(wins
+        .iter()
+        .map(|&w| (w as f64 / total as f64) * 100.0)
+        .collect())
 }
