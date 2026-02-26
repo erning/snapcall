@@ -1,4 +1,4 @@
-import { RANKS, SUITS, type Card, type Suit } from "../types";
+import { RANKS, SUITS, type Card, type Player, type Slot, type Suit } from "../types";
 import { toCompactCard } from "../lib/utils";
 import { useGameStore } from "../stores/gameStore";
 
@@ -9,11 +9,7 @@ const SUIT_LABELS: Record<Suit, string> = {
   c: "♣",
 };
 
-function formatActiveLabel(): string {
-  const { activeSlot, players } = useGameStore.getState();
-  if (!activeSlot) {
-    return "Tap a slot to start input";
-  }
+function formatActiveLabel(activeSlot: Slot, players: Player[]): string {
   if (activeSlot.kind === "board") {
     return `Board card ${activeSlot.cardIndex + 1}`;
   }
@@ -31,6 +27,10 @@ export function TwoTapKeyboard() {
   const setPlayerCard = useGameStore((state) => state.setPlayerCard);
   const setActiveSlot = useGameStore((state) => state.setActiveSlot);
 
+  if (!activeSlot) {
+    return null;
+  }
+
   const usedCards = new Set<string>();
   board.forEach((card) => {
     if (card) {
@@ -45,18 +45,16 @@ export function TwoTapKeyboard() {
     });
   });
 
-  if (activeSlot) {
-    if (activeSlot.kind === "board") {
-      const current = board[activeSlot.cardIndex];
-      if (current) {
-        usedCards.delete(toCompactCard(current));
-      }
-    } else {
-      const player = players.find((item) => item.id === activeSlot.playerId);
-      const current = player?.cards[activeSlot.cardIndex];
-      if (current) {
-        usedCards.delete(toCompactCard(current));
-      }
+  if (activeSlot.kind === "board") {
+    const current = board[activeSlot.cardIndex];
+    if (current) {
+      usedCards.delete(toCompactCard(current));
+    }
+  } else {
+    const player = players.find((item) => item.id === activeSlot.playerId);
+    const current = player?.cards[activeSlot.cardIndex];
+    if (current) {
+      usedCards.delete(toCompactCard(current));
     }
   }
 
@@ -108,9 +106,12 @@ export function TwoTapKeyboard() {
   const bottomRanks = RANKS.slice(8);
 
   return (
-    <section className="keyboard-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/95 px-3 pb-5 pt-3 backdrop-blur">
+    <section
+      data-two-tap-keyboard="true"
+      className="keyboard-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/95 px-3 pb-5 pt-3 backdrop-blur"
+    >
       <div className="mx-auto w-full max-w-4xl rounded-2xl border border-border bg-card-bg p-3 shadow-sm">
-        <div className="mb-2 text-xs font-semibold text-muted">{formatActiveLabel()}</div>
+        <div className="mb-2 text-xs font-semibold text-muted">{formatActiveLabel(activeSlot, players)}</div>
 
         <div className="grid grid-cols-8 gap-1.5">
           {topRanks.map((rank) => (

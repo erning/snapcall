@@ -16,9 +16,10 @@ export function CardSlot({ card, placeholder = "", active = false, onClick }: Ca
   return (
     <button
       type="button"
+      data-card-slot="true"
       onClick={onClick}
       className={[
-        "min-h-11 rounded-xl border text-base font-semibold transition",
+        "h-11 w-[3.125rem] shrink-0 rounded-xl border text-base font-semibold transition",
         "flex items-center justify-center",
         card ? "border-slate-300 bg-white" : "border-dashed border-slate-300 bg-slate-50 text-slate-400",
         active ? "ring-2 ring-accent border-accent" : "",

@@ -4,7 +4,7 @@ import type { Card, Player, Rank, Slot } from "../types";
 interface GameState {
   pot: number;
   opponentBet: number;
-  callAmount: number;
+  callAmount: number | null;
   board: (Card | null)[];
   players: Player[];
   activeSlot: Slot | null;
@@ -14,7 +14,7 @@ interface GameState {
   error: string | null;
   setPot: (value: number) => void;
   setOpponentBet: (value: number) => void;
-  setCallAmount: (value: number) => void;
+  setCallAmount: (value: number | null) => void;
   setBoardCard: (index: number, card: Card | null) => void;
   clearBoard: () => void;
   addPlayer: () => void;
@@ -45,7 +45,7 @@ function clearEquityOnPlayers(players: Player[]): Player[] {
 export const useGameStore = create<GameState>((set) => ({
   pot: 0,
   opponentBet: 0,
-  callAmount: 0,
+  callAmount: null,
   board: [null, null, null, null, null],
   players: [createPlayer(), createPlayer()],
   activeSlot: null,
@@ -54,9 +54,12 @@ export const useGameStore = create<GameState>((set) => ({
   isCalculating: false,
   error: null,
 
-  setPot: (value) => set({ pot: Math.max(0, value) }),
-  setOpponentBet: (value) => set({ opponentBet: Math.max(0, value) }),
-  setCallAmount: (value) => set({ callAmount: Math.max(0, value) }),
+  setPot: (value) => set({ pot: Math.max(0, Math.floor(value)) }),
+  setOpponentBet: (value) => set({ opponentBet: Math.max(0, Math.floor(value)) }),
+  setCallAmount: (value) =>
+    set({
+      callAmount: value === null ? null : Math.max(0, Math.floor(value)),
+    }),
 
   setBoardCard: (index, card) =>
     set((state) => {

@@ -20,11 +20,17 @@ export function CommunityCards() {
     <section className="rounded-2xl border border-border bg-card-bg p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-base font-bold text-text">Community Cards</h2>
-        <button type="button" onClick={clearBoard} className="text-sm font-semibold text-muted hover:text-text">
-          Clear
+        <button
+          type="button"
+          onClick={clearBoard}
+          title="Clear board cards"
+          aria-label="Clear board cards"
+          className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-slate-50 text-xs text-muted transition hover:text-text"
+        >
+          🗑
         </button>
       </div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {BOARD_SLOTS.map(({ id, cardIndex }) => {
           const card = board[cardIndex];
           const isActive = activeSlot?.kind === "board" && activeSlot.cardIndex === cardIndex;
@@ -36,6 +42,7 @@ export function CommunityCards() {
               onClick={() => {
                 if (card) {
                   setBoardCard(cardIndex, null);
+                  setActiveSlot({ kind: "board", cardIndex });
                   return;
                 }
                 setActiveSlot({ kind: "board", cardIndex });

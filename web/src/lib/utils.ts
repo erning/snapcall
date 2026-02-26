@@ -26,10 +26,18 @@ export function cardLabel(card: Card | null, empty = ""): string {
   return `${card.rank}${SUIT_SYMBOLS[card.suit]}`;
 }
 
-export function parseNumericInput(value: string): number {
+export function parseIntegerInput(value: string): number {
   if (!value.trim()) {
     return 0;
   }
-  const parsed = Number.parseFloat(value);
+  const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+export function parseOptionalIntegerInput(value: string): number | null {
+  if (!value.trim()) {
+    return null;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }

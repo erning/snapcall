@@ -17,49 +17,58 @@ export function PlayerCard({ player, index }: PlayerCardProps) {
   const clearPlayerCards = useGameStore((state) => state.clearPlayerCards);
 
   return (
-    <article className="rounded-2xl border border-border bg-card-bg p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-bold text-text">Player {index + 1}</h3>
-        <div className="flex items-center gap-3 text-sm font-semibold">
-          <button type="button" onClick={() => clearPlayerCards(player.id)} className="text-muted hover:text-text">
-            Clear
-          </button>
-          <button
-            type="button"
-            onClick={() => removePlayer(player.id)}
-            disabled={players.length <= 2}
-            className="text-danger disabled:opacity-40"
-          >
-            Remove
-          </button>
+    <article className="relative rounded-2xl border border-border bg-card-bg p-3 pr-20 shadow-sm">
+      <div className="absolute right-2 top-2 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => clearPlayerCards(player.id)}
+          title="Clear cards"
+          aria-label={`Clear player ${index + 1} cards`}
+          className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-slate-50 text-xs text-muted transition hover:text-text"
+        >
+          🗑
+        </button>
+        <button
+          type="button"
+          onClick={() => removePlayer(player.id)}
+          disabled={players.length <= 2}
+          title="Remove player"
+          aria-label={`Remove player ${index + 1}`}
+          className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-red-50 text-xs text-danger transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="flex gap-2">
+          {player.cards.map((card, cardIndex) => {
+            const isActive =
+              activeSlot?.kind === "player" &&
+              activeSlot.playerId === player.id &&
+              activeSlot.cardIndex === cardIndex;
+            return (
+              <CardSlot
+                key={`${player.id}-${cardIndex}`}
+                card={card}
+                placeholder={card ? "" : "??"}
+                active={isActive}
+                onClick={() => {
+                  if (card) {
+                    setPlayerCard(player.id, cardIndex, null);
+                    setActiveSlot({ kind: "player", playerId: player.id, cardIndex });
+                    return;
+                  }
+                  setActiveSlot({ kind: "player", playerId: player.id, cardIndex });
+                }}
+              />
+            );
+          })}
+        </div>
+        <div className="min-w-0 flex-1 pr-1">
+          <EquityBar value={player.equity} />
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        {player.cards.map((card, cardIndex) => {
-          const isActive =
-            activeSlot?.kind === "player" &&
-            activeSlot.playerId === player.id &&
-            activeSlot.cardIndex === cardIndex;
-          return (
-            <CardSlot
-              key={`${player.id}-${cardIndex}`}
-              card={card}
-              placeholder={card ? "" : "??"}
-              active={isActive}
-              onClick={() => {
-                if (card) {
-                  setPlayerCard(player.id, cardIndex, null);
-                  return;
-                }
-                setActiveSlot({ kind: "player", playerId: player.id, cardIndex });
-              }}
-            />
-          );
-        })}
-      </div>
-
-      <EquityBar value={player.equity} />
     </article>
   );
 }

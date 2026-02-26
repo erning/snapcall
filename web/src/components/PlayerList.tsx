@@ -7,7 +7,7 @@ export function PlayerList() {
 
   return (
     <section className="rounded-2xl border border-border bg-card-bg p-4 shadow-sm">
-      <h2 className="mb-3 text-base font-bold text-text">Players</h2>
+      <h2 className="mb-3 text-base font-bold text-text">Players ({players.length})</h2>
       <div className="space-y-3">
         {players.map((player, index) => (
           <PlayerCard key={player.id} player={player} index={index} />

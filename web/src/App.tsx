@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { CommunityCards } from "./components/CommunityCards";
 import { PlayerList } from "./components/PlayerList";
 import { PotOddsPanel } from "./components/PotOddsPanel";
@@ -14,11 +15,39 @@ export default function App() {
   const iterations = useGameStore((state) => state.iterations);
   const setIterations = useGameStore((state) => state.setIterations);
   const error = useGameStore((state) => state.error);
+  const activeSlot = useGameStore((state) => state.activeSlot);
+  const setActiveSlot = useGameStore((state) => state.setActiveSlot);
+  const setPendingRank = useGameStore((state) => state.setPendingRank);
   const { calculate, isCalculating } = useEquity(wasm);
+
+  useEffect(() => {
+    if (!activeSlot) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      if (target.closest("[data-card-slot]") || target.closest("[data-two-tap-keyboard]")) {
+        return;
+      }
+
+      setActiveSlot(null);
+      setPendingRank(null);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [activeSlot, setActiveSlot, setPendingRank]);
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <div className="mx-auto w-full max-w-4xl px-4 pb-[40vh] pt-4">
+      <div className={`mx-auto w-full max-w-4xl px-4 pt-4 ${activeSlot ? "pb-[40vh]" : "pb-6"}`}>
         <header className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card-bg px-4 py-3 shadow-sm">
           <div>
             <h1 className="text-xl font-extrabold tracking-tight">SnapCall</h1>
