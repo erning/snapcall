@@ -87,16 +87,16 @@ export function TwoTapKeyboard() {
     setPendingRank(null);
   }
 
-  const topRanks = RANKS.slice(0, 8);
-  const bottomRanks = RANKS.slice(8);
+  const topRanks = RANKS.slice(0, 5);
+  const bottomRanks = RANKS.slice(5);
 
   return (
     <section
       data-two-tap-keyboard="true"
       className="keyboard-safe fixed bottom-0 left-0 right-0 z-40 rounded-t-2xl border-t border-slate-300 bg-gradient-to-b from-slate-100/95 via-slate-100/95 to-slate-200/95 px-3 pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.16)] backdrop-blur-md"
     >
-      <div className="mx-auto w-full max-w-md rounded-xl border border-slate-300 bg-white/85 p-2.5 shadow-sm">
-        <div className="mb-1.5 text-xs font-semibold text-muted">{formatActiveLabel(activeSlot, players)}</div>
+      <div className="mx-auto w-full max-w-md rounded-xl border border-slate-300 bg-white/85 p-3 shadow-sm">
+        <div className="mb-2 text-xs font-semibold text-muted">{formatActiveLabel(activeSlot, players)}</div>
 
         <div className="flex items-center justify-center gap-1">
           {topRanks.map((rank) => (
@@ -105,7 +105,7 @@ export function TwoTapKeyboard() {
               type="button"
               onClick={() => setPendingRank(pendingRank === rank ? null : rank)}
               className={[
-                "h-[34px] w-[34px] shrink-0 rounded-md border text-sm font-bold",
+                "h-9 w-9 shrink-0 rounded-md border text-sm font-bold",
                 pendingRank === rank ? "border-accent bg-blue-50 text-blue-700" : "border-border bg-white text-text",
               ].join(" ")}
             >
@@ -114,20 +114,23 @@ export function TwoTapKeyboard() {
           ))}
         </div>
 
-        <div className="mt-1 flex items-center justify-center gap-1">
+        <div className="mt-1.5 flex items-center justify-center gap-1">
           {bottomRanks.map((rank) => (
             <button
               key={rank}
               type="button"
               onClick={() => setPendingRank(pendingRank === rank ? null : rank)}
               className={[
-                "h-[34px] w-[34px] shrink-0 rounded-md border text-sm font-bold",
+                "h-9 w-9 shrink-0 rounded-md border text-sm font-bold",
                 pendingRank === rank ? "border-accent bg-blue-50 text-blue-700" : "border-border bg-white text-text",
               ].join(" ")}
             >
               {rank}
             </button>
           ))}
+        </div>
+
+        <div className="mt-1.5 flex items-center justify-center gap-1">
           {SUITS.map((suit) => {
             const isDisabled = !pendingRank || usedCards.has(`${pendingRank}${suit}`);
             return (
@@ -137,7 +140,7 @@ export function TwoTapKeyboard() {
                 disabled={isDisabled}
                 onClick={() => pendingRank && assignCard({ rank: pendingRank, suit })}
                 className={[
-                  "h-[34px] w-[34px] shrink-0 rounded-md border text-base font-bold",
+                  "h-9 w-9 shrink-0 rounded-md border text-base font-bold",
                   suit === "h" || suit === "d" ? "text-red-500" : "text-slate-800",
                   isDisabled ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-40" : "border-border bg-white",
                 ].join(" ")}

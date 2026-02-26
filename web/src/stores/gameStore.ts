@@ -2,8 +2,8 @@ import { create } from "zustand";
 import type { Card, Player, PlayerInputMode, Rank, Slot } from "../types";
 
 interface GameState {
-  pot: number;
-  opponentBet: number;
+  pot: number | null;
+  opponentBet: number | null;
   callAmount: number | null;
   board: (Card | null)[];
   players: Player[];
@@ -13,8 +13,8 @@ interface GameState {
   iterations: number;
   isCalculating: boolean;
   error: string | null;
-  setPot: (value: number) => void;
-  setOpponentBet: (value: number) => void;
+  setPot: (value: number | null) => void;
+  setOpponentBet: (value: number | null) => void;
   setCallAmount: (value: number | null) => void;
   setBoardCard: (index: number, card: Card | null) => void;
   clearBoard: () => void;
@@ -24,6 +24,9 @@ interface GameState {
   clearPlayerCards: (playerId: string) => void;
   clearPlayerRange: (playerId: string) => void;
   setPlayerInputMode: (playerId: string, mode: PlayerInputMode) => void;
+  setPlayerRangeCell: (playerId: string, cell: string, selected: boolean) => void;
+  setPlayerRangeCells: (playerId: string, cells: string[], selected: boolean) => void;
+  replacePlayerRangeCells: (playerId: string, cells: string[]) => void;
   togglePlayerRangeCell: (playerId: string, cell: string) => void;
   setActiveSlot: (slot: Slot | null) => void;
   setActiveRangePlayer: (playerId: string | null) => void;
@@ -50,8 +53,8 @@ function clearEquityOnPlayers(players: Player[]): Player[] {
 }
 
 export const useGameStore = create<GameState>((set) => ({
-  pot: 0,
-  opponentBet: 0,
+  pot: null,
+  opponentBet: null,
   callAmount: null,
   board: [null, null, null, null, null],
   players: [createPlayer(), createPlayer()],
@@ -62,8 +65,14 @@ export const useGameStore = create<GameState>((set) => ({
   isCalculating: false,
   error: null,
 
-  setPot: (value) => set({ pot: Math.max(0, Math.floor(value)) }),
-  setOpponentBet: (value) => set({ opponentBet: Math.max(0, Math.floor(value)) }),
+  setPot: (value) =>
+    set({
+      pot: value === null ? null : Math.max(0, Math.floor(value)),
+    }),
+  setOpponentBet: (value) =>
+    set({
+      opponentBet: value === null ? null : Math.max(0, Math.floor(value)),
+    }),
   setCallAmount: (value) =>
     set({
       callAmount: value === null ? null : Math.max(0, Math.floor(value)),
@@ -187,6 +196,79 @@ export const useGameStore = create<GameState>((set) => ({
           : state.activeSlot,
       activeRangePlayerId: mode === "range" ? playerId : state.activeRangePlayerId === playerId ? null : state.activeRangePlayerId,
       pendingRank: null,
+      error: null,
+    })),
+
+  setPlayerRangeCell: (playerId, cell, selected) =>
+    set((state) => ({
+      players: clearEquityOnPlayers(
+        state.players.map((player) => {
+          if (player.id !== playerId) {
+            return player;
+          }
+
+          const hasCell = player.rangeCells.includes(cell);
+          if (selected === hasCell) {
+            return player;
+          }
+
+          return {
+            ...player,
+            rangeCells: selected ? [...player.rangeCells, cell] : player.rangeCells.filter((item) => item !== cell),
+          };
+        }),
+      ),
+      error: null,
+    })),
+
+  setPlayerRangeCells: (playerId, cells, selected) =>
+    set((state) => {
+      const uniqueCells = [...new Set(cells)];
+      const targetSet = new Set(uniqueCells);
+
+      return {
+        players: clearEquityOnPlayers(
+          state.players.map((player) => {
+            if (player.id !== playerId) {
+              return player;
+            }
+
+            if (selected) {
+              const next = [...player.rangeCells];
+              for (const cell of uniqueCells) {
+                if (!next.includes(cell)) {
+                  next.push(cell);
+                }
+              }
+              return {
+                ...player,
+                rangeCells: next,
+              };
+            }
+
+            return {
+              ...player,
+              rangeCells: player.rangeCells.filter((item) => !targetSet.has(item)),
+            };
+          }),
+        ),
+        error: null,
+      };
+    }),
+
+  replacePlayerRangeCells: (playerId, cells) =>
+    set((state) => ({
+      players: clearEquityOnPlayers(
+        state.players.map((player) => {
+          if (player.id !== playerId) {
+            return player;
+          }
+          return {
+            ...player,
+            rangeCells: [...new Set(cells)],
+          };
+        }),
+      ),
       error: null,
     })),
 

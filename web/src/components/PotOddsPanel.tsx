@@ -1,4 +1,4 @@
-import { calculatePotOdds, parseIntegerInput, parseOptionalIntegerInput } from "../lib/utils";
+import { calculatePotOdds, parseOptionalIntegerInput } from "../lib/utils";
 import { useGameStore } from "../stores/gameStore";
 
 export function PotOddsPanel() {
@@ -9,8 +9,10 @@ export function PotOddsPanel() {
   const setOpponentBet = useGameStore((state) => state.setOpponentBet);
   const setCallAmount = useGameStore((state) => state.setCallAmount);
 
-  const effectiveCallAmount = callAmount ?? opponentBet;
-  const potOdds = calculatePotOdds(pot, opponentBet, effectiveCallAmount);
+  const safePot = pot ?? 0;
+  const safeOpponentBet = opponentBet ?? 0;
+  const effectiveCallAmount = callAmount ?? safeOpponentBet;
+  const potOdds = calculatePotOdds(safePot, safeOpponentBet, effectiveCallAmount);
 
   return (
     <section className="rounded-2xl border border-border bg-card-bg p-4 shadow-sm">
@@ -23,8 +25,9 @@ export function PotOddsPanel() {
             type="number"
             min="0"
             step="10"
-            value={pot}
-            onChange={(event) => setPot(parseIntegerInput(event.target.value))}
+            value={pot ?? ""}
+            placeholder="0"
+            onChange={(event) => setPot(parseOptionalIntegerInput(event.target.value))}
             className="mt-1 min-h-11 w-full rounded-xl border border-border bg-white px-3 text-base font-semibold text-text"
           />
         </label>
@@ -35,8 +38,9 @@ export function PotOddsPanel() {
             type="number"
             min="0"
             step="10"
-            value={opponentBet}
-            onChange={(event) => setOpponentBet(parseIntegerInput(event.target.value))}
+            value={opponentBet ?? ""}
+            placeholder="0"
+            onChange={(event) => setOpponentBet(parseOptionalIntegerInput(event.target.value))}
             className="mt-1 min-h-11 w-full rounded-xl border border-border bg-white px-3 text-base font-semibold text-text"
           />
         </label>
@@ -48,7 +52,7 @@ export function PotOddsPanel() {
             min="0"
             step="10"
             value={callAmount ?? ""}
-            placeholder={`${opponentBet}`}
+            placeholder={safeOpponentBet > 0 ? `${safeOpponentBet}` : "0"}
             onChange={(event) => setCallAmount(parseOptionalIntegerInput(event.target.value))}
             className="mt-1 min-h-11 w-full rounded-xl border border-border bg-white px-3 text-base font-semibold text-text"
           />

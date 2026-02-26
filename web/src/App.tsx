@@ -24,6 +24,7 @@ export default function App() {
   const { calculate, isCalculating } = useEquity(wasm);
 
   const hasBottomKeyboard = Boolean(activeSlot || activeRangePlayerId);
+  const contentBottomPaddingClass = activeSlot ? "pb-56" : activeRangePlayerId ? "pb-48" : "pb-6";
 
   useEffect(() => {
     if (!activeSlot && !activeRangePlayerId) {
@@ -138,7 +139,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <div className={`mx-auto w-full max-w-4xl px-4 pt-4 ${hasBottomKeyboard ? "pb-48" : "pb-6"}`}>
+      <div className={`mx-auto w-full max-w-4xl px-4 pt-4 ${hasBottomKeyboard ? contentBottomPaddingClass : "pb-6"}`}>
         <header className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card-bg px-4 py-3 shadow-sm">
           <div>
             <h1 className="text-xl font-extrabold tracking-tight">SnapCall</h1>
