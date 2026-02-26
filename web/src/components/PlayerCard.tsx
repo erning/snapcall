@@ -11,8 +11,8 @@ interface PlayerCardProps {
 export function PlayerCard({ player, index }: PlayerCardProps) {
   const players = useGameStore((state) => state.players);
   const activeSlot = useGameStore((state) => state.activeSlot);
-  const setPlayerCard = useGameStore((state) => state.setPlayerCard);
   const setActiveSlot = useGameStore((state) => state.setActiveSlot);
+  const setPendingRank = useGameStore((state) => state.setPendingRank);
   const removePlayer = useGameStore((state) => state.removePlayer);
   const clearPlayerCards = useGameStore((state) => state.clearPlayerCards);
 
@@ -54,9 +54,9 @@ export function PlayerCard({ player, index }: PlayerCardProps) {
                 placeholder={card ? "" : "??"}
                 active={isActive}
                 onClick={() => {
-                  if (card) {
-                    setPlayerCard(player.id, cardIndex, null);
-                    setActiveSlot({ kind: "player", playerId: player.id, cardIndex });
+                  if (isActive) {
+                    setActiveSlot(null);
+                    setPendingRank(null);
                     return;
                   }
                   setActiveSlot({ kind: "player", playerId: player.id, cardIndex });

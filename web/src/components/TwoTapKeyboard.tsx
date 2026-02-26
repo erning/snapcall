@@ -87,40 +87,25 @@ export function TwoTapKeyboard() {
     setPendingRank(null);
   }
 
-  function handleBackspace() {
-    if (pendingRank) {
-      setPendingRank(null);
-      return;
-    }
-    if (!activeSlot) {
-      return;
-    }
-    if (activeSlot.kind === "board") {
-      setBoardCard(activeSlot.cardIndex, null);
-    } else {
-      setPlayerCard(activeSlot.playerId, activeSlot.cardIndex, null);
-    }
-  }
-
   const topRanks = RANKS.slice(0, 8);
   const bottomRanks = RANKS.slice(8);
 
   return (
     <section
       data-two-tap-keyboard="true"
-      className="keyboard-safe fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/95 px-3 pb-5 pt-3 backdrop-blur"
+      className="keyboard-safe fixed bottom-0 left-0 right-0 z-40 rounded-t-2xl border-t border-slate-300 bg-gradient-to-b from-slate-100/95 via-slate-100/95 to-slate-200/95 px-3 pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.16)] backdrop-blur-md"
     >
-      <div className="mx-auto w-full max-w-4xl rounded-2xl border border-border bg-card-bg p-3 shadow-sm">
-        <div className="mb-2 text-xs font-semibold text-muted">{formatActiveLabel(activeSlot, players)}</div>
+      <div className="mx-auto w-full max-w-md rounded-xl border border-slate-300 bg-white/85 p-2.5 shadow-sm">
+        <div className="mb-1.5 text-xs font-semibold text-muted">{formatActiveLabel(activeSlot, players)}</div>
 
-        <div className="grid grid-cols-8 gap-1.5">
+        <div className="flex items-center justify-center gap-1">
           {topRanks.map((rank) => (
             <button
               key={rank}
               type="button"
               onClick={() => setPendingRank(pendingRank === rank ? null : rank)}
               className={[
-                "min-h-11 rounded-lg border text-sm font-bold",
+                "h-[34px] w-[34px] shrink-0 rounded-md border text-sm font-bold",
                 pendingRank === rank ? "border-accent bg-blue-50 text-blue-700" : "border-border bg-white text-text",
               ].join(" ")}
             >
@@ -129,23 +114,20 @@ export function TwoTapKeyboard() {
           ))}
         </div>
 
-        <div className="mt-1.5 grid grid-cols-5 gap-1.5">
+        <div className="mt-1 flex items-center justify-center gap-1">
           {bottomRanks.map((rank) => (
             <button
               key={rank}
               type="button"
               onClick={() => setPendingRank(pendingRank === rank ? null : rank)}
               className={[
-                "min-h-11 rounded-lg border text-sm font-bold",
+                "h-[34px] w-[34px] shrink-0 rounded-md border text-sm font-bold",
                 pendingRank === rank ? "border-accent bg-blue-50 text-blue-700" : "border-border bg-white text-text",
               ].join(" ")}
             >
               {rank}
             </button>
           ))}
-        </div>
-
-        <div className="mt-2 grid grid-cols-4 gap-1.5">
           {SUITS.map((suit) => {
             const isDisabled = !pendingRank || usedCards.has(`${pendingRank}${suit}`);
             return (
@@ -155,7 +137,7 @@ export function TwoTapKeyboard() {
                 disabled={isDisabled}
                 onClick={() => pendingRank && assignCard({ rank: pendingRank, suit })}
                 className={[
-                  "min-h-11 rounded-lg border text-lg font-bold",
+                  "h-[34px] w-[34px] shrink-0 rounded-md border text-base font-bold",
                   suit === "h" || suit === "d" ? "text-red-500" : "text-slate-800",
                   isDisabled ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-40" : "border-border bg-white",
                 ].join(" ")}
@@ -165,14 +147,6 @@ export function TwoTapKeyboard() {
             );
           })}
         </div>
-
-        <button
-          type="button"
-          onClick={handleBackspace}
-          className="mt-2 min-h-11 w-full rounded-lg border border-border bg-slate-50 text-sm font-semibold text-text"
-        >
-          Backspace
-        </button>
       </div>
     </section>
   );

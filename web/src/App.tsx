@@ -45,9 +45,49 @@ export default function App() {
     };
   }, [activeSlot, setActiveSlot, setPendingRank]);
 
+  useEffect(() => {
+    if (!activeSlot) {
+      return;
+    }
+
+    let rafId = 0;
+    let nestedRafId = 0;
+
+    const scrollActiveCardAboveKeyboard = () => {
+      const activeCard = document.querySelector("[data-active-card-slot='true']");
+      if (!(activeCard instanceof HTMLElement)) {
+        return;
+      }
+
+      const keyboard = document.querySelector("[data-two-tap-keyboard='true']");
+      if (!(keyboard instanceof HTMLElement)) {
+        activeCard.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        return;
+      }
+
+      const cardRect = activeCard.getBoundingClientRect();
+      const keyboardRect = keyboard.getBoundingClientRect();
+      const safeBottom = keyboardRect.top - 12;
+      const overlap = cardRect.bottom - safeBottom;
+
+      if (overlap > 0) {
+        window.scrollBy({ top: overlap, behavior: "smooth" });
+      }
+    };
+
+    rafId = window.requestAnimationFrame(() => {
+      nestedRafId = window.requestAnimationFrame(scrollActiveCardAboveKeyboard);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.cancelAnimationFrame(nestedRafId);
+    };
+  }, [activeSlot]);
+
   return (
     <div className="min-h-screen bg-bg text-text">
-      <div className={`mx-auto w-full max-w-4xl px-4 pt-4 ${activeSlot ? "pb-[40vh]" : "pb-6"}`}>
+      <div className={`mx-auto w-full max-w-4xl px-4 pt-4 ${activeSlot ? "pb-48" : "pb-6"}`}>
         <header className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card-bg px-4 py-3 shadow-sm">
           <div>
             <h1 className="text-xl font-extrabold tracking-tight">SnapCall</h1>

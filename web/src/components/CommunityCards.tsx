@@ -12,8 +12,8 @@ const BOARD_SLOTS = [
 export function CommunityCards() {
   const board = useGameStore((state) => state.board);
   const activeSlot = useGameStore((state) => state.activeSlot);
-  const setBoardCard = useGameStore((state) => state.setBoardCard);
   const setActiveSlot = useGameStore((state) => state.setActiveSlot);
+  const setPendingRank = useGameStore((state) => state.setPendingRank);
   const clearBoard = useGameStore((state) => state.clearBoard);
 
   return (
@@ -40,9 +40,9 @@ export function CommunityCards() {
               card={card}
               active={isActive}
               onClick={() => {
-                if (card) {
-                  setBoardCard(cardIndex, null);
-                  setActiveSlot({ kind: "board", cardIndex });
+                if (isActive) {
+                  setActiveSlot(null);
+                  setPendingRank(null);
                   return;
                 }
                 setActiveSlot({ kind: "board", cardIndex });

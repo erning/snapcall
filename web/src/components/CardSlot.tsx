@@ -17,6 +17,7 @@ export function CardSlot({ card, placeholder = "", active = false, onClick }: Ca
     <button
       type="button"
       data-card-slot="true"
+      data-active-card-slot={active ? "true" : undefined}
       onClick={onClick}
       className={[
         "h-11 w-[3.125rem] shrink-0 rounded-xl border text-base font-semibold transition",
