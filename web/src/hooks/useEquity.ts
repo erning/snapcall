@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { WasmBindings } from "../lib/wasm";
-import { toCompactCard } from "../lib/utils";
+import { compressRangeCells, toCompactCard } from "../lib/utils";
 import { useGameStore } from "../stores/gameStore";
 
 export function useEquity(wasm: WasmBindings | null) {
@@ -20,6 +20,9 @@ export function useEquity(wasm: WasmBindings | null) {
       }
     }
     for (const player of players) {
+      if (player.inputMode !== "cards") {
+        continue;
+      }
       for (const card of player.cards) {
         if (card) {
           cardSet.add(toCompactCard(card));
@@ -37,7 +40,7 @@ export function useEquity(wasm: WasmBindings | null) {
 
     const assignedCount =
       board.filter(Boolean).length +
-      players.reduce((sum, player) => sum + player.cards.filter(Boolean).length, 0);
+      players.reduce((sum, player) => sum + (player.inputMode === "cards" ? player.cards.filter(Boolean).length : 0), 0);
 
     if (usedCards.size !== assignedCount) {
       setError("Duplicate cards detected. Remove duplicates before calculating");
@@ -45,6 +48,9 @@ export function useEquity(wasm: WasmBindings | null) {
     }
 
     for (const player of players) {
+      if (player.inputMode !== "cards") {
+        continue;
+      }
       const cardCount = player.cards.filter(Boolean).length;
       if (cardCount === 1) {
         setError("Each player must have 0 or 2 cards");
@@ -53,6 +59,10 @@ export function useEquity(wasm: WasmBindings | null) {
     }
 
     const playerInputs = players.map((player) => {
+      if (player.inputMode === "range") {
+        const compressed = compressRangeCells(player.rangeCells);
+        return compressed.length > 0 ? compressed.join(",") : "";
+      }
       const cards = player.cards.filter((card): card is NonNullable<typeof card> => card !== null);
       if (cards.length === 0) {
         return "";

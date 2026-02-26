@@ -3,6 +3,7 @@ export const SUITS = ["s", "h", "d", "c"] as const;
 
 export type Rank = (typeof RANKS)[number];
 export type Suit = (typeof SUITS)[number];
+export type PlayerInputMode = "cards" | "range";
 
 export interface Card {
   rank: Rank;
@@ -12,6 +13,8 @@ export interface Card {
 export interface Player {
   id: string;
   cards: [Card | null, Card | null];
+  inputMode: PlayerInputMode;
+  rangeCells: string[];
   equity?: number;
 }
 

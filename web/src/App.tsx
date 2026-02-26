@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { CommunityCards } from "./components/CommunityCards";
 import { PlayerList } from "./components/PlayerList";
 import { PotOddsPanel } from "./components/PotOddsPanel";
+import { RangeMatrixKeyboard } from "./components/RangeMatrixKeyboard";
 import { TwoTapKeyboard } from "./components/TwoTapKeyboard";
 import { useEquity } from "./hooks/useEquity";
 import { useWasm } from "./hooks/useWasm";
@@ -16,12 +17,16 @@ export default function App() {
   const setIterations = useGameStore((state) => state.setIterations);
   const error = useGameStore((state) => state.error);
   const activeSlot = useGameStore((state) => state.activeSlot);
+  const activeRangePlayerId = useGameStore((state) => state.activeRangePlayerId);
   const setActiveSlot = useGameStore((state) => state.setActiveSlot);
+  const setActiveRangePlayer = useGameStore((state) => state.setActiveRangePlayer);
   const setPendingRank = useGameStore((state) => state.setPendingRank);
   const { calculate, isCalculating } = useEquity(wasm);
 
+  const hasBottomKeyboard = Boolean(activeSlot || activeRangePlayerId);
+
   useEffect(() => {
-    if (!activeSlot) {
+    if (!activeSlot && !activeRangePlayerId) {
       return;
     }
 
@@ -31,11 +36,17 @@ export default function App() {
         return;
       }
 
-      if (target.closest("[data-card-slot]") || target.closest("[data-two-tap-keyboard]")) {
+      if (
+        target.closest("[data-card-slot]") ||
+        target.closest("[data-two-tap-keyboard]") ||
+        target.closest("[data-range-matrix]") ||
+        target.closest("[data-range-trigger]")
+      ) {
         return;
       }
 
       setActiveSlot(null);
+      setActiveRangePlayer(null);
       setPendingRank(null);
     };
 
@@ -43,7 +54,7 @@ export default function App() {
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [activeSlot, setActiveSlot, setPendingRank]);
+  }, [activeSlot, activeRangePlayerId, setActiveSlot, setActiveRangePlayer, setPendingRank]);
 
   useEffect(() => {
     if (!activeSlot) {
@@ -85,9 +96,49 @@ export default function App() {
     };
   }, [activeSlot]);
 
+  useEffect(() => {
+    if (!activeRangePlayerId) {
+      return;
+    }
+
+    let rafId = 0;
+    let nestedRafId = 0;
+
+    const scrollRangeCardAboveKeyboard = () => {
+      const activeRangeCard = document.querySelector("[data-active-range-player-card='true']");
+      if (!(activeRangeCard instanceof HTMLElement)) {
+        return;
+      }
+
+      const rangeKeyboard = document.querySelector("[data-range-matrix='true']");
+      if (!(rangeKeyboard instanceof HTMLElement)) {
+        activeRangeCard.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        return;
+      }
+
+      const cardRect = activeRangeCard.getBoundingClientRect();
+      const keyboardRect = rangeKeyboard.getBoundingClientRect();
+      const safeBottom = keyboardRect.top - 12;
+      const overlap = cardRect.bottom - safeBottom;
+
+      if (overlap > 0) {
+        window.scrollBy({ top: overlap, behavior: "smooth" });
+      }
+    };
+
+    rafId = window.requestAnimationFrame(() => {
+      nestedRafId = window.requestAnimationFrame(scrollRangeCardAboveKeyboard);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.cancelAnimationFrame(nestedRafId);
+    };
+  }, [activeRangePlayerId]);
+
   return (
     <div className="min-h-screen bg-bg text-text">
-      <div className={`mx-auto w-full max-w-4xl px-4 pt-4 ${activeSlot ? "pb-48" : "pb-6"}`}>
+      <div className={`mx-auto w-full max-w-4xl px-4 pt-4 ${hasBottomKeyboard ? "pb-48" : "pb-6"}`}>
         <header className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card-bg px-4 py-3 shadow-sm">
           <div>
             <h1 className="text-xl font-extrabold tracking-tight">SnapCall</h1>
@@ -138,6 +189,7 @@ export default function App() {
       </div>
 
       <TwoTapKeyboard />
+      <RangeMatrixKeyboard />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Card, Player, Rank, Slot } from "../types";
+import type { Card, Player, PlayerInputMode, Rank, Slot } from "../types";
 
 interface GameState {
   pot: number;
@@ -8,6 +8,7 @@ interface GameState {
   board: (Card | null)[];
   players: Player[];
   activeSlot: Slot | null;
+  activeRangePlayerId: string | null;
   pendingRank: Rank | null;
   iterations: number;
   isCalculating: boolean;
@@ -21,7 +22,11 @@ interface GameState {
   removePlayer: (playerId: string) => void;
   setPlayerCard: (playerId: string, cardIndex: number, card: Card | null) => void;
   clearPlayerCards: (playerId: string) => void;
+  clearPlayerRange: (playerId: string) => void;
+  setPlayerInputMode: (playerId: string, mode: PlayerInputMode) => void;
+  togglePlayerRangeCell: (playerId: string, cell: string) => void;
   setActiveSlot: (slot: Slot | null) => void;
+  setActiveRangePlayer: (playerId: string | null) => void;
   setPendingRank: (rank: Rank | null) => void;
   setIterations: (iterations: number) => void;
   setIsCalculating: (value: boolean) => void;
@@ -35,6 +40,8 @@ function createPlayer(): Player {
   return {
     id,
     cards: [null, null],
+    inputMode: "cards",
+    rangeCells: [],
   };
 }
 
@@ -49,6 +56,7 @@ export const useGameStore = create<GameState>((set) => ({
   board: [null, null, null, null, null],
   players: [createPlayer(), createPlayer()],
   activeSlot: null,
+  activeRangePlayerId: null,
   pendingRank: null,
   iterations: 10000,
   isCalculating: false,
@@ -80,6 +88,7 @@ export const useGameStore = create<GameState>((set) => ({
       board: [null, null, null, null, null],
       players: clearEquityOnPlayers(state.players),
       activeSlot: null,
+      activeRangePlayerId: null,
       pendingRank: null,
       error: null,
     })),
@@ -100,6 +109,7 @@ export const useGameStore = create<GameState>((set) => ({
         players: clearEquityOnPlayers(state.players.filter((player) => player.id !== playerId)),
         activeSlot:
           state.activeSlot?.kind === "player" && state.activeSlot.playerId === playerId ? null : state.activeSlot,
+        activeRangePlayerId: state.activeRangePlayerId === playerId ? null : state.activeRangePlayerId,
         pendingRank: null,
         error: null,
       };
@@ -142,7 +152,74 @@ export const useGameStore = create<GameState>((set) => ({
       error: null,
     })),
 
-  setActiveSlot: (slot) => set({ activeSlot: slot }),
+  clearPlayerRange: (playerId) =>
+    set((state) => ({
+      players: clearEquityOnPlayers(
+        state.players.map((player) => {
+          if (player.id !== playerId) {
+            return player;
+          }
+          return {
+            ...player,
+            rangeCells: [],
+          };
+        }),
+      ),
+      error: null,
+    })),
+
+  setPlayerInputMode: (playerId, mode) =>
+    set((state) => ({
+      players: clearEquityOnPlayers(
+        state.players.map((player) => {
+          if (player.id !== playerId) {
+            return player;
+          }
+          return {
+            ...player,
+            inputMode: mode,
+          };
+        }),
+      ),
+      activeSlot:
+        mode === "range" && state.activeSlot?.kind === "player" && state.activeSlot.playerId === playerId
+          ? null
+          : state.activeSlot,
+      activeRangePlayerId: mode === "range" ? playerId : state.activeRangePlayerId === playerId ? null : state.activeRangePlayerId,
+      pendingRank: null,
+      error: null,
+    })),
+
+  togglePlayerRangeCell: (playerId, cell) =>
+    set((state) => ({
+      players: clearEquityOnPlayers(
+        state.players.map((player) => {
+          if (player.id !== playerId) {
+            return player;
+          }
+          const hasCell = player.rangeCells.includes(cell);
+          return {
+            ...player,
+            rangeCells: hasCell ? player.rangeCells.filter((item) => item !== cell) : [...player.rangeCells, cell],
+          };
+        }),
+      ),
+      error: null,
+    })),
+
+  setActiveSlot: (slot) =>
+    set({
+      activeSlot: slot,
+      activeRangePlayerId: null,
+    }),
+
+  setActiveRangePlayer: (playerId) =>
+    set({
+      activeRangePlayerId: playerId,
+      activeSlot: null,
+      pendingRank: null,
+    }),
+
   setPendingRank: (rank) => set({ pendingRank: rank }),
 
   setIterations: (iterations) =>
