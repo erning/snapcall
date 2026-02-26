@@ -141,36 +141,43 @@ let equities = calculate_equity(&[aa, kk], &board, 10000)?;
 // equities[1] = 4.9% (KK with board)
 ```
 
-## Web App (WASM)
+## Web App (WASM + React)
 
-A minimal browser UI lives in `web/` and calls into the Rust core via WebAssembly.
+The `web/` app is now a React 18 + TypeScript + Vite frontend that consumes the Rust WASM bindings from `web/pkg`.
 
 ```bash
 cd web
+
 # Install wasm-pack if you don't have it
 cargo install wasm-pack
 
-# Build the WASM package into web/pkg
-make build
+# Build WASM bindings into web/pkg
+PATH="$HOME/.cargo/bin:$PATH" make wasm
 
-# Serve the web/ directory
-make dev
-# Open http://localhost:8000
+# Install frontend dependencies (pnpm)
+pnpm install
+
+# Start Vite dev server
+pnpm run dev -- --host
+
+# Type-check and production build
+pnpm run typecheck
+pnpm run build
 ```
 
 Notes:
-- Use an HTTP server (ES modules + WASM fetch); opening `web/index.html` directly usually fails.
-- Start by entering two hands like `AhAd` and `KhKd`, then click Calculate.
+- Do not open `web/index.html` directly. Run the Vite dev server so WASM and ESM assets are resolved correctly.
+- `make dev` and `make build` in `web/` now use pnpm internally.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      Mobile UI (Swift/Kotlin)               │
-│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐   │
-│  │ Two-Tap      │  │ Range        │  │ Equity Display  │   │
-│  │ Keyboard     │  │ Matrix       │  │                 │   │
-│  └──────────────┘  └──────────────┘  └─────────────────┘   │
+│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐    │
+│  │ Two-Tap      │  │ Range        │  │ Equity Display  │    │
+│  │ Keyboard     │  │ Matrix       │  │                 │    │
+│  └──────────────┘  └──────────────┘  └─────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
                               │
                     UniFFI FFI Bridge

@@ -1,5 +1,10 @@
-build:
+wasm:
 	wasm-pack build --target web
 
-dev:
-	python3 -m http.server 8000
+dev: wasm
+	pnpm install
+	pnpm run dev -- --host
+
+build: wasm
+	pnpm install
+	pnpm run build

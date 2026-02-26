@@ -38,26 +38,25 @@
 
 ## 待完成 ⏳
 
-### Phase 3: Web App (WASM) ✅ COMPLETE
-基于 Web 的快速原型，验证 UI/UX 设计
+### Phase 3: Web App (WASM) ✅ COMPLETE (V2)
+基于 Web 的可用产品版本，作为移动端 UI 设计和交互验证平台
 
 - [x] WASM 模块构建
   - [x] 添加 `wasm32-unknown-unknown` target
   - [x] 配置 `wasm-bindgen` 暴露 API
-  - [x] 测试 rs-poker WASM 兼容性
-- [x] Web 前端
-  - [x] Two-Tap Poker Keyboard UI
-    - [x] Rank 行 (A, K, Q...)
-    - [x] Suit 行 (♠ ♥ ♣ ♦)
-    - [x] Ghosting (禁用已用牌)
-  - [x] 13x13 Range Matrix
-    - [x] Grid layout
-    - [x] Click-to-select 交互
-  - [x] Equity 结果显示
-  - [x] 响应式设计 (移动端适配)
-  
-**Build:** `cd web && make build`
-**Dev Server:** `cd web && make dev` (http://localhost:8000)
+  - [x] 保留 `calculate_equity` / `evaluate_hand` / `parse_range` / `format_card` 接口
+- [x] Web 前端 V2（React + TypeScript + Vite + Tailwind + Zustand）
+  - [x] 浅色主题移动优先布局
+  - [x] 底池赔率面板（底池 / 对手下注 / 跟注 + 自动赔率计算）
+  - [x] 公共牌与玩家卡片输入
+  - [x] Two-Tap Keyboard（底部固定、已用牌禁用、退格）
+  - [x] 胜率结果卡片内展示（百分比 + 进度条）
+  - [x] 多玩家增删（最少 2 人）
+  - [x] pnpm 工程化工作流
+
+**WASM Build:** `cd web && PATH="$HOME/.cargo/bin:$PATH" make wasm`
+**Dev Server:** `cd web && pnpm install && pnpm run dev -- --host`
+**Prod Build:** `cd web && pnpm run build`
 
 ### Phase 4: UniFFI 绑定生成
 - [ ] 配置 `build.rs` 生成绑定
@@ -105,7 +104,7 @@
 Phase 1: CLI (已完成)
    │
    ▼
-Phase 3: Web + WASM (进行中)
+Phase 3: Web + WASM (已完成)
    │    • 快速验证 UI/UX
    │    • 跨平台访问
    │    • 无需应用商店

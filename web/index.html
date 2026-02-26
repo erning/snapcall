@@ -1,72 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SnapCall - Poker Equity Calculator</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div id="app">
-    <header class="app-header">
-      <h1>SnapCall ♠♥♦♣</h1>
-      <p class="subtitle">Texas Hold'em equity calculator (Rust + WASM)</p>
-    </header>
-
-    <!-- Equity Calculator Section -->
-    <div id="equity-section" class="card">
-      <div class="section-header">
-        <h2>Equity Calculator</h2>
-        <div class="pill-row">
-          <label class="pill">
-            Iterations
-            <input id="iterations" type="number" inputmode="numeric" min="100" step="100" value="10000" />
-          </label>
-        </div>
-      </div>
-
-      <!-- Player Inputs -->
-      <div id="players"></div>
-      <button id="add-player" class="btn secondary" type="button">+ Add Player</button>
-
-      <!-- Board Input -->
-      <div id="board-section" class="subcard">
-        <div class="row">
-          <h3>Board (optional)</h3>
-          <button id="clear-board" class="btn ghost" type="button">Clear</button>
-        </div>
-        <div id="board-cards" class="card-slots"></div>
-      </div>
-
-      <!-- Two-Tap Keyboard -->
-      <div id="keyboard" class="subcard">
-        <h3>Two-Tap Keyboard</h3>
-        <div class="hint">Tap a rank, then a suit.</div>
-        <div id="ranks" class="key-row">A K Q J T 9 8 7 6 5 4 3 2</div>
-        <div id="suits" class="key-row">♠ ♥ ♦ ♣</div>
-        <div class="row">
-          <button id="backspace" class="btn ghost" type="button">Backspace</button>
-          <div id="active-target" class="active-target">No slot selected</div>
-        </div>
-      </div>
-
-      <!-- Range Matrix -->
-      <div id="range-matrix-section" class="subcard" style="display:none">
-        <div class="row">
-          <h3>Range Selection</h3>
-          <button id="range-done" class="btn ghost" type="button">Done</button>
-        </div>
-        <div class="hint">Click to select. Shift-click to multi-select.</div>
-        <div id="range-grid" class="range-grid"></div>
-      </div>
-
-      <!-- Results -->
-      <button id="calculate" class="btn primary" type="button">Calculate Equity</button>
-      <div id="results" class="results"></div>
-      <div id="status" class="status"></div>
-    </div>
-  </div>
-
-  <script type="module" src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnapCall Web</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
