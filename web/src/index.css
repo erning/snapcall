@@ -1,8 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Manrope:wght@500;600;700;800&display=swap");
 
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 
 :root {
   --bg: #f8fafc;
@@ -32,6 +30,38 @@ body {
     radial-gradient(1200px 420px at 10% -4%, rgba(59, 130, 246, 0.14), transparent 65%),
     radial-gradient(1000px 360px at 90% 0%, rgba(16, 185, 129, 0.1), transparent 65%),
     var(--bg);
+}
+
+.bg-bg {
+  background-color: var(--bg);
+}
+
+.bg-card-bg {
+  background-color: var(--card-bg);
+}
+
+.border-border {
+  border-color: var(--border);
+}
+
+.text-text {
+  color: var(--text);
+}
+
+.text-muted {
+  color: var(--muted);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+}
+
+.bg-accent-2 {
+  background-color: var(--accent-2);
+}
+
+.text-danger {
+  color: var(--danger);
 }
 
 .keyboard-safe {

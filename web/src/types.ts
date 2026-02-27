@@ -15,6 +15,7 @@ export interface Player {
   cards: [Card | null, Card | null];
   inputMode: PlayerInputMode;
   rangeCells: string[];
+  folded: boolean;
   equity?: number;
 }
 

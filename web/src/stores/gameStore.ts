@@ -6,6 +6,7 @@ interface GameState {
   opponentBet: number | null;
   callAmount: number | null;
   board: (Card | null)[];
+  deadCards: (Card | null)[];
   players: Player[];
   activeSlot: Slot | null;
   activeRangePlayerId: string | null;
@@ -17,7 +18,9 @@ interface GameState {
   setOpponentBet: (value: number | null) => void;
   setCallAmount: (value: number | null) => void;
   setBoardCard: (index: number, card: Card | null) => void;
+  setDeadCard: (index: number, card: Card | null) => void;
   clearBoard: () => void;
+  clearDeadCards: () => void;
   addPlayer: () => void;
   removePlayer: (playerId: string) => void;
   setPlayerCard: (playerId: string, cardIndex: number, card: Card | null) => void;
@@ -28,6 +31,7 @@ interface GameState {
   setPlayerRangeCells: (playerId: string, cells: string[], selected: boolean) => void;
   replacePlayerRangeCells: (playerId: string, cells: string[]) => void;
   togglePlayerRangeCell: (playerId: string, cell: string) => void;
+  togglePlayerFold: (playerId: string) => void;
   setActiveSlot: (slot: Slot | null) => void;
   setActiveRangePlayer: (playerId: string | null) => void;
   setPendingRank: (rank: Rank | null) => void;
@@ -45,6 +49,7 @@ function createPlayer(): Player {
     cards: [null, null],
     inputMode: "cards",
     rangeCells: [],
+    folded: false,
   };
 }
 
@@ -57,6 +62,7 @@ export const useGameStore = create<GameState>((set) => ({
   opponentBet: null,
   callAmount: null,
   board: [null, null, null, null, null],
+  deadCards: [null, null, null],
   players: [createPlayer(), createPlayer()],
   activeSlot: null,
   activeRangePlayerId: null,
@@ -92,9 +98,33 @@ export const useGameStore = create<GameState>((set) => ({
       };
     }),
 
+  setDeadCard: (index, card) =>
+    set((state) => {
+      if (index < 0 || index >= state.deadCards.length) {
+        return state;
+      }
+      const deadCards = [...state.deadCards];
+      deadCards[index] = card;
+      return {
+        deadCards,
+        players: clearEquityOnPlayers(state.players),
+        error: null,
+      };
+    }),
+
   clearBoard: () =>
     set((state) => ({
       board: [null, null, null, null, null],
+      players: clearEquityOnPlayers(state.players),
+      activeSlot: null,
+      activeRangePlayerId: null,
+      pendingRank: null,
+      error: null,
+    })),
+
+  clearDeadCards: () =>
+    set((state) => ({
+      deadCards: [null, null, null],
       players: clearEquityOnPlayers(state.players),
       activeSlot: null,
       activeRangePlayerId: null,
@@ -283,6 +313,22 @@ export const useGameStore = create<GameState>((set) => ({
           return {
             ...player,
             rangeCells: hasCell ? player.rangeCells.filter((item) => item !== cell) : [...player.rangeCells, cell],
+          };
+        }),
+      ),
+      error: null,
+    })),
+
+  togglePlayerFold: (playerId) =>
+    set((state) => ({
+      players: clearEquityOnPlayers(
+        state.players.map((player) => {
+          if (player.id !== playerId) {
+            return player;
+          }
+          return {
+            ...player,
+            folded: !player.folded,
           };
         }),
       ),
