@@ -1,5 +1,8 @@
 use clap::{Parser, Subcommand};
-use snapcall_core::{calculate_equity, evaluate_hand, hand_type_name, parse_cards, Card, Suit};
+use snapcall_core::{
+    calculate_equity, calculate_equity_with_math, evaluate_hand, hand_type_name, parse_cards, Card,
+    EquitySolveMode, Suit,
+};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -33,6 +36,10 @@ enum Commands {
         /// Number of Monte Carlo iterations
         #[arg(short = 'i', long, default_value = "10000")]
         iterations: u32,
+
+        /// Show computation details (mode, state-space, sample count)
+        #[arg(long)]
+        show_math: bool,
     },
 
     /// Calculate pot odds
@@ -92,6 +99,7 @@ fn main() {
             player_count,
             board,
             iterations,
+            show_math,
         } => {
             // Extend player list with empty strings if player_count is specified
             let mut player = player;
@@ -112,14 +120,48 @@ fn main() {
 
             let board_str = board.unwrap_or_default();
 
-            match calculate_equity(&player, &board_str, iterations) {
-                Ok(equities) => {
-                    println!("Equity Results ({} iterations):", iterations);
-                    for (i, eq) in equities.iter().enumerate() {
-                        println!("  Player {}: {:.2}%", i + 1, eq);
+            if show_math {
+                match calculate_equity_with_math(&player, &board_str, iterations) {
+                    Ok(result) => {
+                        let equities = result.equities;
+                        let math = result.math;
+
+                        println!("Computation:");
+                        let mode = match math.mode {
+                            EquitySolveMode::ExactEnumeration => "exact",
+                            EquitySolveMode::MonteCarlo => "monte_carlo",
+                        };
+                        println!("  Mode: {}", mode);
+                        println!("  Iteration Budget: {}", math.iteration_budget);
+                        println!(
+                            "  Assignment Combinations: {}",
+                            math.assignment_combinations
+                        );
+                        println!(
+                            "  Board Runout Combinations: {}",
+                            math.board_runout_combinations
+                        );
+                        println!("  Total States: {}", math.total_states);
+                        println!("  Samples Used: {}", math.samples_used);
+                        println!();
+
+                        println!("Equity Results ({} iterations):", iterations);
+                        for (i, eq) in equities.iter().enumerate() {
+                            println!("  Player {}: {:.2}%", i + 1, eq);
+                        }
                     }
+                    Err(e) => eprintln!("Error calculating equity: {}", e),
                 }
-                Err(e) => eprintln!("Error calculating equity: {}", e),
+            } else {
+                match calculate_equity(&player, &board_str, iterations) {
+                    Ok(equities) => {
+                        println!("Equity Results ({} iterations):", iterations);
+                        for (i, eq) in equities.iter().enumerate() {
+                            println!("  Player {}: {:.2}%", i + 1, eq);
+                        }
+                    }
+                    Err(e) => eprintln!("Error calculating equity: {}", e),
+                }
             }
         }
         Commands::PotOdds { pot, bet, call } => {
