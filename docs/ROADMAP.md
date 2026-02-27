@@ -9,7 +9,7 @@
   - [x] `parse_card()` - 解析单张牌
   - [x] `parse_cards()` - 解析多张牌
   - [x] `evaluate_hand()` - 评估手牌 (5-7张)
-  - [x] `calculate_equity()` - 阈值驱动胜率计算（组合数 <= iterations 时精确枚举，否则 Monte Carlo）
+  - [x] `calculate_equity()` - 字符串输入统一 API（空串/单张/两张/range），阈值驱动胜率计算（组合数 <= iterations 时精确枚举，否则 Monte Carlo）
   - [x] `parse_range()` - 范围解析 (简化版)
 - [x] FFI 层 (UniFFI)
   - [x] `ffi_parse_card()`
@@ -54,7 +54,7 @@
   - [x] 多玩家增删（最少 2 人）
   - [x] pnpm 工程化工作流
 
-**WASM Build:** `cd web && make wasm`
+**WASM Build:** `cd web && make wasm` 或 `cargo build -p snapcall-web --target wasm32-unknown-unknown`
 **Dev Server:** `cd web && pnpm install && pnpm run dev -- --host`
 **Prod Build:** `cd web && pnpm run build`
 

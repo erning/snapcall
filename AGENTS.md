@@ -31,6 +31,9 @@ snapcall/
 │   └── Cargo.toml
 ├── cli/                # Command-line tool
 │   └── src/main.rs
+├── web/                # WASM bindings + React frontend
+│   ├── Cargo.toml
+│   └── src/lib.rs
 ├── docs/
 │   ├── ROADMAP.md      # What's done / what's next
 │   └── INITIAL_AGENTS.md # Original spec
@@ -47,6 +50,7 @@ snapcall/
 | Wrapper | Rust | FFI-friendly API layer |
 | FFI Bridge | UniFFI | Auto-generate Swift/Kotlin bindings |
 | CLI | Rust + clap | Testing & debugging |
+| Web | Rust WASM + React | Browser UI and interaction validation |
 | iOS UI | Swift + SwiftUI | Native iOS interface (planned) |
 | Android UI | Kotlin + Compose | Native Android interface (planned) |
 
@@ -64,10 +68,16 @@ evaluate_hand(&cards) -> Rank      // Returns hand rank
 
 // Equity calculation (exact enumeration when feasible, Monte Carlo fallback)
 calculate_equity(
-    &[vec![card1, card2], vec![card3, card4]],  // Player hands
-    &[card5, card6, card7],                      // Board (optional)
-    10000                                        // Iterations
+    &["AhAd".to_string(), "AKs".to_string()],  // Player inputs
+    "AsKdQh",                                    // Board string (0/3/4/5 cards)
+    10000                                         // Iterations / exact budget
 ) -> Vec<f64>                                   // Equity % per player
+
+// Player input formats per seat:
+// ""      -> two unknown cards (all starting hands)
+// "Ah"    -> one known card + one unknown card
+// "AhAd"  -> exact two-card hand
+// "AKs"   -> range expression (also supports TT+, A5s-A2s, etc.)
 
 // Range parsing (simplified)
 parse_range("AKs") -> Vec<(Value, Value, bool)>
@@ -112,6 +122,11 @@ ffi_calculate_equity(
     board: String,
     iterations: u32
 ) -> Result<Vec<f64>, String>
+ffi_calculate_equity_with_ranges(
+    player_hands: Vec<String>,
+    board: String,
+    iterations: u32
+) -> Result<Vec<f64>, String>  // Alias of ffi_calculate_equity
 ```
 
 ---

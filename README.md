@@ -26,6 +26,9 @@ cd snapcall
 # Build
 cargo build --workspace
 
+# Faster Rust-only build (skip web crate)
+cargo build -p snapcall-core -p snapcall-cli
+
 # Evaluate a hand (5-7 cards)
 cargo run --bin snapcall -- eval "AsKsQsJsTs"
 # → Hand: A♠ K♠ Q♠ J♠ T♠
@@ -131,19 +134,23 @@ println!("{}", hand_type_name(&rank)); // "Straight Flush"
 ### Equity Calculation
 
 ```rust
-use snapcall_core::{parse_cards, calculate_equity};
+use snapcall_core::calculate_equity;
 
-let aa = parse_cards("AhAd")?;  // or "Ah Ad"
-let kk = parse_cards("KhKd")?;
-let board = parse_cards("AsKdQh")?;  // optional board cards
-let equities = calculate_equity(&[aa, kk], &board, 10000)?;
-// equities[0] = 95.1% (AA with board)
-// equities[1] = 4.9% (KK with board)
+let players = vec!["AhAd".to_string(), "KhKd".to_string()];
+let equities = calculate_equity(&players, "AsKdQh", 10000)?;
+// player input supports: "" (random), "Ah" (one known card),
+// exact two cards ("AhAd"), and ranges ("AKs", "TT+")
 ```
+
+Input rules:
+- `player_hands`: one string per player, each item can be empty, one card, exact two cards, or range syntax.
+- `board`: must contain `0`, `3`, `4`, or `5` cards.
+- `iterations`: used as exact-enumeration budget, with Monte Carlo fallback when state space exceeds budget.
 
 ## Web App (WASM + React)
 
 The `web/` app is now a React 18 + TypeScript + Vite frontend that consumes the Rust WASM bindings from `web/pkg`.
+`snapcall-web` is a member of the root Cargo workspace, so shared dependency versions are managed in root `Cargo.toml`.
 
 ```bash
 cd web
@@ -153,6 +160,9 @@ cargo install wasm-pack
 
 # Build WASM bindings into web/pkg
 make wasm
+
+# Or build web crate directly from repo root
+cargo build -p snapcall-web --target wasm32-unknown-unknown
 
 # Install frontend dependencies (pnpm)
 pnpm install
