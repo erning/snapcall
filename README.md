@@ -20,7 +20,7 @@ SnapCall calculates the probability of winning (equity) in Texas Hold'em poker. 
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/snapcall
+git clone https://github.com/erning/snapcall
 cd snapcall
 
 # Build
