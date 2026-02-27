@@ -107,17 +107,17 @@ Calculate pot odds to make better calling decisions:
 
 ```bash
 # Basic pot odds (calling a half-pot bet)
-cargo run --bin snapcall -- pot-odds --pot 100 --bet 50
+cargo run --bin snapcall -- pot-odds --pot-size 150 --call-amount 50
 # → Pot Odds: 25.00%
 # → You need at least 25.00% equity to break even
 
-# Custom call amount (e.g., you have less chips than opponent's bet)
-cargo run --bin snapcall -- pot-odds --pot 100 --bet 100 --call 25
+# Custom call amount with larger pot
+cargo run --bin snapcall -- pot-odds --pot-size 300 --call-amount 75
 # → Pot Odds: 14.29%
 # → You need at least 14.29% equity to break even
 ```
 
-**Formula:** `Pot Odds = Call Amount / (Current Pot + Opponent Bet + Your Call)`
+**Formula:** `Pot Odds = Call Amount / (Pot Size Before Call + Your Call)`
 
 ## How It Works
 

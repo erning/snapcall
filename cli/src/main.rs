@@ -44,17 +44,13 @@ enum Commands {
 
     /// Calculate pot odds
     PotOdds {
-        /// Current pot size (before opponent's bet)
-        #[arg(short = 'p', long, required = true)]
-        pot: f64,
+        /// Current pot size before your call (includes opponent action)
+        #[arg(short = 'p', long = "pot-size", required = true)]
+        pot_size: f64,
 
-        /// Opponent's bet amount
-        #[arg(short = 'b', long, required = true)]
-        bet: f64,
-
-        /// Your call amount (defaults to opponent's bet)
-        #[arg(short = 'c', long)]
-        call: Option<f64>,
+        /// Amount you need to call
+        #[arg(short = 'c', long = "call-amount", required = true)]
+        call_amount: f64,
     },
 }
 
@@ -164,21 +160,22 @@ fn main() {
                 }
             }
         }
-        Commands::PotOdds { pot, bet, call } => {
-            let call_amount = call.unwrap_or(bet);
-            calculate_pot_odds(pot, bet, call_amount);
+        Commands::PotOdds {
+            pot_size,
+            call_amount,
+        } => {
+            calculate_pot_odds(pot_size, call_amount);
         }
     }
 }
 
 /// Calculate pot odds and display result
-fn calculate_pot_odds(pot: f64, bet: f64, call_amount: f64) {
-    let total_pot_after_call = pot + bet + call_amount;
+fn calculate_pot_odds(pot_size: f64, call_amount: f64) {
+    let total_pot_after_call = pot_size + call_amount;
     let pot_odds_pct = (call_amount / total_pot_after_call) * 100.0;
 
     println!("Pot Odds Calculation:");
-    println!("  Current Pot: {:.0}", pot);
-    println!("  Opponent Bet: {:.0}", bet);
+    println!("  Pot Size (Before Call): {:.0}", pot_size);
     println!("  Amount to Call: {:.0}", call_amount);
     println!("  Total Pot After Call: {:.0}", total_pot_after_call);
     println!();
