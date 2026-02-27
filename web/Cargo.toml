@@ -18,4 +18,3 @@ wasm-bindgen = { workspace = true }
 snapcall-core = { path = "../core" }
 
 getrandom = { workspace = true }
-getrandom_04 = { workspace = true }

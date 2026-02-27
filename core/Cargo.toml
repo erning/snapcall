@@ -16,11 +16,10 @@ ffi = ["uniffi"]  # Enable FFI bindings generation
 [dependencies]
 rs_poker = { workspace = true }
 rand = { workspace = true }
-thiserror = { workspace = true }
-uniffi = { version = "0.28", optional = true }
+uniffi = { version = "0.28.3", optional = true }
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [build-dependencies]
-uniffi = { version = "0.28", features = ["build"] }
+uniffi = { version = "0.28.3", features = ["build"] }
