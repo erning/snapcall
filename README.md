@@ -187,7 +187,7 @@ Notes:
 │                                                             │
 │  • Card parsing: "Ah" → Card { Ace, Heart }                 │
 │  • Hand eval: 7 cards → rank (< 25ns)                       │
-│  • Equity: exact enumeration + Monte Carlo fallback          │
+│  • Equity: exact enumeration + Monte Carlo fallback         │
 │  • Range parsing: "AKs" → [(A,K,suited), ...]               │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
