@@ -16,7 +16,6 @@ pub mod ffi;
 
 pub use equity::{
     calculate_equity, calculate_equity_with_math, calculate_equity_with_ranges, evaluate_hand,
-    hand_type_name,
 };
 pub use parsing::{parse_card, parse_cards, parse_range};
 pub use types::{EquityMath, EquityResult, EquitySolveMode, SnapError};

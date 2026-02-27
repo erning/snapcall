@@ -1,5 +1,5 @@
 use snapcall_core::{
-    calculate_equity as core_calculate_equity, evaluate_hand as core_evaluate_hand, hand_type_name,
+    calculate_equity as core_calculate_equity, evaluate_hand as core_evaluate_hand,
     holdem::RangeParser, parse_card as core_parse_card, parse_cards as core_parse_cards, Card,
     Suit,
 };
@@ -45,7 +45,7 @@ pub fn evaluate_hand(cards: &str) -> String {
         Err(e) => return throw(e),
     };
 
-    format!("{} ({:?})", hand_type_name(&rank), rank)
+    format!("{:?}", rank)
 }
 
 #[wasm_bindgen]
@@ -89,5 +89,5 @@ pub fn calculate_equity(players: Vec<String>, board: String, iterations: u32) ->
         return throw("Need at least 2 players");
     }
 
-    core_calculate_equity(&players, &board, iterations).unwrap_or_else(|e| throw(e))
+    core_calculate_equity(&players, &board, iterations).unwrap_or_else(throw)
 }

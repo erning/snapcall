@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use snapcall_core::{
-    calculate_equity, calculate_equity_with_math, evaluate_hand, hand_type_name, parse_cards, Card,
+    calculate_equity, calculate_equity_with_math, evaluate_hand, parse_cards, Card,
     EquitySolveMode, Suit,
 };
 
@@ -84,7 +84,6 @@ fn main() {
                         cards.iter().map(format_card).collect::<Vec<_>>().join(" ")
                     );
                     println!("Rank: {:?}", rank);
-                    println!("Type: {}", hand_type_name(&rank));
                 }
                 Err(e) => eprintln!("Error evaluating hand: {}", e),
             },
@@ -141,7 +140,7 @@ fn main() {
                         println!("  Samples Used: {}", math.samples_used);
                         println!();
 
-                        println!("Equity Results ({} iterations):", iterations);
+                        println!("Equity Results:");
                         for (i, eq) in equities.iter().enumerate() {
                             println!("  Player {}: {:.2}%", i + 1, eq);
                         }
@@ -151,7 +150,7 @@ fn main() {
             } else {
                 match calculate_equity(&player, &board_str, iterations) {
                     Ok(equities) => {
-                        println!("Equity Results ({} iterations):", iterations);
+                        println!("Equity Results:");
                         for (i, eq) in equities.iter().enumerate() {
                             println!("  Player {}: {:.2}%", i + 1, eq);
                         }

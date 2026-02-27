@@ -1235,27 +1235,3 @@ pub fn calculate_equity_with_ranges(
 ) -> Result<Vec<f64>, SnapError> {
     calculate_equity(player_inputs, board, iterations)
 }
-
-/// Returns a user-friendly hand type name for a [`Rank`].
-///
-/// # Example
-/// ```rust
-/// use snapcall_core::{hand_type_name, parse_cards, evaluate_hand};
-///
-/// let cards = parse_cards("As Ks Qs Js Ts").unwrap();
-/// let rank = evaluate_hand(&cards).unwrap();
-/// assert_eq!(hand_type_name(&rank), "Straight Flush");
-/// ```
-pub fn hand_type_name(rank: &Rank) -> &'static str {
-    match rank {
-        Rank::HighCard(_) => "High Card",
-        Rank::OnePair(_) => "One Pair",
-        Rank::TwoPair(_) => "Two Pair",
-        Rank::ThreeOfAKind(_) => "Three of a Kind",
-        Rank::Straight(_) => "Straight",
-        Rank::Flush(_) => "Flush",
-        Rank::FullHouse(_) => "Full House",
-        Rank::FourOfAKind(_) => "Four of a Kind",
-        Rank::StraightFlush(_) => "Straight Flush",
-    }
-}
