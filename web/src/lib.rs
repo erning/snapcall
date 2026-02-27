@@ -1,10 +1,8 @@
-use std::collections::HashSet;
-
-use rand::{Rng, RngExt};
 use snapcall_core::{
-    calculate_equity as core_calculate_equity, evaluate_hand as core_evaluate_hand,
-    hand_type_name, parse_card as core_parse_card, parse_cards as core_parse_cards, Card, SnapError,
-    Suit,
+    calculate_equity as core_calculate_equity,
+    calculate_equity_with_ranges as core_calculate_equity_with_ranges,
+    evaluate_hand as core_evaluate_hand, hand_type_name, parse_card as core_parse_card,
+    parse_cards as core_parse_cards, Card, SnapError, Suit,
 };
 use wasm_bindgen::prelude::*;
 
@@ -86,9 +84,19 @@ fn generate_all_starting_hands() -> Result<Vec<Vec<Card>>, String> {
     // Generate all 52 cards
     let suits = [Suit::Spade, Suit::Heart, Suit::Diamond, Suit::Club];
     let values = [
-        Value::Ace, Value::King, Value::Queen, Value::Jack, Value::Ten,
-        Value::Nine, Value::Eight, Value::Seven, Value::Six, Value::Five,
-        Value::Four, Value::Three, Value::Two,
+        Value::Ace,
+        Value::King,
+        Value::Queen,
+        Value::Jack,
+        Value::Ten,
+        Value::Nine,
+        Value::Eight,
+        Value::Seven,
+        Value::Six,
+        Value::Five,
+        Value::Four,
+        Value::Three,
+        Value::Two,
     ];
 
     let mut all_cards: Vec<PokerCard> = Vec::with_capacity(52);
@@ -107,13 +115,6 @@ fn generate_all_starting_hands() -> Result<Vec<Vec<Card>>, String> {
 
     Ok(hands)
 }
-
-fn choose_one<'a, T>(rng: &mut impl Rng, items: &'a [T]) -> &'a T {
-    let idx = rng.random_range(0..items.len());
-    &items[idx]
-}
-
-
 
 #[wasm_bindgen]
 pub fn evaluate_hand(cards: &str) -> String {
@@ -158,7 +159,11 @@ pub fn parse_range(range: &str) -> Vec<String> {
             if cards.len() != 2 {
                 return throw("Range expansion produced non-2-card hand");
             }
-            format!("{}{}", card_to_compact(&cards[0]), card_to_compact(&cards[1]))
+            format!(
+                "{}{}",
+                card_to_compact(&cards[0]),
+                card_to_compact(&cards[1])
+            )
         })
         .collect()
 }
@@ -189,60 +194,10 @@ pub fn calculate_equity(players: Vec<String>, board: String, iterations: u32) ->
             .map(|r| r.into_iter().next().unwrap())
             .collect();
 
-        return core_calculate_equity(&hands, &board_cards, iterations).unwrap_or_else(|e| throw(e));
+        return core_calculate_equity(&hands, &board_cards, iterations)
+            .unwrap_or_else(|e| throw(e));
     }
 
-    // Range-aware: sample one hand from each range per iteration.
-    let iters = if iterations == 0 { 10_000 } else { iterations as usize };
-    let mut rng = rand::rng();
-
-    let mut totals = vec![0.0_f64; players.len()];
-    let mut valid_iters = 0_usize;
-
-    for _ in 0..iters {
-        let mut used: HashSet<Card> = board_cards.iter().copied().collect();
-        let mut sampled: Vec<Vec<Card>> = Vec::with_capacity(players.len());
-
-        let mut collision = false;
-        for range in &player_ranges {
-            let hand = choose_one(&mut rng, range).clone();
-
-            // Reject hands with collisions (between players and/or board).
-            for c in &hand {
-                if !used.insert(*c) {
-                    collision = true;
-                    break;
-                }
-            }
-            if collision {
-                break;
-            }
-
-            sampled.push(hand);
-        }
-
-        if collision {
-            continue;
-        }
-
-        let eq = match core_calculate_equity(&sampled, &board_cards, 1) {
-            Ok(v) => v,
-            Err(_) => continue,
-        };
-
-        for (i, e) in eq.iter().enumerate() {
-            totals[i] += *e;
-        }
-        valid_iters += 1;
-    }
-
-    if valid_iters == 0 {
-        let n = players.len();
-        return vec![100.0 / n as f64; n];
-    }
-
-    totals
-        .into_iter()
-        .map(|t| t / valid_iters as f64)
-        .collect()
+    core_calculate_equity_with_ranges(&player_ranges, &board_cards, iterations)
+        .unwrap_or_else(|e| throw(e))
 }

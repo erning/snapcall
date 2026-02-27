@@ -1,7 +1,7 @@
 //! FFI layer for UniFFI bindings
 use crate::{
-    calculate_equity, evaluate_hand, hand_type_name, parse_card, parse_cards, Card, Rank, Suit,
-    Value,
+    calculate_equity, calculate_equity_with_ranges, evaluate_hand, hand_type_name, parse_card,
+    parse_cards, Card, Rank, Suit, Value,
 };
 
 /// FFI-friendly wrapper for Card
@@ -64,7 +64,7 @@ pub fn ffi_evaluate_hand(cards: Vec<FfiCard>) -> Result<String, String> {
 /// # Arguments
 /// * `player_hands` - Each player's hole cards as list of "Ah Kd" style strings
 /// * `board` - Community cards as "5s 6h 7d" style string (can be empty)
-/// * `iterations` - Number of Monte Carlo simulations
+/// * `iterations` - Enumeration threshold and Monte Carlo fallback iterations
 #[uniffi::export]
 pub fn ffi_calculate_equity(
     player_hands: Vec<String>,
@@ -86,6 +86,62 @@ pub fn ffi_calculate_equity(
     };
 
     calculate_equity(&parsed_hands, &parsed_board, iterations)
+        .map_err(|e: crate::SnapError| e.to_string())
+}
+
+fn parse_hand_or_range_for_ffi(input: &str) -> Result<Vec<Vec<Card>>, crate::SnapError> {
+    let trimmed = input.trim();
+
+    if let Ok(cards) = parse_cards(trimmed) {
+        if cards.len() == 2 {
+            return Ok(vec![cards]);
+        }
+        return Err(crate::SnapError::InvalidHand(format!(
+            "Expected exactly 2 cards for a hand, got {}",
+            cards.len()
+        )));
+    }
+
+    use rs_poker::holdem::RangeParser;
+
+    let flat_hands = RangeParser::parse_many(trimmed).map_err(|e| {
+        crate::SnapError::InvalidRange(format!("Failed to parse range '{}': {:?}", trimmed, e))
+    })?;
+
+    let hands: Vec<Vec<Card>> = flat_hands
+        .into_iter()
+        .map(|fh: rs_poker::core::FlatHand| fh.iter().copied().collect())
+        .collect();
+
+    if hands.is_empty() {
+        return Err(crate::SnapError::InvalidRange(format!(
+            "Range '{}' produced no valid hands",
+            trimmed
+        )));
+    }
+
+    Ok(hands)
+}
+
+#[uniffi::export]
+pub fn ffi_calculate_equity_with_ranges(
+    player_ranges: Vec<String>,
+    board: String,
+    iterations: u32,
+) -> Result<Vec<f64>, String> {
+    let parsed_ranges: Vec<Vec<Vec<Card>>> = player_ranges
+        .into_iter()
+        .map(|value| parse_hand_or_range_for_ffi(&value))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    let parsed_board = if board.trim().is_empty() {
+        vec![]
+    } else {
+        parse_cards(&board).map_err(|e: crate::SnapError| e.to_string())?
+    };
+
+    calculate_equity_with_ranges(&parsed_ranges, &parsed_board, iterations)
         .map_err(|e: crate::SnapError| e.to_string())
 }
 

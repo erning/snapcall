@@ -19,11 +19,6 @@ snapcall-core = { path = "../core" }
 # Keep rs-poker available for range parsing
 rs_poker = { version = "4.1", default-features = false, features = ["serde"] }
 
-# Used for range sampling / Monte Carlo glue
-rand = "0.10"
-
-# Enable browser entropy source for both getrandom versions
-# rand 0.10 uses getrandom 0.3, but some deps use getrandom 0.4
 getrandom = { version = "0.3", features = ["wasm_js"] }
 getrandom_04 = { package = "getrandom", version = "0.4", features = ["wasm_js"] }
 
