@@ -9,7 +9,7 @@
   - [x] `parse_card()` - 解析单张牌
   - [x] `parse_cards()` - 解析多张牌
   - [x] `evaluate_hand()` - 评估手牌 (5-7张)
-  - [x] `calculate_equity()` - Monte Carlo 胜率计算
+  - [x] `calculate_equity()` - 阈值驱动胜率计算（组合数 <= iterations 时精确枚举，否则 Monte Carlo）
   - [x] `parse_range()` - 范围解析 (简化版)
 - [x] FFI 层 (UniFFI)
   - [x] `ffi_parse_card()`
@@ -54,7 +54,7 @@
   - [x] 多玩家增删（最少 2 人）
   - [x] pnpm 工程化工作流
 
-**WASM Build:** `cd web && PATH="$HOME/.cargo/bin:$PATH" make wasm`
+**WASM Build:** `cd web && make wasm`
 **Dev Server:** `cd web && pnpm install && pnpm run dev -- --host`
 **Prod Build:** `cd web && pnpm run build`
 
@@ -84,7 +84,7 @@
 
 ### Phase 7: 优化与发布
 - [x] Range 解析完整实现 (`TT+`, `AKs-AQs`, `KK+,A2s+`)
-- [ ] 精确枚举 (Turn/River 时)
+- [x] 精确枚举 + Monte Carlo 自适应切换（含 Range 场景）
 - [ ] 性能基准测试
 - [ ] 发布准备
 

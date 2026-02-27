@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
-use rand::prelude::IndexedRandom;
-use snapcall_core::{evaluate_hand, hand_type_name, parse_cards, Card, Suit};
+use snapcall_core::{
+    calculate_equity_with_ranges, evaluate_hand, hand_type_name, parse_cards, Card, Suit,
+};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -304,74 +305,4 @@ fn calculate_pot_odds(pot: f64, bet: f64, call_amount: f64) {
         "  You need at least {:.2}% equity to break even",
         pot_odds_pct
     );
-}
-
-/// Calculate equity with range support
-/// Each iteration randomly samples one hand from each player's range
-fn calculate_equity_with_ranges(
-    player_ranges: &[Vec<Vec<Card>>],
-    board: &[Card],
-    iterations: u32,
-) -> Result<Vec<f64>, String> {
-    let mut rng = rand::rng();
-    let num_players = player_ranges.len();
-    let mut wins: Vec<u64> = vec![0; num_players];
-    let iters = iterations as usize;
-
-    for _ in 0..iters {
-        // Sample one hand from each player's range
-        let sampled_hands: Vec<Vec<Card>> = player_ranges
-            .iter()
-            .map(|range| range.choose(&mut rng).unwrap().clone())
-            .collect();
-
-        // Check for card collisions (same card used by different players or board)
-        let mut all_cards: std::collections::HashSet<Card> = board.iter().copied().collect();
-        let mut collision = false;
-        for hand in &sampled_hands {
-            for card in hand {
-                if !all_cards.insert(*card) {
-                    collision = true;
-                    break;
-                }
-            }
-            if collision {
-                break;
-            }
-        }
-
-        if collision {
-            // Skip this iteration due to card collision
-            continue;
-        }
-
-        // Calculate equity for this sample
-        match snapcall_core::calculate_equity(&sampled_hands, board, 1) {
-            Ok(eq) => {
-                // Add weighted wins
-                for (i, e) in eq.iter().enumerate() {
-                    // e is percentage (0-100), convert to win contribution
-                    if *e > 50.0 {
-                        wins[i] += 1;
-                    } else if (*e - 50.0).abs() < f64::EPSILON {
-                        // Tie - split the win
-                        wins[i] += 1;
-                    }
-                }
-            }
-            Err(_) => continue,
-        }
-    }
-
-    // Convert to percentages
-    let total: u64 = wins.iter().sum();
-    if total == 0 {
-        let n = num_players;
-        return Ok(vec![100.0 / n as f64; n]);
-    }
-
-    Ok(wins
-        .iter()
-        .map(|&w| (w as f64 / total as f64) * 100.0)
-        .collect())
 }

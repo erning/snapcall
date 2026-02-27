@@ -43,7 +43,7 @@ snapcall/
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| Core Engine | rs-poker 4.1 | Hand evaluation, Monte Carlo simulation |
+| Core Engine | rs-poker 4.1 | Hand evaluation, exact enumeration + Monte Carlo fallback |
 | Wrapper | Rust | FFI-friendly API layer |
 | FFI Bridge | UniFFI | Auto-generate Swift/Kotlin bindings |
 | CLI | Rust + clap | Testing & debugging |
@@ -62,7 +62,7 @@ parse_cards("As Ks Qs") -> Vec<Card>
 // Hand evaluation (5-7 cards)
 evaluate_hand(&cards) -> Rank      // Returns hand rank
 
-// Equity calculation (Monte Carlo)
+// Equity calculation (exact enumeration when feasible, Monte Carlo fallback)
 calculate_equity(
     &[vec![card1, card2], vec![card3, card4]],  // Player hands
     &[card5, card6, card7],                      // Board (optional)

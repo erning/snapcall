@@ -37,6 +37,8 @@ target
 
 # Project specific
 *.log
+.envrc
+.envrc.d/
 # Web (wasm-pack)
 web/pkg/
 web/target/

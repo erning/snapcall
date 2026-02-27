@@ -11,7 +11,7 @@ SnapCall calculates the probability of winning (equity) in Texas Hold'em poker. 
 
 **Key Features:**
 - ⚡ **Fast**: ~25 nanoseconds per hand evaluation (50M+ hands/sec)
-- 🎲 **Monte Carlo**: Simulate thousands of runouts in milliseconds
+- 🎯 **Hybrid Equity Engine**: Exact enumeration when affordable, Monte Carlo fallback for large state spaces
 - 📱 **Cross-platform**: iOS and Android (coming soon)
 - 🎹 **Two-tap input**: Poker-optimized keyboard for quick entry
 - 📊 **Range support**: Enter entire hand ranges, not just specific hands
@@ -152,7 +152,7 @@ cd web
 cargo install wasm-pack
 
 # Build WASM bindings into web/pkg
-PATH="$HOME/.cargo/bin:$PATH" make wasm
+make wasm
 
 # Install frontend dependencies (pnpm)
 pnpm install
@@ -187,7 +187,7 @@ Notes:
 │                                                             │
 │  • Card parsing: "Ah" → Card { Ace, Heart }                 │
 │  • Hand eval: 7 cards → rank (< 25ns)                       │
-│  • Monte Carlo: 10k simulations → equity %                  │
+│  • Equity: exact enumeration + Monte Carlo fallback          │
 │  • Range parsing: "AKs" → [(A,K,suited), ...]               │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
