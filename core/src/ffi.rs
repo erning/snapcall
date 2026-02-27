@@ -4,7 +4,9 @@ use crate::{
     parse_cards, Card, Rank, Suit, Value,
 };
 
-/// FFI-friendly wrapper for Card
+/// FFI-friendly card representation.
+///
+/// `value` and `suit` follow rs-poker numeric enums.
 #[derive(uniffi::Record)]
 pub struct FfiCard {
     pub value: u8, // 0-12 (2-Ace)
@@ -30,7 +32,10 @@ impl TryFrom<FfiCard> for Card {
     }
 }
 
-/// Parse a card from string via FFI
+/// Parses one card string and returns an FFI-safe card.
+///
+/// # Arguments
+/// - `card_str`: Card string like `"Ah"`.
 #[uniffi::export]
 pub fn ffi_parse_card(card_str: String) -> Result<FfiCard, String> {
     parse_card(&card_str)
@@ -38,7 +43,10 @@ pub fn ffi_parse_card(card_str: String) -> Result<FfiCard, String> {
         .map_err(|e: crate::SnapError| e.to_string())
 }
 
-/// Parse multiple cards from string via FFI
+/// Parses multiple cards into FFI-safe cards.
+///
+/// # Arguments
+/// - `cards_str`: Card sequence like `"As Ks Qh"` or `"AsKsQh"`.
 #[uniffi::export]
 pub fn ffi_parse_cards(cards_str: String) -> Result<Vec<FfiCard>, String> {
     parse_cards(&cards_str)
@@ -46,7 +54,10 @@ pub fn ffi_parse_cards(cards_str: String) -> Result<Vec<FfiCard>, String> {
         .map_err(|e: crate::SnapError| e.to_string())
 }
 
-/// Evaluate a hand via FFI
+/// Evaluates a hand and returns only the hand type name.
+///
+/// # Arguments
+/// - `cards`: 5 to 7 cards.
 #[uniffi::export]
 pub fn ffi_evaluate_hand(cards: Vec<FfiCard>) -> Result<String, String> {
     let cards: Vec<Card> = cards
@@ -59,93 +70,39 @@ pub fn ffi_evaluate_hand(cards: Vec<FfiCard>) -> Result<String, String> {
         .map_err(|e: crate::SnapError| e.to_string())
 }
 
-/// Calculate equity via FFI
+/// Calculates equity using string-first player and board inputs.
 ///
 /// # Arguments
-/// * `player_hands` - Each player's hole cards as list of "Ah Kd" style strings
-/// * `board` - Community cards as "5s 6h 7d" style string (can be empty)
-/// * `iterations` - Enumeration threshold and Monte Carlo fallback iterations
+/// - `player_hands`: One input string per player. Each item can be empty,
+///   one card, exact two cards, or a range expression.
+/// - `board`: Community card string with 0/3/4/5 cards.
+/// - `iterations`: Enumeration budget and Monte Carlo fallback iterations.
 #[uniffi::export]
 pub fn ffi_calculate_equity(
     player_hands: Vec<String>,
     board: String,
     iterations: u32,
 ) -> Result<Vec<f64>, String> {
-    // Parse player hands
-    let parsed_hands: Vec<Vec<Card>> = player_hands
-        .into_iter()
-        .map(|h| parse_cards(&h))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e: crate::SnapError| e.to_string())?;
-
-    // Parse board
-    let parsed_board = if board.trim().is_empty() {
-        vec![]
-    } else {
-        parse_cards(&board).map_err(|e: crate::SnapError| e.to_string())?
-    };
-
-    calculate_equity(&parsed_hands, &parsed_board, iterations)
-        .map_err(|e: crate::SnapError| e.to_string())
+    calculate_equity(&player_hands, &board, iterations).map_err(|e: crate::SnapError| e.to_string())
 }
 
-fn parse_hand_or_range_for_ffi(input: &str) -> Result<Vec<Vec<Card>>, crate::SnapError> {
-    let trimmed = input.trim();
-
-    if let Ok(cards) = parse_cards(trimmed) {
-        if cards.len() == 2 {
-            return Ok(vec![cards]);
-        }
-        return Err(crate::SnapError::InvalidHand(format!(
-            "Expected exactly 2 cards for a hand, got {}",
-            cards.len()
-        )));
-    }
-
-    use rs_poker::holdem::RangeParser;
-
-    let flat_hands = RangeParser::parse_many(trimmed).map_err(|e| {
-        crate::SnapError::InvalidRange(format!("Failed to parse range '{}': {:?}", trimmed, e))
-    })?;
-
-    let hands: Vec<Vec<Card>> = flat_hands
-        .into_iter()
-        .map(|fh: rs_poker::core::FlatHand| fh.iter().copied().collect())
-        .collect();
-
-    if hands.is_empty() {
-        return Err(crate::SnapError::InvalidRange(format!(
-            "Range '{}' produced no valid hands",
-            trimmed
-        )));
-    }
-
-    Ok(hands)
-}
-
+/// Backward-compatible alias for [`ffi_calculate_equity`].
+///
+/// Uses identical string-first semantics.
 #[uniffi::export]
 pub fn ffi_calculate_equity_with_ranges(
     player_ranges: Vec<String>,
     board: String,
     iterations: u32,
 ) -> Result<Vec<f64>, String> {
-    let parsed_ranges: Vec<Vec<Vec<Card>>> = player_ranges
-        .into_iter()
-        .map(|value| parse_hand_or_range_for_ffi(&value))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| e.to_string())?;
-
-    let parsed_board = if board.trim().is_empty() {
-        vec![]
-    } else {
-        parse_cards(&board).map_err(|e: crate::SnapError| e.to_string())?
-    };
-
-    calculate_equity_with_ranges(&parsed_ranges, &parsed_board, iterations)
+    calculate_equity_with_ranges(&player_ranges, &board, iterations)
         .map_err(|e: crate::SnapError| e.to_string())
 }
 
-/// Get a description of what hands each player has
+/// Evaluates a hand and returns debug-style rank description.
+///
+/// Useful when consumers need more detailed rank text than
+/// `ffi_evaluate_hand`.
 #[uniffi::export]
 pub fn ffi_describe_hand(cards: Vec<FfiCard>) -> Result<String, String> {
     let cards: Vec<Card> = cards

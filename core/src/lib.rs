@@ -35,7 +35,27 @@ impl std::fmt::Display for SnapError {
 
 impl std::error::Error for SnapError {}
 
-/// Parse a card from string (e.g., "Ah", "Tc")
+/// Parses one card from a two-character string.
+///
+/// Format: `<rank><suit>`
+/// - rank: `A K Q J T 9 8 7 6 5 4 3 2`
+/// - suit: `s h d c`
+///
+/// # Arguments
+/// - `s`: Card text like `"Ah"` or `"Tc"`.
+///
+/// # Returns
+/// - `Ok(Card)` when parsing succeeds.
+/// - `Err(SnapError::InvalidCard)` when format or value is invalid.
+///
+/// # Example
+/// ```rust
+/// use snapcall_core::parse_card;
+///
+/// let card = parse_card("Ah").unwrap();
+/// assert_eq!(card.value.to_char(), 'A');
+/// assert_eq!(card.suit.to_char(), 'h');
+/// ```
 pub fn parse_card(s: &str) -> Result<Card, SnapError> {
     if s.len() < 2 {
         return Err(SnapError::InvalidCard(s.to_string()));
@@ -51,7 +71,27 @@ pub fn parse_card(s: &str) -> Result<Card, SnapError> {
     Ok(Card::new(value, suit))
 }
 
-/// Parse multiple cards from space, comma-separated, or concatenated string (e.g., "Ah Ks", "Ah,Ks", or "AhKs")
+/// Parses multiple cards from a single string.
+///
+/// Accepted layouts:
+/// - space-separated: `"Ah Ks Qd"`
+/// - comma-separated: `"Ah,Ks,Qd"`
+/// - concatenated: `"AhKsQd"`
+///
+/// # Arguments
+/// - `s`: Card sequence string.
+///
+/// # Returns
+/// - `Ok(Vec<Card>)` for valid inputs.
+/// - `Err(SnapError::InvalidCard)` for invalid or empty input.
+///
+/// # Example
+/// ```rust
+/// use snapcall_core::parse_cards;
+///
+/// let cards = parse_cards("Ah Ks Qd").unwrap();
+/// assert_eq!(cards.len(), 3);
+/// ```
 pub fn parse_cards(s: &str) -> Result<Vec<Card>, SnapError> {
     // Remove all whitespace and commas
     let cleaned: String = s
@@ -92,8 +132,25 @@ pub fn parse_cards(s: &str) -> Result<Vec<Card>, SnapError> {
     cleaned.split_whitespace().map(parse_card).collect()
 }
 
-/// Evaluate a hand and return its rank
-/// Works with 5, 6, or 7 cards
+/// Evaluates a poker hand and returns its rank.
+///
+/// Supports 5, 6, or 7 cards and uses best-5 evaluation.
+///
+/// # Arguments
+/// - `cards`: Hand cards (length must be 5..=7).
+///
+/// # Returns
+/// - `Ok(Rank)` with hand rank.
+/// - `Err(SnapError::InvalidHand)` if card count is outside 5..=7.
+///
+/// # Example
+/// ```rust
+/// use snapcall_core::{evaluate_hand, parse_cards};
+///
+/// let cards = parse_cards("As Ks Qs Js Ts").unwrap();
+/// let rank = evaluate_hand(&cards).unwrap();
+/// assert!(matches!(rank, snapcall_core::Rank::StraightFlush(_)));
+/// ```
 pub fn evaluate_hand(cards: &[Card]) -> Result<Rank, SnapError> {
     if cards.len() < 5 || cards.len() > 7 {
         return Err(SnapError::InvalidHand(format!(
@@ -242,16 +299,172 @@ fn calculate_exact_equity(
         .collect()
 }
 
-/// Calculate equity for multiple players.
+fn generate_all_starting_hands() -> Vec<Vec<Card>> {
+    let deck = all_cards();
+    let mut hands = Vec::with_capacity(1326);
+    for i in 0..deck.len() {
+        for j in (i + 1)..deck.len() {
+            hands.push(vec![deck[i], deck[j]]);
+        }
+    }
+    hands
+}
+
+fn generate_hands_with_known_card(known_card: Card) -> Vec<Vec<Card>> {
+    all_cards()
+        .into_iter()
+        .filter(|card| *card != known_card)
+        .map(|card| vec![known_card, card])
+        .collect()
+}
+
+fn parse_player_hand_input(input: &str) -> Result<Vec<Vec<Card>>, SnapError> {
+    let trimmed = input.trim();
+
+    if trimmed.is_empty() {
+        return Ok(generate_all_starting_hands());
+    }
+
+    if let Ok(cards) = parse_cards(trimmed) {
+        if cards.len() == 1 {
+            return Ok(generate_hands_with_known_card(cards[0]));
+        }
+        if cards.len() == 2 {
+            if cards[0] == cards[1] {
+                return Err(SnapError::InvalidHand(
+                    "Player hand contains duplicate cards".to_string(),
+                ));
+            }
+            return Ok(vec![cards]);
+        }
+
+        return Err(SnapError::InvalidHand(format!(
+            "Player input '{}' must be empty, 1 card, 2 cards, or a valid range",
+            trimmed
+        )));
+    }
+
+    let flat_hands = holdem::RangeParser::parse_many(trimmed).map_err(|e| {
+        SnapError::InvalidRange(format!("Failed to parse range '{}': {:?}", trimmed, e))
+    })?;
+
+    let hands: Vec<Vec<Card>> = flat_hands
+        .into_iter()
+        .map(|fh| fh.iter().copied().collect())
+        .collect();
+
+    if hands.is_empty() {
+        return Err(SnapError::InvalidRange(format!(
+            "Range '{}' produced no valid hands",
+            trimmed
+        )));
+    }
+
+    Ok(hands)
+}
+
+fn parse_board_input(board: &str) -> Result<Vec<Card>, SnapError> {
+    let cards = if board.trim().is_empty() {
+        vec![]
+    } else {
+        parse_cards(board)?
+    };
+
+    if !matches!(cards.len(), 0 | 3 | 4 | 5) {
+        return Err(SnapError::InvalidHand(format!(
+            "Board must have 0, 3, 4, or 5 cards, got {}",
+            cards.len()
+        )));
+    }
+
+    let mut seen = HashSet::new();
+    for card in &cards {
+        if !seen.insert(*card) {
+            return Err(SnapError::InvalidHand(format!(
+                "Duplicate board card detected: {:?}",
+                card
+            )));
+        }
+    }
+
+    Ok(cards)
+}
+
+fn filter_hands_against_board(hands: &[Vec<Card>], board: &[Card]) -> Vec<Vec<Card>> {
+    let board_cards: HashSet<Card> = board.iter().copied().collect();
+
+    hands
+        .iter()
+        .filter(|hand| {
+            hand.len() == 2
+                && hand[0] != hand[1]
+                && !board_cards.contains(&hand[0])
+                && !board_cards.contains(&hand[1])
+        })
+        .cloned()
+        .collect()
+}
+
+/// Calculates player equities from string inputs.
+///
+/// Player input supports four forms per player:
+/// - `""` (empty): both hole cards unknown (all 1326 combos)
+/// - one card: e.g. `"Ah"` (second hole card unknown)
+/// - exact two cards: e.g. `"AhAd"` or `"Ah Ad"`
+/// - range expression: e.g. `"AKs"`, `"TT+"`, `"A5s-A2s"`
+///
+/// Board input must contain exactly `0`, `3`, `4`, or `5` cards.
+///
+/// The solver uses exact enumeration when the total state space is within
+/// `iterations` budget, otherwise Monte Carlo approximation.
 ///
 /// # Arguments
-/// * `player_hands` - Each player's hole cards (2 cards each)
-/// * `board` - Community cards (0-5 cards)
-/// * `iterations` - Enumeration threshold and Monte Carlo iterations fallback
+/// - `player_hands`: One string per player.
+/// - `board`: Community card string (`""`, flop, turn, or river).
+/// - `iterations`: Enumeration budget and MC sample count fallback.
 ///
 /// # Returns
-/// Equity percentages for each player (sum = 100.0)
+/// - `Ok(Vec<f64>)`: Equity percentages per player, summing to `100.0`.
+/// - `Err(SnapError)`: Invalid card/range/board or impossible configuration.
+///
+/// # Example
+/// ```rust
+/// use snapcall_core::calculate_equity;
+///
+/// let players = vec!["AhAd".to_string(), "KhKd".to_string()];
+/// let equities = calculate_equity(&players, "2c 7d 9h", 10_000).unwrap();
+/// assert_eq!(equities.len(), 2);
+/// ```
 pub fn calculate_equity(
+    player_hands: &[String],
+    board: &str,
+    iterations: u32,
+) -> Result<Vec<f64>, SnapError> {
+    if player_hands.len() < 2 {
+        return Err(SnapError::InvalidHand(
+            "Need at least 2 players".to_string(),
+        ));
+    }
+
+    let parsed_board = parse_board_input(board)?;
+
+    let mut player_ranges = Vec::with_capacity(player_hands.len());
+    for (idx, input) in player_hands.iter().enumerate() {
+        let parsed = parse_player_hand_input(input)?;
+        let filtered = filter_hands_against_board(&parsed, &parsed_board);
+        if filtered.is_empty() {
+            return Err(SnapError::InvalidRange(format!(
+                "Player {} has no valid hands after board/card filtering",
+                idx + 1
+            )));
+        }
+        player_ranges.push(filtered);
+    }
+
+    calculate_equity_from_ranges(&player_ranges, &parsed_board, iterations)
+}
+
+fn calculate_equity_from_hands(
     player_hands: &[Vec<Card>],
     board: &[Card],
     iterations: u32,
@@ -524,7 +737,7 @@ fn for_each_valid_range_assignment<F>(
     );
 }
 
-pub fn calculate_equity_with_ranges(
+fn calculate_equity_from_ranges(
     player_ranges: &[Vec<Vec<Card>>],
     board: &[Card],
     iterations: u32,
@@ -625,7 +838,7 @@ pub fn calculate_equity_with_ranges(
             continue;
         }
 
-        let equities = calculate_equity(&sampled_hands, board, 1)?;
+        let equities = calculate_equity_from_hands(&sampled_hands, board, 1)?;
         for (i, value) in equities.into_iter().enumerate() {
             totals[i] += value;
         }
@@ -641,8 +854,37 @@ pub fn calculate_equity_with_ranges(
     Ok(totals.into_iter().map(|sum| sum / samples as f64).collect())
 }
 
-/// Parse a simple range string (e.g., "AKs", "AKo")
-/// Returns list of (value1, value2, suited) tuples
+/// Alias for [`calculate_equity`].
+///
+/// Kept for API compatibility with existing range-oriented call sites.
+/// Semantics are identical to `calculate_equity`.
+pub fn calculate_equity_with_ranges(
+    player_inputs: &[String],
+    board: &str,
+    iterations: u32,
+) -> Result<Vec<f64>, SnapError> {
+    calculate_equity(player_inputs, board, iterations)
+}
+
+/// Parses a simplified two-rank range descriptor.
+///
+/// This helper accepts only compact forms like `"AKs"` or `"AKo"`
+/// and returns a structural tuple `(high, low, suited)`.
+///
+/// # Arguments
+/// - `range_str`: Simplified range token.
+///
+/// # Returns
+/// - `Ok(Vec<(Value, Value, bool)>)` with one parsed descriptor.
+/// - `Err(SnapError::InvalidRange)` for malformed input.
+///
+/// # Example
+/// ```rust
+/// use snapcall_core::{parse_range, Value};
+///
+/// let parsed = parse_range("AKs").unwrap();
+/// assert_eq!(parsed[0], (Value::Ace, Value::King, true));
+/// ```
 pub fn parse_range(range_str: &str) -> Result<Vec<(Value, Value, bool)>, SnapError> {
     if range_str.len() < 2 {
         return Err(SnapError::InvalidRange(range_str.to_string()));
@@ -667,7 +909,16 @@ pub fn parse_range(range_str: &str) -> Result<Vec<(Value, Value, bool)>, SnapErr
     Ok(vec![(v1, v2, suited)])
 }
 
-/// Get hand type name as string
+/// Returns a user-friendly hand type name for a [`Rank`].
+///
+/// # Example
+/// ```rust
+/// use snapcall_core::{hand_type_name, parse_cards, evaluate_hand};
+///
+/// let cards = parse_cards("As Ks Qs Js Ts").unwrap();
+/// let rank = evaluate_hand(&cards).unwrap();
+/// assert_eq!(hand_type_name(&rank), "Straight Flush");
+/// ```
 pub fn hand_type_name(rank: &Rank) -> &'static str {
     match rank {
         Rank::HighCard(_) => "High Card",
@@ -756,7 +1007,8 @@ mod tests {
             .filter(|card| !used_cards.contains(card))
             .collect();
         let exact = calculate_exact_equity(&player_hands, &board, &remaining_deck, 2);
-        let actual = calculate_equity(&player_hands, &board, 990).unwrap();
+        let actual =
+            calculate_equity(&["Ah Ad".to_string(), "Kh Kd".to_string()], "2c 7d 9h", 990).unwrap();
 
         for (expected, result) in exact.iter().zip(actual.iter()) {
             assert!((expected - result).abs() < 1e-9);
@@ -765,23 +1017,24 @@ mod tests {
 
     #[test]
     fn test_calculate_equity_rejects_duplicate_cards() {
-        let p1 = parse_cards("Ah Ad").unwrap();
-        let p2 = parse_cards("Ah Kd").unwrap();
-
-        let err = calculate_equity(&[p1, p2], &[], 100).unwrap_err();
-        assert!(matches!(err, SnapError::InvalidHand(_)));
-        assert!(err.to_string().contains("Duplicate card"));
+        let err =
+            calculate_equity(&["Ah Ad".to_string(), "Ah Kd".to_string()], "", 100).unwrap_err();
+        assert!(matches!(
+            err,
+            SnapError::InvalidHand(_) | SnapError::InvalidRange(_)
+        ));
     }
 
     #[test]
     fn test_calculate_equity_with_ranges_exact_matches_single_combo_equity() {
-        let p1 = parse_cards("Ah Ad").unwrap();
-        let p2 = parse_cards("Kh Kd").unwrap();
-        let board = parse_cards("2c 7d 9h").unwrap();
-
-        let exact_from_hands = calculate_equity(&[p1.clone(), p2.clone()], &board, 990).unwrap();
-        let exact_from_ranges =
-            calculate_equity_with_ranges(&[vec![p1], vec![p2]], &board, 990).unwrap();
+        let exact_from_hands =
+            calculate_equity(&["Ah Ad".to_string(), "Kh Kd".to_string()], "2c 7d 9h", 990).unwrap();
+        let exact_from_ranges = calculate_equity_with_ranges(
+            &["Ah Ad".to_string(), "Kh Kd".to_string()],
+            "2c 7d 9h",
+            990,
+        )
+        .unwrap();
 
         for (lhs, rhs) in exact_from_hands.iter().zip(exact_from_ranges.iter()) {
             assert!((lhs - rhs).abs() < 1e-9);
@@ -790,25 +1043,42 @@ mod tests {
 
     #[test]
     fn test_calculate_equity_with_ranges_falls_back_to_monte_carlo() {
-        let p1 = parse_cards("Ah Ad").unwrap();
-        let p2 = parse_cards("Kh Kd").unwrap();
-        let board = parse_cards("2c 7d 9h").unwrap();
-
-        let eq = calculate_equity_with_ranges(&[vec![p1], vec![p2]], &board, 1).unwrap();
+        let eq = calculate_equity_with_ranges(
+            &["Ah Ad".to_string(), "Kh Kd".to_string()],
+            "2c 7d 9h",
+            1,
+        )
+        .unwrap();
         assert!(eq[0] == 0.0 || eq[0] == 50.0 || eq[0] == 100.0);
         assert!((eq.iter().sum::<f64>() - 100.0).abs() < 1e-9);
     }
 
     #[test]
     fn test_calculate_equity_with_ranges_rejects_fully_colliding_ranges() {
-        let p1 = parse_cards("Ah Ad").unwrap();
-        let p2 = parse_cards("Ah Kd").unwrap();
-
-        let err = calculate_equity_with_ranges(&[vec![p1], vec![p2]], &[], 100).unwrap_err();
+        let err =
+            calculate_equity_with_ranges(&["Ah Ad".to_string(), "Ah Kd".to_string()], "", 100)
+                .unwrap_err();
         assert!(matches!(err, SnapError::InvalidRange(_)));
         assert!(err
             .to_string()
             .contains("No valid range combinations available"));
+    }
+
+    #[test]
+    fn test_calculate_equity_supports_single_card_and_empty_input() {
+        let eq = calculate_equity(&["Ah".to_string(), "".to_string()], "", 200).unwrap();
+        assert_eq!(eq.len(), 2);
+        assert!((eq.iter().sum::<f64>() - 100.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_calculate_equity_rejects_invalid_board_street() {
+        let err =
+            calculate_equity(&["Ah Ad".to_string(), "Kh Kd".to_string()], "2c", 100).unwrap_err();
+        assert!(matches!(err, SnapError::InvalidHand(_)));
+        assert!(err
+            .to_string()
+            .contains("Board must have 0, 3, 4, or 5 cards"));
     }
 }
 

@@ -1,7 +1,5 @@
 use clap::{Parser, Subcommand};
-use snapcall_core::{
-    calculate_equity_with_ranges, evaluate_hand, hand_type_name, parse_cards, Card, Suit,
-};
+use snapcall_core::{calculate_equity, evaluate_hand, hand_type_name, parse_cards, Card, Suit};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -71,99 +69,6 @@ fn format_card(card: &Card) -> String {
     format!("{}{}", value_char, suit_symbol)
 }
 
-/// Check if input looks like a range expression
-/// Range indicators: + (TT+), - (AKs-AQs), s/o suit indicators
-fn is_range(input: &str) -> bool {
-    let input = input.trim();
-    // Range indicators
-    input.contains('+')
-        || input.contains('-')
-        || input.contains(',')
-        || (input.len() >= 2 && (input.ends_with('s') || input.ends_with('o')))
-}
-
-/// Parse a hand or range into a vector of possible hands
-/// Returns Vec<Vec<Card>> where each inner Vec is a possible hand (2 cards)
-fn parse_hand_or_range(input: &str) -> Result<Vec<Vec<Card>>, String> {
-    let input = input.trim();
-
-    // Empty string means "any two cards" - generate all 1326 possible starting hands
-    if input.is_empty() {
-        return generate_all_starting_hands();
-    }
-
-    if is_range(input) {
-        // Use rs_poker's RangeParser
-        use rs_poker::holdem::RangeParser;
-
-        let flat_hands = RangeParser::parse_many(input)
-            .map_err(|e| format!("Failed to parse range '{}': {:?}", input, e))?;
-
-        // Convert FlatHand to Vec<Card>
-        let hands: Vec<Vec<Card>> = flat_hands
-            .into_iter()
-            .map(|fh: rs_poker::core::FlatHand| fh.iter().copied().collect())
-            .collect();
-
-        if hands.is_empty() {
-            return Err(format!("Range '{}' produced no valid hands", input));
-        }
-
-        Ok(hands)
-    } else {
-        // Parse as specific cards
-        let cards = parse_cards(input).map_err(|e| format!("{:?}", e))?;
-        if cards.len() != 2 {
-            return Err(format!(
-                "Expected exactly 2 cards for a hand, got {}",
-                cards.len()
-            ));
-        }
-        Ok(vec![cards])
-    }
-}
-
-/// Generate all 1326 possible starting hands (52 choose 2)
-fn generate_all_starting_hands() -> Result<Vec<Vec<Card>>, String> {
-    use rs_poker::core::{Card as PokerCard, Suit, Value};
-
-    let mut hands = Vec::with_capacity(1326);
-
-    // Generate all 52 cards
-    let suits = [Suit::Spade, Suit::Heart, Suit::Diamond, Suit::Club];
-    let values = [
-        Value::Ace,
-        Value::King,
-        Value::Queen,
-        Value::Jack,
-        Value::Ten,
-        Value::Nine,
-        Value::Eight,
-        Value::Seven,
-        Value::Six,
-        Value::Five,
-        Value::Four,
-        Value::Three,
-        Value::Two,
-    ];
-
-    let mut all_cards: Vec<PokerCard> = Vec::with_capacity(52);
-    for value in &values {
-        for suit in &suits {
-            all_cards.push(PokerCard::new(*value, *suit));
-        }
-    }
-
-    // Generate all combinations of 2 cards
-    for i in 0..all_cards.len() {
-        for j in (i + 1)..all_cards.len() {
-            hands.push(vec![all_cards[i], all_cards[j]]);
-        }
-    }
-
-    Ok(hands)
-}
-
 fn main() {
     let cli = Cli::parse();
 
@@ -205,73 +110,9 @@ fn main() {
                 }
             }
 
-            // Parse each player's hand or range
-            let player_ranges: Vec<Vec<Vec<Card>>> = match player
-                .iter()
-                .map(|p| parse_hand_or_range(p))
-                .collect::<Result<Vec<_>, _>>()
-            {
-                Ok(ranges) => ranges,
-                Err(e) => {
-                    eprintln!("Error: {}", e);
-                    return;
-                }
-            };
-            // Parse board
-            let parsed_board = match board {
-                Some(b) => match parse_cards(&b) {
-                    Ok(c) => c,
-                    Err(e) => {
-                        eprintln!("Error parsing board: {}", e);
-                        return;
-                    }
-                },
-                None => vec![],
-            };
+            let board_str = board.unwrap_or_default();
 
-            // Print parsed info
-            println!("Player Ranges:");
-            for (i, range) in player_ranges.iter().enumerate() {
-                if range.len() == 1 {
-                    println!(
-                        "  Player {}: {}",
-                        i + 1,
-                        range[0]
-                            .iter()
-                            .map(format_card)
-                            .collect::<Vec<_>>()
-                            .join(" ")
-                    );
-                } else {
-                    println!("  Player {}: {} combos (range)", i + 1, range.len());
-                    // Show first few examples
-                    let examples: Vec<_> = range.iter().take(3).collect();
-                    for (j, hand) in examples.iter().enumerate() {
-                        println!(
-                            "    Example {}: {}",
-                            j + 1,
-                            hand.iter().map(format_card).collect::<Vec<_>>().join(" ")
-                        );
-                    }
-                    if range.len() > 3 {
-                        println!("    ... and {} more", range.len() - 3);
-                    }
-                }
-            }
-            if !parsed_board.is_empty() {
-                println!(
-                    "  Board: {}",
-                    parsed_board
-                        .iter()
-                        .map(format_card)
-                        .collect::<Vec<_>>()
-                        .join(" ")
-                );
-            }
-            println!();
-
-            // Calculate equity with range sampling
-            match calculate_equity_with_ranges(&player_ranges, &parsed_board, iterations) {
+            match calculate_equity(&player, &board_str, iterations) {
                 Ok(equities) => {
                     println!("Equity Results ({} iterations):", iterations);
                     for (i, eq) in equities.iter().enumerate() {

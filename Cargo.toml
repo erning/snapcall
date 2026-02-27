@@ -1,5 +1,5 @@
 [workspace]
-members = ["core", "cli"]
+members = ["core", "cli", "web"]
 resolver = "2"
 
 [workspace.package]
@@ -14,3 +14,6 @@ rs_poker = { version = "4.1", default-features = false, features = ["serde"] }
 rand = "0.10"
 thiserror = "2.0"
 clap = { version = "4.5", features = ["derive"] }
+wasm-bindgen = "0.2"
+getrandom = { version = "0.3", features = ["wasm_js"] }
+getrandom_04 = { package = "getrandom", version = "0.4", features = ["wasm_js"] }
