@@ -1,8 +1,7 @@
-use rs_poker::core::{Card, FlatHand, Rankable};
-use rs_poker::holdem::{RangeParser};
 use crate::SnapError;
+use rs_poker::core::{Card, FlatHand, Rankable};
+use rs_poker::holdem::RangeParser;
 use std::str::FromStr;
-
 
 #[derive(Clone)]
 pub enum HoleCardsInput {
@@ -47,9 +46,7 @@ impl FromStr for HoleCardsInput {
                 1 => {
                     return Ok(Self::Partial(hand.cards().next().unwrap()));
                 }
-                2 => {
-                    return Ok(Self::Exact(hand))
-                }
+                2 => return Ok(Self::Exact(hand)),
                 n => {
                     return Err(SnapError::InvalidHand(format!(
                         "Board must have 0, 3, 4, or 5 cards, got {}",
