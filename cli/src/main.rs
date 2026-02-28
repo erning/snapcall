@@ -28,12 +28,12 @@ enum Commands {
         hero: String,
 
         /// One or more villains: unknown / partial / exact / range (e.g., "", "Kh", "KhKd", "TT+")
-        #[arg(short = 'v', long = "villan", num_args = 1..)]
-        villan: Vec<String>,
+        #[arg(short = 'v', long = "villain", num_args = 1..)]
+        villain: Vec<String>,
 
         /// Total number of villains (fills missing villains as unknown hands)
-        #[arg(short = 'n', long = "villan-count")]
-        villan_count: Option<usize>,
+        #[arg(short = 'n', long = "villain-count")]
+        villain_count: Option<usize>,
 
         /// Number of Monte Carlo iterations
         #[arg(short = 'i', long, default_value = "10000")]
@@ -52,18 +52,6 @@ enum Commands {
     },
 }
 
-/// Format a card in human-friendly format with Unicode suit symbols (not emoji)
-fn format_card(card: &Card) -> String {
-    let suit_symbol = match card.suit {
-        Suit::Spade => '♠',
-        Suit::Heart => '♥',
-        Suit::Club => '♣',
-        Suit::Diamond => '♦',
-    };
-    let value_char = card.value.to_char().to_ascii_uppercase();
-    format!("{}{}", value_char, suit_symbol)
-}
-
 fn main() {
     let cli = Cli::parse();
 
@@ -71,11 +59,11 @@ fn main() {
         Commands::Evaluate { hand } => run_evaluate_command(&hand),
         Commands::Equity {
             hero,
-            villan,
-            villan_count,
+            villain,
+            villain_count,
             board,
             iterations,
-        } => run_equity_command(hero, villan, villan_count, board, iterations),
+        } => run_equity_command(hero, villain, villain_count, board, iterations),
         Commands::PotOdds {
             pot_size,
             call_amount,
@@ -84,25 +72,18 @@ fn main() {
 }
 
 fn run_evaluate_command(hand: &str) {
-    match parse_cards(hand) {
-        Ok(cards) => match evaluate_hand(&cards) {
-            Ok(rank) => {
-                println!(
-                    "Hand: {}",
-                    cards.iter().map(format_card).collect::<Vec<_>>().join(" ")
-                );
-                println!("Rank: {:?}", rank);
-            }
-            Err(e) => eprintln!("Error evaluating hand: {}", e),
-        },
-        Err(e) => eprintln!("Error parsing cards: {}", e),
+    match evaluate_hand(hand) {
+        Ok(rank) => {
+            println!("Rank: {:?}", rank);
+        }
+        Err(e) => eprintln!("Error evaluating hand: {}", e),
     }
 }
 
 fn run_equity_command(
     hero: String,
-    mut villan: Vec<String>,
-    villan_count: Option<usize>,
+    mut villain: Vec<String>,
+    villain_count: Option<usize>,
     board: Option<String>,
     iterations: u32,
 ) {
@@ -122,28 +103,28 @@ fn run_equity_command(
         }
     }
 
-    if let Some(count) = villan_count {
-        if count < villan.len() {
+    if let Some(count) = villain_count {
+        if count < villain.len() {
             eprintln!(
-                "Error: villan-count ({}) cannot be less than number of --villan arguments ({})",
+                "Error: villain-count ({}) cannot be less than number of --villain arguments ({})",
                 count,
-                villan.len()
+                villain.len()
             );
             return;
         }
-        while villan.len() < count {
-            villan.push(String::new());
+        while villain.len() < count {
+            villain.push(String::new());
         }
     }
 
-    if villan.is_empty() {
-        eprintln!("Error: provide at least one opponent via --villan or --villan-count");
+    if villain.is_empty() {
+        eprintln!("Error: provide at least one opponent via --villain or --villain-count");
         return;
     }
 
-    let mut players = Vec::with_capacity(villan.len() + 1);
+    let mut players = Vec::with_capacity(villain.len() + 1);
     players.push(hero);
-    players.extend(villan);
+    players.extend(villain);
 
     let board_str = board.unwrap_or_default();
 

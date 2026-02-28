@@ -1,24 +1,9 @@
-use crate::parsing::parse_cards;
 use crate::{
-    holdem, Card, EquityResult, EquitySolveMode, FlatHand, Rank, Rankable, SnapError, Suit, Value,
+    holdem, parse_cards, Card, EquityResult, EquitySolveMode, FlatHand, Rank, Rankable, SnapError,
+    Suit, Value,
 };
 use rand::prelude::{IndexedRandom, SliceRandom};
 use std::collections::HashSet;
-
-/// Evaluates a poker hand and returns its rank.
-///
-/// Supports 5, 6, or 7 cards and uses best-5 evaluation.
-pub fn evaluate_hand(cards: &[Card]) -> Result<Rank, SnapError> {
-    if cards.len() < 5 || cards.len() > 7 {
-        return Err(SnapError::InvalidHand(format!(
-            "Hand must have 5-7 cards, got {}",
-            cards.len()
-        )));
-    }
-
-    let hand = FlatHand::new_with_cards(cards.to_vec());
-    Ok(hand.rank())
-}
 
 /// Normalized per-player input form used by the equity engine.
 #[derive(Clone)]

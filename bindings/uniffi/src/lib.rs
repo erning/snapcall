@@ -49,7 +49,13 @@ pub fn ffi_evaluate_hand(cards: Vec<FfiCard>) -> Result<String, String> {
         .map(|c| c.try_into())
         .collect::<Result<Vec<_>, _>>()?;
 
-    evaluate_hand(&cards)
+    let hand = cards
+        .iter()
+        .map(|card| format!("{}{}", card.value.to_char(), card.suit.to_char()))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    evaluate_hand(&hand)
         .map(|rank: Rank| format!("{:?}", rank))
         .map_err(|e: snapcall_core::SnapError| e.to_string())
 }
@@ -81,7 +87,13 @@ pub fn ffi_describe_hand(cards: Vec<FfiCard>) -> Result<String, String> {
         .map(|c| c.try_into())
         .collect::<Result<Vec<_>, _>>()?;
 
-    evaluate_hand(&cards)
+    let hand = cards
+        .iter()
+        .map(|card| format!("{}{}", card.value.to_char(), card.suit.to_char()))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    evaluate_hand(&hand)
         .map(|rank: Rank| format!("{:?}", rank))
         .map_err(|e: snapcall_core::SnapError| e.to_string())
 }

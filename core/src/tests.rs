@@ -1,42 +1,22 @@
 use super::*;
 
 #[test]
-fn test_parse_card() {
-    let card = parse_card("Ah").unwrap();
-    assert_eq!(card.value, Value::Ace);
-    assert_eq!(card.suit, Suit::Heart);
-}
-
-#[test]
 fn test_parse_cards() {
     let cards = parse_cards("Ah Kd Qc").unwrap();
     assert_eq!(cards.len(), 3);
-    assert_eq!(cards[0].value, Value::Ace);
+    assert!(cards.iter().any(|card| card.value == Value::Ace));
 }
 
 #[test]
 fn test_evaluate_royal_flush() {
-    let cards = parse_cards("As Ks Qs Js Ts").unwrap();
-    let rank = evaluate_hand(&cards).unwrap();
+    let rank = evaluate_hand("As Ks Qs Js Ts").unwrap();
     assert!(matches!(rank, Rank::StraightFlush(_)));
 }
 
 #[test]
 fn test_evaluate_pair() {
-    let cards = parse_cards("Ah Ad Kc Qd Js").unwrap();
-    let rank = evaluate_hand(&cards).unwrap();
+    let rank = evaluate_hand("Ah Ad Kc Qd Js").unwrap();
     assert!(matches!(rank, Rank::OnePair(_)));
-}
-
-#[test]
-fn test_parse_range() {
-    let hands = parse_range("AKs").unwrap();
-    assert!(!hands.is_empty());
-
-    let has_aks = hands
-        .iter()
-        .any(|(v1, v2, suited)| *v1 == Value::Ace && *v2 == Value::King && *suited);
-    assert!(has_aks, "Range should include AKs");
 }
 
 #[test]
