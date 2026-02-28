@@ -1,6 +1,6 @@
 use crate::{
-    holdem, parse_cards, Card, EquityResult, EquitySolveMode, FlatHand, Rank, Rankable, SnapError,
-    Suit, Value,
+    BoardCardsInput, Card, EquityResult, EquitySolveMode, FlatHand, HoleCardsInput, Rank, Rankable,
+    SnapError, Suit, Value,
 };
 use rand::prelude::{IndexedRandom, SliceRandom};
 use std::collections::HashSet;
@@ -44,18 +44,7 @@ fn all_cards() -> Vec<Card> {
 
 /// Parses and validates a Hold'em board string.
 fn parse_board_input(board: &str) -> Result<Vec<Card>, SnapError> {
-    let cards = if board.trim().is_empty() {
-        vec![]
-    } else {
-        parse_cards(board)?
-    };
-
-    if !matches!(cards.len(), 0 | 3 | 4 | 5) {
-        return Err(SnapError::InvalidHand(format!(
-            "Board must have 0, 3, 4, or 5 cards, got {}",
-            cards.len()
-        )));
-    }
+    let cards = board.parse::<BoardCardsInput>()?.cards();
 
     let mut seen = HashSet::new();
     for card in &cards {
@@ -72,69 +61,58 @@ fn parse_board_input(board: &str) -> Result<Vec<Card>, SnapError> {
 
 /// Parses one player input into a PlayerSpec.
 fn parse_player_input(input: &str, board_cards: &HashSet<Card>) -> Result<PlayerSpec, SnapError> {
-    let trimmed = input.trim();
-
-    if trimmed.is_empty() {
-        return Ok(PlayerSpec::Unknown);
-    }
-
-    if let Ok(cards) = parse_cards(trimmed) {
-        if cards.len() == 1 {
-            if board_cards.contains(&cards[0]) {
+    match input.parse::<HoleCardsInput>()? {
+        HoleCardsInput::Unknown => Ok(PlayerSpec::Unknown),
+        HoleCardsInput::Partial(card) => {
+            if board_cards.contains(&card) {
                 return Err(SnapError::InvalidHand(format!(
                     "Known card conflicts with board: {:?}",
-                    cards[0]
+                    card
                 )));
             }
-            return Ok(PlayerSpec::OneKnown(cards[0]));
+            Ok(PlayerSpec::OneKnown(card))
         }
-        if cards.len() == 2 {
-            if cards[0] == cards[1] {
+        HoleCardsInput::Exact(hand) => {
+            let cards: Vec<Card> = hand.iter().copied().collect();
+            let c1 = cards[0];
+            let c2 = cards[1];
+            if c1 == c2 {
                 return Err(SnapError::InvalidHand(
                     "Player hand contains duplicate cards".to_string(),
                 ));
             }
-            if board_cards.contains(&cards[0]) || board_cards.contains(&cards[1]) {
+            if board_cards.contains(&c1) || board_cards.contains(&c2) {
                 return Err(SnapError::InvalidHand(format!(
                     "Player hand conflicts with board: {:?} {:?}",
-                    cards[0], cards[1]
+                    c1, c2
                 )));
             }
-            return Ok(PlayerSpec::TwoKnown([cards[0], cards[1]]));
+            Ok(PlayerSpec::TwoKnown([c1, c2]))
         }
+        HoleCardsInput::Range(range_hands) => {
+            let hands: Vec<[Card; 2]> = range_hands
+                .into_iter()
+                .filter_map(|fh| {
+                    let mut iter = fh.iter().copied();
+                    let c1 = iter.next()?;
+                    let c2 = iter.next()?;
+                    if c1 == c2 || board_cards.contains(&c1) || board_cards.contains(&c2) {
+                        None
+                    } else {
+                        Some([c1, c2])
+                    }
+                })
+                .collect();
 
-        return Err(SnapError::InvalidHand(format!(
-            "Player input '{}' must be empty, 1 card, 2 cards, or a valid range",
-            trimmed
-        )));
-    }
-
-    let flat_hands = holdem::RangeParser::parse_many(trimmed).map_err(|e| {
-        SnapError::InvalidRange(format!("Failed to parse range '{}': {:?}", trimmed, e))
-    })?;
-
-    let hands: Vec<[Card; 2]> = flat_hands
-        .into_iter()
-        .filter_map(|fh| {
-            let mut iter = fh.iter().copied();
-            let c1 = iter.next()?;
-            let c2 = iter.next()?;
-            if c1 == c2 || board_cards.contains(&c1) || board_cards.contains(&c2) {
-                None
-            } else {
-                Some([c1, c2])
+            if hands.is_empty() {
+                return Err(SnapError::InvalidRange(
+                    "Range produced no valid hands".to_string(),
+                ));
             }
-        })
-        .collect();
 
-    if hands.is_empty() {
-        return Err(SnapError::InvalidRange(format!(
-            "Range '{}' produced no valid hands",
-            trimmed
-        )));
+            Ok(PlayerSpec::Range(hands))
+        }
     }
-
-    Ok(PlayerSpec::Range(hands))
 }
 
 /// Calculates player equities via Monte Carlo simulation.

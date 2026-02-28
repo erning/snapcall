@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use snapcall_core::{calculate_equity, evaluate_hand, parse_cards, Card, EquitySolveMode, Suit};
+use snapcall_core::{calculate_equity, evaluate_hand, parse_cards, EquitySolveMode};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]

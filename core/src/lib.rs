@@ -7,10 +7,12 @@ pub use rs_poker::core::{FlatHand, Hand};
 pub use rs_poker::holdem;
 
 mod equity;
+mod input;
 mod parsing;
 mod types;
 
 pub use equity::calculate_equity;
+pub use input::{BoardCardsInput, HoleCardsInput};
 pub use types::{EquityResult, EquitySolveMode, SnapError};
 
 #[cfg(test)]
