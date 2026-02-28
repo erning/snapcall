@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use rs_poker::core::{FlatHand, Rankable};
-use snapcall_core::{estimate_equity, EquitySolveMode};
+use snapcall_core::{estimate_equity, EquityEstimateMode};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -37,7 +37,7 @@ enum Commands {
         villain_count: Option<usize>,
 
         /// Number of Monte Carlo iterations
-        #[arg(short = 'i', long, default_value = "10000")]
+        #[arg(short = 'i', long, default_value = "100000")]
         iterations: u32,
     },
 
@@ -101,33 +101,23 @@ fn run_equity_command(
     villain_count: Option<usize>,
     iterations: u32,
 ) {
-    if let Some(count) = villain_count {
-        if count < villains.len() {
-            eprintln!(
-                "Error: villain-count ({}) cannot be less than number of --villain arguments ({})",
-                count,
-                villains.len()
-            );
-            return;
-        }
-    }
-
-    if villains.is_empty() {
+    let count = villain_count.unwrap_or(villains.len());
+    if count == 0 {
         eprintln!("Error: provide at least one opponent via --villain or --villain-count");
         return;
     }
 
     let board_str = board.unwrap_or_default();
     let mut villains_str: Vec<&str> = villains.iter().map(|s| s.as_str()).collect();
-    while villains_str.len() < villain_count.unwrap() {
+    while villains_str.len() < count {
         villains_str.push("");
     }
 
     match estimate_equity(&board_str, &hero, &villains_str, iterations as usize) {
         Ok(result) => {
             let mode = match result.mode {
-                EquitySolveMode::ExactEnumeration => "exact",
-                EquitySolveMode::MonteCarlo => "monte_carlo",
+                EquityEstimateMode::ExactEnumeration => "exact",
+                EquityEstimateMode::MonteCarlo => "monte_carlo",
             };
             println!("Computation:");
             println!("  Mode: {}", mode);
