@@ -117,7 +117,7 @@ pub fn estimate_equity(
                         Some(c) => *c,
                         None => return false,
                     };
-                    c1 != c2 && !board_set.contains(&c1) && !board_set.contains(&c2)
+                    c1 != c2 && !fixed_known.contains(&c1) && !fixed_known.contains(&c2)
                 });
                 if hands.is_empty() {
                     return Err(SnapError::InvalidRange(
