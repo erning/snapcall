@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
-use snapcall_core::{estimate_equity, evaluate_hand, EquitySolveMode};
+use rs_poker::core::{FlatHand, Rankable};
+use snapcall_core::{estimate_equity, EquitySolveMode};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -72,12 +73,25 @@ fn main() {
 }
 
 fn run_evaluate_command(hand: &str) {
-    match evaluate_hand(hand) {
-        Ok(rank) => {
-            println!("Rank: {:?}", rank);
+    let cleaned: String = hand
+        .chars()
+        .filter(|c| !c.is_whitespace() && *c != ',')
+        .collect();
+
+    let fh = match FlatHand::new_from_str(&cleaned) {
+        Ok(h) => h,
+        Err(e) => {
+            eprintln!("Error parsing hand '{}': {:?}", hand, e);
+            return;
         }
-        Err(e) => eprintln!("Error evaluating hand: {}", e),
+    };
+
+    if fh.len() < 5 || fh.len() > 7 {
+        eprintln!("Hand must have 5-7 cards, got {}", fh.len());
+        return;
     }
+
+    println!("Rank: {:?}", fh.rank());
 }
 
 fn run_equity_command(
@@ -131,11 +145,6 @@ fn run_equity_command(
 }
 
 fn run_pot_odds_command(pot_size: f64, call_amount: f64) {
-    calculate_pot_odds(pot_size, call_amount);
-}
-
-/// Calculate pot odds and display result
-fn calculate_pot_odds(pot_size: f64, call_amount: f64) {
     let total_pot_after_call = pot_size + call_amount;
     let pot_odds_pct = (call_amount / total_pot_after_call) * 100.0;
 

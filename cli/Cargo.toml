@@ -13,3 +13,4 @@ path = "src/main.rs"
 [dependencies]
 snapcall-core = { path = "../core" }
 clap = { version = "4.5.60", features = ["derive"] }
+rs_poker = { workspace = true }
