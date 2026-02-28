@@ -1,0 +1,15 @@
+[package]
+name = "snapcall-uniffi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+publish = false
+description = "SnapCall UniFFI bindings"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+snapcall-core = { path = "../../core" }
+uniffi = "0.31.0"

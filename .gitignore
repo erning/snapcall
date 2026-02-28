@@ -39,3 +39,8 @@ target/
 *.log
 .envrc
 .envrc.d/
+
+# Web app generated assets
+apps/web/node_modules/
+apps/web/dist/
+apps/web/src/wasm-pkg/

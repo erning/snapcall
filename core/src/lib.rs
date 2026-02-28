@@ -11,9 +11,6 @@ mod equity;
 mod parsing;
 mod types;
 
-#[cfg(feature = "ffi")]
-pub mod ffi;
-
 pub use equity::{
     calculate_equity, calculate_equity_with_math, calculate_equity_with_ranges, evaluate_hand,
 };
@@ -22,6 +19,3 @@ pub use types::{EquityMath, EquityResult, EquitySolveMode, SnapError};
 
 #[cfg(test)]
 mod tests;
-
-#[cfg(feature = "ffi")]
-uniffi::setup_scaffolding!();

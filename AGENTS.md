@@ -1,8 +1,8 @@
 # SnapCall Knowledge Base
 
 **Project:** Texas Hold'em Equity Calculator  
-**Status:** Core Complete (rs-poker integration), UI Pending  
-**Architecture:** Rust Core (rs-poker) + UniFFI + Native UI
+**Status:** Core Complete (rs-poker integration), bindings split complete, UI rewrite in progress  
+**Architecture:** Rust Core (domain) + Bindings (UniFFI/WASM) + App UIs
 
 ---
 
@@ -13,7 +13,8 @@ High-performance cross-platform poker equity calculator. Built on [rs-poker](htt
 **Current State:**
 - ✅ Rust core with rs-poker integration (complete)
 - ✅ CLI tool working
-- ✅ UniFFI FFI layer ready
+- ✅ Separate bindings crates (`bindings/uniffi`, `bindings/wasm`)
+- 🔄 Web app rewrite started (`apps/web` Hello World + static equity call)
 - ⏳ iOS UI (pending)
 - ⏳ Android UI (pending)
 
@@ -24,16 +25,17 @@ High-performance cross-platform poker equity calculator. Built on [rs-poker](htt
 ```
 snapcall/
 ├── Cargo.toml          # Workspace configuration
-├── core/               # Rust library (rs-poker wrapper + FFI)
+├── core/               # Rust library (pure domain logic)
 │   ├── src/
 │   │   ├── lib.rs      # Core API
-│   │   └── ffi.rs      # UniFFI bindings
 │   └── Cargo.toml
 ├── cli/                # Command-line tool
 │   └── src/main.rs
-├── web/                # WASM bindings + React frontend
-│   ├── Cargo.toml
-│   └── src/lib.rs
+├── bindings/
+│   ├── uniffi/         # UniFFI exports for Swift/Kotlin
+│   └── wasm/           # wasm-bindgen exports for Web
+├── apps/
+│   └── web/            # React frontend
 ├── docs/
 │   ├── ROADMAP.md      # What's done / what's next
 │   └── INITIAL_AGENTS.md # Original spec
@@ -103,8 +105,17 @@ $ cargo run --bin snapcall -- equity -p "Ah Ad,Kh Kd" -i 10000
 Player 1: 81.5%
 Player 2: 18.5%
 
-# Build FFI library (for iOS/Android)
-cargo build --features ffi -p snapcall-core
+# Build UniFFI bindings crate (for iOS/Android)
+cargo build -p snapcall-uniffi
+
+# Build WASM bindings crate
+cargo build -p snapcall-wasm --target wasm32-unknown-unknown
+
+# Run new web app
+cd apps/web
+pnpm install
+pnpm run wasm
+pnpm run dev -- --host
 ```
 
 ---

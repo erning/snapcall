@@ -26,7 +26,7 @@ cd snapcall
 # Build
 cargo build --workspace
 
-# Faster Rust-only build (skip web crate)
+# Faster Rust-only build (skip bindings/apps)
 cargo build -p snapcall-core -p snapcall-cli
 
 # Evaluate a hand (5-7 cards)
@@ -149,20 +149,23 @@ Input rules:
 
 ## Web App (WASM + React)
 
-The `web/` app is now a React 18 + TypeScript + Vite frontend that consumes the Rust WASM bindings from `web/pkg`.
-`snapcall-web` is a member of the root Cargo workspace, so shared dependency versions are managed in root `Cargo.toml`.
+The web stack is now split into:
+- `bindings/wasm` (Rust wasm-bindgen crate, `snapcall-wasm`)
+- `apps/web` (React + TypeScript + Vite app)
+
+This keeps `core/` focused on poker domain logic while bindings stay platform-specific.
 
 ```bash
-cd web
+cd apps/web
 
 # Install wasm-pack if you don't have it
 cargo install wasm-pack
 
-# Build WASM bindings into web/pkg
-make wasm
+# Build WASM bindings into apps/web/src/wasm-pkg
+pnpm run wasm
 
-# Or build web crate directly from repo root
-cargo build -p snapcall-web --target wasm32-unknown-unknown
+# Or build wasm crate directly from repo root
+cargo build -p snapcall-wasm --target wasm32-unknown-unknown
 
 # Install frontend dependencies (pnpm)
 pnpm install
@@ -176,8 +179,8 @@ pnpm run build
 ```
 
 Notes:
-- Do not open `web/index.html` directly. Run the Vite dev server so WASM and ESM assets are resolved correctly.
-- `make dev` and `make build` in `web/` now use pnpm internally.
+- Do not open `apps/web/index.html` directly. Run the Vite dev server so WASM and ESM assets are resolved correctly.
+- `pnpm run build` in `apps/web` runs `wasm-pack` first, then type-check + Vite build.
 
 ## Architecture
 

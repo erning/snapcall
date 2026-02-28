@@ -1,5 +1,5 @@
 [workspace]
-members = ["core", "cli", "web"]
+members = ["core", "cli", "bindings/uniffi", "bindings/wasm"]
 resolver = "2"
 
 [workspace.package]

@@ -969,11 +969,18 @@ dependencies = [
  "criterion",
  "rand 0.10.0",
  "rs_poker",
+]
+
+[[package]]
+name = "snapcall-uniffi"
+version = "0.1.0"
+dependencies = [
+ "snapcall-core",
  "uniffi",
 ]
 
 [[package]]
-name = "snapcall-web"
+name = "snapcall-wasm"
 version = "0.1.0"
 dependencies = [
  "getrandom 0.3.4",
@@ -1117,7 +1124,6 @@ dependencies = [
  "anyhow",
  "cargo_metadata",
  "uniffi_bindgen",
- "uniffi_build",
  "uniffi_core",
  "uniffi_macros",
  "uniffi_pipeline",
@@ -1147,17 +1153,6 @@ dependencies = [
  "uniffi_meta",
  "uniffi_pipeline",
  "uniffi_udl",
-]
-
-[[package]]
-name = "uniffi_build"
-version = "0.31.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b78fd9271a4c2e85bd2c266c5a9ede1fac676eb39fd77f636c27eaf67426fd5f"
-dependencies = [
- "anyhow",
- "camino",
- "uniffi_bindgen",
 ]
 
 [[package]]

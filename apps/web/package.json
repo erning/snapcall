@@ -1,0 +1,25 @@
+{
+  "name": "snapcall-web-app",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.30.2",
+  "type": "module",
+  "scripts": {
+    "wasm": "${HOME}/.cargo/bin/wasm-pack build ../../bindings/wasm --target web --out-dir ../../apps/web/src/wasm-pkg --out-name snapcall_wasm",
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm run wasm && pnpm run typecheck && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}

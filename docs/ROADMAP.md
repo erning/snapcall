@@ -37,25 +37,16 @@
 
 ## 待完成 ⏳
 
-### Phase 3: Web App (WASM) ✅ COMPLETE (V2)
-基于 Web 的可用产品版本，作为移动端 UI 设计和交互验证平台
+### Phase 3: Web App (WASM) 🔄 RESET (Rebuild in progress)
+旧版 Web 已移除，当前按新架构重建：`bindings/wasm` + `apps/web`
 
-- [x] WASM 模块构建
-  - [x] 添加 `wasm32-unknown-unknown` target
-  - [x] 配置 `wasm-bindgen` 暴露 API
-  - [x] 保留 `calculate_equity` / `evaluate_hand` / `parse_range` / `format_card` 接口
-- [x] Web 前端 V2（React + TypeScript + Vite + Tailwind + Zustand）
-  - [x] 浅色主题移动优先布局
-  - [x] 底池赔率面板（底池 / 对手下注 / 跟注 + 自动赔率计算）
-  - [x] 公共牌与玩家卡片输入
-  - [x] Two-Tap Keyboard（底部固定、已用牌禁用、退格）
-  - [x] 胜率结果卡片内展示（百分比 + 进度条）
-  - [x] 多玩家增删（最少 2 人）
-  - [x] pnpm 工程化工作流
+- [x] 新架构拆分：`core` / `bindings/uniffi` / `bindings/wasm` / `apps/web`
+- [x] 新 Web MVP：Hello World + 静态 equity 调用
+- [ ] 新 Web UI 重写（不继承旧技术债）
 
-**WASM Build:** `cd web && make wasm` 或 `cargo build -p snapcall-web --target wasm32-unknown-unknown`
-**Dev Server:** `cd web && pnpm install && pnpm run dev -- --host`
-**Prod Build:** `cd web && pnpm run build`
+**WASM Build:** `cd apps/web && pnpm run wasm` 或 `cargo build -p snapcall-wasm --target wasm32-unknown-unknown`
+**Dev Server:** `cd apps/web && pnpm install && pnpm run dev -- --host`
+**Prod Build:** `cd apps/web && pnpm run build`
 
 ### Phase 4: UniFFI 绑定生成
 - [ ] 配置 `build.rs` 生成绑定
