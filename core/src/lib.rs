@@ -6,13 +6,10 @@ pub use rs_poker::core::{Card, Deck, Rank, Rankable, Suit, Value};
 pub use rs_poker::core::{FlatHand, Hand};
 pub use rs_poker::holdem;
 
-mod equity;
 mod estimate;
 mod input;
-mod parsing;
 mod types;
 
-pub use equity::calculate_equity;
 pub use estimate::estimate_equity;
 pub use input::{BoardCardsInput, HoleCardsInput};
 pub use types::{EquityResult, EquitySolveMode, SnapError};
@@ -45,19 +42,4 @@ pub fn evaluate_hand(input: &str) -> Result<Rank, SnapError> {
     }
 
     Ok(hand.rank())
-}
-
-pub fn parse_cards(s: &str) -> Result<Vec<Card>, SnapError> {
-    let cleaned: String = s
-        .chars()
-        .filter(|c| !c.is_whitespace() && *c != ',')
-        .collect();
-
-    if cleaned.is_empty() {
-        return Err(SnapError::InvalidCard("Empty card string".to_string()));
-    }
-
-    let hand =
-        FlatHand::new_from_str(&cleaned).map_err(|_| SnapError::InvalidCard(s.to_string()))?;
-    Ok(hand.iter().copied().collect())
 }
