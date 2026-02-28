@@ -32,15 +32,3 @@ fn test_board_cards_input_from_str_streets() {
     assert!(matches!(turn, BoardCardsInput::Turn(_)));
     assert!(matches!(river, BoardCardsInput::River(_)));
 }
-
-#[test]
-fn test_evaluate_royal_flush() {
-    let rank = evaluate_hand("As Ks Qs Js Ts").unwrap();
-    assert!(matches!(rank, Rank::StraightFlush(_)));
-}
-
-#[test]
-fn test_evaluate_pair() {
-    let rank = evaluate_hand("Ah Ad Kc Qd Js").unwrap();
-    assert!(matches!(rank, Rank::OnePair(_)));
-}

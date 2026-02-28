@@ -16,30 +16,3 @@ pub use types::{EquityResult, EquitySolveMode, SnapError};
 
 #[cfg(test)]
 mod tests;
-
-/// Evaluates a poker hand and returns its rank.
-///
-/// Supports 5, 6, or 7 cards and uses best-5 evaluation.
-pub fn evaluate_hand(input: &str) -> Result<Rank, SnapError> {
-    let cleaned: String = input
-        .chars()
-        .filter(|c| !c.is_whitespace() && *c != ',')
-        .collect();
-
-    if cleaned.is_empty() {
-        return Err(SnapError::InvalidHand("Hand string is empty".to_string()));
-    }
-
-    let hand = FlatHand::new_from_str(&cleaned).map_err(|e| {
-        SnapError::InvalidHand(format!("Failed to parse hand '{}': {:?}", input, e))
-    })?;
-
-    if hand.len() < 5 || hand.len() > 7 {
-        return Err(SnapError::InvalidHand(format!(
-            "Hand must have 5-7 cards, got {}",
-            hand.len()
-        )));
-    }
-
-    Ok(hand.rank())
-}
