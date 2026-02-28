@@ -16,7 +16,7 @@ use crate::types::{EquityResult, SnapError};
 /// - `board` — community cards as a string (`""` for preflop, or 3/4/5 cards like `"AhKdQc"`)
 /// - `hero` — hero's hole cards, or a single known card (e.g. `"Ah"`)
 /// - `villains` — each villain's hole cards, range, or `""` for unknown
-/// - `iterations` — maximum sample count; `0` defaults to 10 000.
+/// - `iterations` — maximum sample count.
 ///   When the total enumerable combinations ≤ this value, exact enumeration is used.
 ///
 /// # Returns
@@ -129,13 +129,12 @@ pub fn estimate_equity(
         }
     }
 
-    let iters = if iterations == 0 { 10_000 } else { iterations };
     let missing_board = 5 - board_cards.len();
 
     // --- Decide mode: exact enumeration vs Monte Carlo ---
     let mut partial_count = 0usize;
     let mut unknown_count = 0usize;
-    let mut range_product: u64 = 1;
+    let mut range_product: usize = 1;
     let mut range_count = 0usize;
 
     for p in &players {
@@ -143,7 +142,7 @@ pub fn estimate_equity(
             HoleCardsInput::Partial(_) => partial_count += 1,
             HoleCardsInput::Unknown => unknown_count += 1,
             HoleCardsInput::Range(hands) => {
-                range_product = range_product.saturating_mul(hands.len() as u64);
+                range_product = range_product.saturating_mul(hands.len());
                 range_count += 1;
             }
             HoleCardsInput::Exact(_) => {}
@@ -159,7 +158,7 @@ pub fn estimate_equity(
     let use_exact = if let Some(enum_count) =
         estimate_enumeration_count(available_for_estimate, non_range_slots, range_product)
     {
-        enum_count > 0 && enum_count <= iters as u64
+        enum_count > 0 && enum_count <= iterations
     } else {
         false
     };
@@ -172,7 +171,7 @@ pub fn estimate_equity(
             &fixed_known,
         ))
     } else {
-        estimate_equity_monte_carlo(&board_cards, &board_set, &players, iters)
+        estimate_equity_monte_carlo(&board_cards, &board_set, &players, iterations)
     }
 }
 
@@ -288,9 +287,12 @@ mod tests {
     }
 
     #[test]
-    fn equity_default_iterations() {
-        let result = estimate_equity("", "AhAd", &["KhKd"], 0).unwrap();
-        assert!(result.samples > 5_000, "default should run ~10k samples");
+    fn equity_zero_iterations_uses_mc_with_zero() {
+        // iterations=0 means 0 MC samples, but exact enumeration may still kick in
+        // Preflop exact hands: C(48, 5) = 1,712,304 > 0, so MC with 0 iterations
+        let result = estimate_equity("", "AhAd", &["KhKd"], 0);
+        // With 0 iterations and enum_count > 0, MC runs 0 iterations → error
+        assert!(result.is_err());
     }
 
     #[test]

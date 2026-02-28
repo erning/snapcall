@@ -6,7 +6,7 @@ use crate::input::HoleCardsInput;
 use crate::types::{EquityEstimateMode, EquityResult};
 
 /// Compute the binomial coefficient C(n, k).
-pub(crate) fn n_choose_k(n: usize, k: usize) -> u64 {
+pub(crate) fn n_choose_k(n: usize, k: usize) -> usize {
     if k > n {
         return 0;
     }
@@ -14,9 +14,9 @@ pub(crate) fn n_choose_k(n: usize, k: usize) -> u64 {
         return 1;
     }
     let k = k.min(n - k); // symmetry optimisation
-    let mut result: u64 = 1;
+    let mut result: usize = 1;
     for i in 0..k {
-        result = result.saturating_mul((n - i) as u64) / (i as u64 + 1);
+        result = result.saturating_mul(n - i) / (i + 1);
     }
     result
 }
@@ -94,8 +94,8 @@ pub(crate) fn estimate_equity_exact_enumeration(
 
     let non_range_slots = partial_count + 2 * unknown_count + missing_board;
 
-    let mut wins: Vec<u64> = vec![0; num_players];
-    let mut total_combos: u64 = 0;
+    let mut wins: Vec<usize> = vec![0; num_players];
+    let mut total_combos: usize = 0;
 
     // Recursively enumerate Range player cartesian product, then for each
     // valid range assignment enumerate the remaining C(pool, non_range_slots).
@@ -122,7 +122,7 @@ pub(crate) fn estimate_equity_exact_enumeration(
         &mut total_combos,
     );
 
-    let total_wins: u64 = wins.iter().sum();
+    let total_wins: usize = wins.iter().sum();
     let equities = if total_wins == 0 {
         vec![100.0 / num_players as f64; num_players]
     } else {
@@ -134,7 +134,7 @@ pub(crate) fn estimate_equity_exact_enumeration(
     EquityResult {
         equities,
         mode: EquityEstimateMode::ExactEnumeration,
-        samples: total_combos as usize,
+        samples: total_combos,
     }
 }
 
@@ -151,8 +151,8 @@ fn enumerate_ranges(
     board_cards: &[Card],
     missing_board: usize,
     non_range_slots: usize,
-    wins: &mut Vec<u64>,
-    total_combos: &mut u64,
+    wins: &mut Vec<usize>,
+    total_combos: &mut usize,
 ) {
     if depth == range_indices.len() {
         // All ranges assigned — collect cards used by ranges
@@ -295,8 +295,8 @@ fn enumerate_ranges(
 pub(crate) fn estimate_enumeration_count(
     available_count: usize,
     non_range_slots: usize,
-    range_product: u64,
-) -> Option<u64> {
+    range_product: usize,
+) -> Option<usize> {
     let choose = n_choose_k(available_count, non_range_slots);
     range_product.checked_mul(choose)
 }
@@ -321,7 +321,7 @@ mod tests {
             .into_iter()
             .take(10)
             .collect();
-        let mut count = 0u64;
+        let mut count = 0usize;
         for_each_combination(&cards, 3, |_| count += 1);
         assert_eq!(count, n_choose_k(10, 3));
     }

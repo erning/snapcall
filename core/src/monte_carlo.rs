@@ -15,7 +15,7 @@ pub(crate) fn estimate_equity_monte_carlo(
     let num_players = players.len();
     let full_deck: Vec<Card> = Deck::default().into_iter().collect();
     let mut rng = rand::rng();
-    let mut wins: Vec<u64> = vec![0; num_players];
+    let mut wins: Vec<usize> = vec![0; num_players];
     let mut samples = 0usize;
     let missing_board = 5 - board_cards.len();
 
@@ -138,7 +138,7 @@ pub(crate) fn estimate_equity_monte_carlo(
         ));
     }
 
-    let total: u64 = wins.iter().sum();
+    let total: usize = wins.iter().sum();
     let equities = if total == 0 {
         vec![100.0 / num_players as f64; num_players]
     } else {
