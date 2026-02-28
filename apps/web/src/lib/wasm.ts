@@ -1,4 +1,4 @@
-import init, { calculate_equity } from "../wasm-pkg/snapcall_wasm";
+import init, { estimate_equity } from "../wasm-pkg/snapcall_wasm";
 
 let initPromise: Promise<void> | null = null;
 
@@ -9,14 +9,25 @@ function ensureInit(): Promise<void> {
   return initPromise;
 }
 
-export async function runStaticEquity(): Promise<number[]> {
+export interface EquityResult {
+  equities: number[];
+  mode: string;
+  samples: number;
+}
+
+export async function runStaticEquity(): Promise<EquityResult> {
   await ensureInit();
 
-  const result = calculate_equity(
-    ["AcKs", "KQs", "99+", "22+"],
-    "5c6c7c8hAs",
-    20000,
+  const result = estimate_equity(
+    "5c6c7c8h",
+    "AcKs",
+    ["KQs", "99", "22+"],
+    100000,
   );
 
-  return Array.from(result);
+  return {
+    equities: Array.from(result.equities),
+    mode: result.mode,
+    samples: result.samples,
+  };
 }

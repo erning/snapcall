@@ -1,21 +1,20 @@
 import { useState } from "react";
-import { runStaticEquity } from "./lib/wasm";
+import { runStaticEquity, type EquityResult } from "./lib/wasm";
 
-const PLAYERS = ["AcKs", "KQs", "99+", "22+"];
+const PLAYERS = ["AcKs", "KQs", "99", "22+"];
 const BOARD = "5c6c7c8hAs";
 
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [equity, setEquity] = useState<number[] | null>(null);
+  const [result, setResult] = useState<EquityResult | null>(null);
 
   async function handleRun() {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await runStaticEquity();
-      setEquity(result);
+      setResult(await runStaticEquity());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Unknown WASM error");
     } finally {
@@ -37,14 +36,17 @@ export default function App() {
 
         {error ? <p className="error">Error: {error}</p> : null}
 
-        {equity ? (
-          <ul>
-            {equity.map((value, index) => (
-              <li key={`${PLAYERS[index]}-${index}`}>
-                Player {index + 1} ({PLAYERS[index]}): {value.toFixed(2)}%
-              </li>
-            ))}
-          </ul>
+        {result ? (
+          <>
+            <p>Mode: {result.mode} | Samples: {result.samples}</p>
+            <ul>
+              {result.equities.map((value, index) => (
+                <li key={`${PLAYERS[index]}-${index}`}>
+                  Player {index + 1} ({PLAYERS[index]}): {value.toFixed(2)}%
+                </li>
+              ))}
+            </ul>
+          </>
         ) : null}
       </section>
     </main>
