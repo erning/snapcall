@@ -2,61 +2,104 @@
 
 ## 概述
 
-SnapCall 使用 Monte Carlo 模拟来计算德州扑克中各玩家的胜率（equity）。核心函数为 `calculate_equity`，位于 `core/src/equity.rs`。
+SnapCall 使用两种模式计算德州扑克中各玩家的胜率（equity）：
+
+1. **精确枚举（Exact Enumeration）**— 当可枚举的组合总数 ≤ 请求的迭代次数时自动启用，产出 100% 准确的结果。
+2. **Monte Carlo 模拟** — 组合数过大时退化为随机采样。
+
+核心入口函数为 `estimate_equity`，位于 `core/src/estimate.rs`。
 
 ## 输入
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `player_hands` | `&[String]` | 每个玩家的手牌描述，至少 2 人 |
 | `board` | `&str` | 公共牌，合法长度为 0、3、4、5 张 |
-| `iterations` | `u32` | Monte Carlo 迭代次数，0 表示默认 10,000 |
+| `hero` | `&str` | Hero 手牌（1-2 张已知牌） |
+| `villains` | `&[&str]` | 每个对手的手牌描述 |
+| `iterations` | `usize` | 最大采样次数，0 表示默认 10,000 |
 
 ## 输出
 
 ```rust
 EquityResult {
-    equities: Vec<f64>,   // 各玩家胜率百分比，总和为 100.0
-    mode: EquitySolveMode, // 当前始终为 MonteCarlo
-    samples: usize,        // 实际有效采样数
+    equities: Vec<f64>,       // 各玩家胜率百分比，总和为 100.0
+    mode: EquityEstimateMode, // ExactEnumeration 或 MonteCarlo
+    samples: usize,           // 实际有效采样/枚举数
 }
 ```
 
-## 玩家输入格式（PlayerSpec）
+## 玩家输入格式（HoleCardsInput）
 
 每个玩家的输入字符串被解析为以下四种类型之一：
 
 | 类型 | 输入示例 | 说明 |
 |------|----------|------|
-| `TwoKnown` | `"AhAd"`, `"Ah Ad"` | 两张确定的手牌 |
-| `OneKnown` | `"Ah"` | 一张已知，另一张随机发 |
+| `Exact` | `"AhAd"`, `"Ah Ad"` | 两张确定的手牌 |
+| `Partial` | `"Ah"` | 一张已知，另一张随机发 |
 | `Unknown` | `""` | 两张都随机发 |
 | `Range` | `"AKs"`, `"TT+"`, `"A5s-A2s"` | 范围表达式，展开为多个具体两张牌组合 |
 
-解析优先级：先尝试 `parse_cards` 解析具体牌，失败后尝试 `RangeParser::parse_many` 解析范围表达式。
+解析优先级：先尝试 `FlatHand::new_from_str` 解析具体牌，失败后尝试 `RangeParser::parse_many` 解析范围表达式。
 
 ## 算法流程
 
 ### 第一阶段：输入验证
 
 ```
-1. 检查玩家数 >= 2
-2. 解析 board → Vec<Card>，验证张数为 0/3/4/5，无重复
-3. 逐个解析玩家输入 → Vec<PlayerSpec>
-4. 对 TwoKnown 和 OneKnown 的已知牌做全局去重检查
-5. 检查 board张数 + 2×玩家数 <= 52
+1. 检查 villains 非空
+2. 解析 board → Vec<Card>，验证张数为 0/3/4/5
+3. 解析 hero → HoleCardsInput（必须为 Exact 或 Partial）
+4. 逐个解析 villain → Vec<HoleCardsInput>
+5. 对 Exact 和 Partial 的已知牌做全局去重检查
+6. 对 Range 做 board 冲突过滤
+7. 检查 board张数 + 2×玩家数 ≤ 52
 ```
 
-### 第二阶段：Monte Carlo 模拟主循环
+### 第二阶段：模式选择
 
-每次迭代执行以下步骤：
+计算枚举数量估算：
+
+```
+non_range_slots = partial_count + 2 × unknown_count + missing_board
+available ≈ 52 − |fixed_known| − 2 × range_count
+enum_estimate = range_product × C(available, non_range_slots)
+
+if enum_estimate > 0 AND enum_estimate ≤ iterations:
+    → 精确枚举
+else:
+    → Monte Carlo
+```
+
+典型场景：
+- **River + Exact hands**: 0 slots → C(n, 0) = 1 → 精确枚举
+- **Turn + Exact hands**: 1 slot → C(44, 1) = 44 → 精确枚举
+- **Flop + Exact hands**: 2 slots → C(45, 2) = 990 → 精确枚举
+- **Preflop + Unknown villain**: 7 slots → C(48, 7) ≈ 3.1 亿 → Monte Carlo
+
+### 第三阶段A：精确枚举（ExactEnumeration）
+
+位于 `core/src/enumeration.rs`。
+
+#### 算法
+
+1. 构建可用牌池 = 全 52 张 − fixed_known（不含 Range 的牌）
+2. 递归枚举 Range 玩家的笛卡尔积（跳过相互冲突的组合）
+3. 对每个有效的 Range 组合：
+   - 从剩余牌池中枚举 C(remaining, non_range_slots) 个组合
+   - 每个组合按固定顺序分配：Partial 的第二张 → Unknown 的两张 → Board 补全
+4. 评估 7 张牌最佳手牌，记录胜者（平局并列各 +1）
+5. 返回 `EquityResult { mode: ExactEnumeration, samples: total_combos, ... }`
+
+### 第三阶段B：Monte Carlo 模拟（MonteCarlo）
+
+位于 `core/src/monte_carlo.rs`。每次迭代执行以下步骤：
 
 #### 步骤 1：构建已用牌集合
 
 ```
 used = board_cards
-     ∪ { c1, c2 | TwoKnown([c1, c2]) }
-     ∪ { c | OneKnown(c) }
+     ∪ { c1, c2 | Exact([c1, c2]) }
+     ∪ { c | Partial(c) }
 ```
 
 #### 步骤 2：两遍发牌
@@ -91,10 +134,10 @@ cursor = 0
 
 ```
 for each player (按原始顺序):
-    TwoKnown([c1, c2]):  直接写入
-    OneKnown(known):      手牌 = [known, available[cursor++]]
-    Unknown:              手牌 = [available[cursor], available[cursor+1]], cursor += 2
-    Range:                跳过（第一遍已处理）
+    Exact([c1, c2]):  直接写入
+    Partial(known):   手牌 = [known, available[cursor++]]
+    Unknown:          手牌 = [available[cursor], available[cursor+1]], cursor += 2
+    Range:            跳过（第一遍已处理）
 ```
 
 #### 步骤 3：补全公共牌
@@ -117,16 +160,14 @@ for each player where rank == best:
     wins[player] += 1
 ```
 
-平局（tie）时所有并列玩家都 +1。最终归一化时自然得到正确的分摊比例。
-
-### 第三阶段：归一化输出
+### 第四阶段：归一化输出
 
 ```
 total = sum(wins)
 equities[i] = wins[i] / total × 100.0
 ```
 
-`samples` 记录实际有效的迭代次数（排除因 rejection sampling 失败而作废的迭代）。
+`samples` 记录实际枚举组合数（精确枚举）或有效迭代次数（Monte Carlo，排除因 rejection sampling 失败而作废的迭代）。
 
 ## 平局处理
 
@@ -140,7 +181,20 @@ equities[i] = wins[i] / total × 100.0
 
 ## 性能特征
 
-- 时间复杂度：O(iterations × players)，每次迭代中洗牌为 O(deck_size)
+- **精确枚举**: 时间复杂度 O(enum_count × players)，结果 100% 准确
+- **Monte Carlo**: 时间复杂度 O(iterations × players)，每次迭代中洗牌为 O(deck_size)
 - 每次迭代重建 `used` 集合和 `available` 向量
 - Range 的 rejection sampling 最多尝试 100 次/玩家/迭代
 - 如果某次迭代发牌失败（牌不够或 rejection 失败），该迭代被跳过，不计入 samples
+
+## 模块结构
+
+```
+core/src/
+├── lib.rs            — mod 声明 + pub use 再导出
+├── types.rs          — SnapError, EquityEstimateMode, EquityResult
+├── input.rs          — HoleCardsInput, BoardCardsInput, FromStr, normalize_cards_str
+├── estimate.rs       — estimate_equity（验证 + 模式派发）
+├── monte_carlo.rs    — Monte Carlo 模拟实现
+├── enumeration.rs    — 精确枚举实现 + 组合工具函数
+```
