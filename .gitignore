@@ -39,8 +39,10 @@ target/
 *.log
 .envrc
 .envrc.d/
+/.claude/
+/worktrees/
 
 # Web app generated assets
-apps/web/node_modules/
-apps/web/dist/
-apps/web/src/wasm-pkg/
+/apps/web/node_modules/
+/apps/web/dist/
+/apps/web/src/wasm-pkg/

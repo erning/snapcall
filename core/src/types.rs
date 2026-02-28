@@ -13,22 +13,12 @@ pub enum EquitySolveMode {
     MonteCarlo,
 }
 
-/// Computation metadata for an equity solve.
-#[derive(Debug, Clone, PartialEq)]
-pub struct EquityMath {
-    pub mode: EquitySolveMode,
-    pub iteration_budget: usize,
-    pub assignment_combinations: u128,
-    pub board_runout_combinations: u128,
-    pub total_states: u128,
-    pub samples_used: usize,
-}
-
 /// Full equity response with result vector and computation metadata.
 #[derive(Debug, Clone, PartialEq)]
 pub struct EquityResult {
     pub equities: Vec<f64>,
-    pub math: EquityMath,
+    pub mode: EquitySolveMode,
+    pub samples: usize,
 }
 
 impl std::fmt::Display for SnapError {
