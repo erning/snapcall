@@ -10,3 +10,4 @@ license = "MIT"
 repository = "https://github.com/yourusername/snapcall"
 
 [workspace.dependencies]
+rs_poker = { version = "4.1.0", default-features = false }
