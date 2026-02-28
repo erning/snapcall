@@ -41,9 +41,12 @@ fn test_parse_range() {
 
 #[test]
 fn test_calculate_equity_basic() {
-    let result =
-        calculate_equity(&["Ah Ad".to_string(), "Kh Kd".to_string()], "2c 7d 9h", 10_000)
-            .unwrap();
+    let result = calculate_equity(
+        &["Ah Ad".to_string(), "Kh Kd".to_string()],
+        "2c 7d 9h",
+        10_000,
+    )
+    .unwrap();
     assert_eq!(result.equities.len(), 2);
     // AA vs KK on this board: AA should be heavily favored (~90%+)
     assert!(result.equities[0] > 80.0);
@@ -77,9 +80,12 @@ fn test_calculate_equity_rejects_invalid_board_street() {
 
 #[test]
 fn test_calculate_equity_monte_carlo_mode() {
-    let result =
-        calculate_equity(&["Ah Ad".to_string(), "Kh Kd".to_string()], "2c 7d 9h", 1000)
-            .unwrap();
+    let result = calculate_equity(
+        &["Ah Ad".to_string(), "Kh Kd".to_string()],
+        "2c 7d 9h",
+        1000,
+    )
+    .unwrap();
 
     assert_eq!(result.mode, EquitySolveMode::MonteCarlo);
     assert!(result.samples > 0);
@@ -88,8 +94,7 @@ fn test_calculate_equity_monte_carlo_mode() {
 
 #[test]
 fn test_calculate_equity_with_ranges() {
-    let result =
-        calculate_equity(&["AKs".to_string(), "TT".to_string()], "", 5000).unwrap();
+    let result = calculate_equity(&["AKs".to_string(), "TT".to_string()], "", 5000).unwrap();
     assert_eq!(result.equities.len(), 2);
     assert!((result.equities.iter().sum::<f64>() - 100.0).abs() < 1e-9);
 }

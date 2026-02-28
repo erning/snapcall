@@ -86,10 +86,7 @@ fn parse_board_input(board: &str) -> Result<Vec<Card>, SnapError> {
 }
 
 /// Parses one player input into a PlayerSpec.
-fn parse_player_input(
-    input: &str,
-    board_cards: &HashSet<Card>,
-) -> Result<PlayerSpec, SnapError> {
+fn parse_player_input(input: &str, board_cards: &HashSet<Card>) -> Result<PlayerSpec, SnapError> {
     let trimmed = input.trim();
 
     if trimmed.is_empty() {
@@ -213,7 +210,11 @@ pub fn calculate_equity(
         ));
     }
 
-    let iters = if iterations == 0 { 10_000 } else { iterations as usize };
+    let iters = if iterations == 0 {
+        10_000
+    } else {
+        iterations as usize
+    };
 
     let mut rng = rand::rng();
     let deck_all = all_cards();
