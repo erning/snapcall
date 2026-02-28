@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use snapcall_core::{calculate_equity, evaluate_hand, parse_cards, EquitySolveMode};
+use snapcall_core::{estimate_equity, evaluate_hand, EquitySolveMode};
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -28,8 +28,8 @@ enum Commands {
         hero: String,
 
         /// One or more villains: unknown / partial / exact / range (e.g., "", "Kh", "KhKd", "TT+")
-        #[arg(short = 'v', long = "villain", num_args = 1..)]
-        villain: Vec<String>,
+        #[arg(short = 'V', long = "villain", num_args = 1..)]
+        villains: Vec<String>,
 
         /// Total number of villains (fills missing villains as unknown hands)
         #[arg(short = 'n', long = "villain-count")]
@@ -58,12 +58,12 @@ fn main() {
     match cli.command {
         Commands::Evaluate { hand } => run_evaluate_command(&hand),
         Commands::Equity {
-            hero,
-            villain,
-            villain_count,
             board,
+            hero,
+            villains,
+            villain_count,
             iterations,
-        } => run_equity_command(hero, villain, villain_count, board, iterations),
+        } => run_equity_command(board, hero, villains, villain_count, iterations),
         Commands::PotOdds {
             pot_size,
             call_amount,
@@ -81,54 +81,35 @@ fn run_evaluate_command(hand: &str) {
 }
 
 fn run_equity_command(
-    hero: String,
-    mut villain: Vec<String>,
-    villain_count: Option<usize>,
     board: Option<String>,
+    hero: String,
+    villains: Vec<String>,
+    villain_count: Option<usize>,
     iterations: u32,
 ) {
-    match parse_cards(&hero) {
-        Ok(hero_cards) => {
-            if hero_cards.len() != 1 && hero_cards.len() != 2 {
-                eprintln!(
-                    "Error: --hero must contain exactly 1 or 2 known cards, got {}",
-                    hero_cards.len()
-                );
-                return;
-            }
-        }
-        Err(e) => {
-            eprintln!("Error parsing --hero cards: {}", e);
-            return;
-        }
-    }
-
     if let Some(count) = villain_count {
-        if count < villain.len() {
+        if count < villains.len() {
             eprintln!(
                 "Error: villain-count ({}) cannot be less than number of --villain arguments ({})",
                 count,
-                villain.len()
+                villains.len()
             );
             return;
         }
-        while villain.len() < count {
-            villain.push(String::new());
-        }
     }
 
-    if villain.is_empty() {
+    if villains.is_empty() {
         eprintln!("Error: provide at least one opponent via --villain or --villain-count");
         return;
     }
 
-    let mut players = Vec::with_capacity(villain.len() + 1);
-    players.push(hero);
-    players.extend(villain);
-
     let board_str = board.unwrap_or_default();
+    let mut villains_str: Vec<&str> = villains.iter().map(|s| s.as_str()).collect();
+    while villains_str.len() < villain_count.unwrap() {
+        villains_str.push("");
+    }
 
-    match calculate_equity(&players, &board_str, iterations) {
+    match estimate_equity(&board_str, &hero, &villains_str, iterations as usize) {
         Ok(result) => {
             let mode = match result.mode {
                 EquitySolveMode::ExactEnumeration => "exact",
@@ -140,8 +121,9 @@ fn run_equity_command(
             println!();
 
             println!("Equity Results:");
-            for (i, eq) in result.equities.iter().enumerate() {
-                println!("  Player {}: {:.2}%", i + 1, eq);
+            println!("  Hero:      {:.2}%", result.equities[0]);
+            for (i, eq) in result.equities[1..].iter().enumerate() {
+                println!("  Villain {}: {:.2}%", i + 1, eq);
             }
         }
         Err(e) => eprintln!("Error calculating equity: {}", e),
