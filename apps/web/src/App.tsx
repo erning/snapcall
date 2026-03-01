@@ -2,7 +2,7 @@ import { useReducer, useMemo } from "react";
 import { appReducer, initialState } from "./reducer";
 import { useEquity } from "./hooks/useEquity";
 import { parseCards } from "./lib/poker";
-import { BoardInput } from "./components/BoardInput";
+import { BoardSection } from "./components/BoardSection";
 import { HeroSection } from "./components/HeroSection";
 import { VillainsSection } from "./components/VillainsSection";
 import { PotOddsSection } from "./components/PotOddsSection";
@@ -33,7 +33,7 @@ export default function App() {
           )}
         </header>
 
-        <BoardInput
+        <BoardSection
           value={state.board}
           disabledCards={heroCards}
           onChange={(v) => dispatch({ type: "SET_BOARD", value: v })}

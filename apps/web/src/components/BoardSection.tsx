@@ -3,13 +3,13 @@ import { CardPicker } from "./CardPicker";
 import { BottomSheet } from "./BottomSheet";
 import { parseCards } from "../lib/poker";
 
-interface BoardInputProps {
+interface BoardSectionProps {
   value: string;
   disabledCards: string[];
   onChange: (value: string) => void;
 }
 
-export function BoardInput({ value, disabledCards, onChange }: BoardInputProps) {
+export function BoardSection({ value, disabledCards, onChange }: BoardSectionProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const selectedCards = parseCards(value);
 
