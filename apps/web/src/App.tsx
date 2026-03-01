@@ -39,9 +39,17 @@ export default function App() {
     [state.hero],
   );
 
+  const villainCards = useMemo(
+    () =>
+      state.villains.flatMap((slots) =>
+        slots.filter((c): c is string => c !== null),
+      ),
+    [state.villains],
+  );
+
   const globalDisabledCards = useMemo(
-    () => [...boardCards, ...heroCards],
-    [boardCards, heroCards],
+    () => [...boardCards, ...heroCards, ...villainCards],
+    [boardCards, heroCards, villainCards],
   );
 
   return (
@@ -59,7 +67,7 @@ export default function App() {
 
         <BoardSection
           slots={state.board}
-          disabledCards={heroCards}
+          disabledCards={[...heroCards, ...villainCards]}
           onChange={(slots) => dispatch({ type: "SET_BOARD", value: slots })}
         />
 
@@ -67,7 +75,7 @@ export default function App() {
           slots={state.hero}
           equity={equities ? equities[0] : null}
           isCalculating={isCalculating}
-          disabledCards={boardCards}
+          disabledCards={[...boardCards, ...villainCards]}
           onChange={(slots) => dispatch({ type: "SET_HERO", value: slots })}
         />
 
