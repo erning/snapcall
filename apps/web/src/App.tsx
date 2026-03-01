@@ -1,54 +1,81 @@
-import { useState } from "react";
-import { runStaticEquity, type EquityResult } from "./lib/wasm";
-
-const PLAYERS = ["AcKs", "KQs", "99", "22+"];
-const BOARD = "5c6c7c8hAs";
+import { useReducer, useMemo } from "react";
+import { appReducer, initialState } from "./reducer";
+import { useEquity } from "./hooks/useEquity";
+import { parseCards } from "./lib/poker";
+import { BoardInput } from "./components/BoardInput";
+import { HeroSection } from "./components/HeroSection";
+import { VillainsSection } from "./components/VillainsSection";
+import { PotOddsSection } from "./components/PotOddsSection";
 
 export default function App() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<EquityResult | null>(null);
+  const [state, dispatch] = useReducer(appReducer, initialState);
 
-  async function handleRun() {
-    setLoading(true);
-    setError(null);
+  const { equities, mode, samples, isCalculating, error } = useEquity(
+    state.board,
+    state.hero,
+    state.villains,
+  );
 
-    try {
-      setResult(await runStaticEquity());
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown WASM error");
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Collect all cards used across board + hero for disabling in pickers
+  const boardCards = useMemo(() => parseCards(state.board), [state.board]);
+  const heroCards = useMemo(() => parseCards(state.hero), [state.hero]);
 
   return (
-    <main className="page">
-      <section className="card">
-        <h1>SnapCall Hello World</h1>
-        <p>
-          Static equity demo: players {PLAYERS.join(" vs ")} on board {BOARD}
-        </p>
+    <main className="min-h-screen bg-stone-50">
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+        {/* Header */}
+        <header className="px-1">
+          <h1 className="text-xl font-bold text-stone-900">SnapCall</h1>
+          {mode && samples !== null && (
+            <p className="text-xs text-stone-400 mt-0.5">
+              {mode} &middot; {samples.toLocaleString()} samples
+            </p>
+          )}
+        </header>
 
-        <button className="button" type="button" onClick={() => void handleRun()} disabled={loading}>
-          {loading ? "Running..." : "Run Static Equity"}
-        </button>
+        <BoardInput
+          value={state.board}
+          disabledCards={heroCards}
+          onChange={(v) => dispatch({ type: "SET_BOARD", value: v })}
+        />
 
-        {error ? <p className="error">Error: {error}</p> : null}
+        <HeroSection
+          value={state.hero}
+          equity={equities ? equities[0] : null}
+          isCalculating={isCalculating}
+          disabledCards={boardCards}
+          onChange={(v) => dispatch({ type: "SET_HERO", value: v })}
+        />
 
-        {result ? (
-          <>
-            <p>Mode: {result.mode} | Samples: {result.samples}</p>
-            <ul>
-              {result.equities.map((value, index) => (
-                <li key={`${PLAYERS[index]}-${index}`}>
-                  Player {index + 1} ({PLAYERS[index]}): {value.toFixed(2)}%
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : null}
-      </section>
+        {error && (
+          <div className="px-1">
+            <p className="text-sm text-red-500">{error}</p>
+          </div>
+        )}
+
+        <VillainsSection
+          villains={state.villains}
+          equities={equities}
+          isCalculating={isCalculating}
+          onSetVillain={(i, v) =>
+            dispatch({ type: "SET_VILLAIN", index: i, value: v })
+          }
+          onAddVillain={() => dispatch({ type: "ADD_VILLAIN" })}
+          onRemoveVillain={(i) =>
+            dispatch({ type: "REMOVE_VILLAIN", index: i })
+          }
+        />
+
+        <PotOddsSection
+          potSize={state.potSize}
+          callAmount={state.callAmount}
+          heroEquity={equities ? equities[0] : null}
+          onSetPotSize={(v) => dispatch({ type: "SET_POT_SIZE", value: v })}
+          onSetCallAmount={(v) =>
+            dispatch({ type: "SET_CALL_AMOUNT", value: v })
+          }
+        />
+      </div>
     </main>
   );
 }

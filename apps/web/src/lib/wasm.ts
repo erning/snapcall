@@ -15,15 +15,15 @@ export interface EquityResult {
   samples: number;
 }
 
-export async function runStaticEquity(): Promise<EquityResult> {
+export async function estimateEquity(
+  board: string,
+  hero: string,
+  villains: string[],
+  iterations: number = 100000,
+): Promise<EquityResult> {
   await ensureInit();
 
-  const result = estimate_equity(
-    "5c6c7c8h",
-    "AcKs",
-    ["KQs", "99", "22+"],
-    100000,
-  );
+  const result = estimate_equity(board, hero, villains, iterations);
 
   return {
     equities: Array.from(result.equities),

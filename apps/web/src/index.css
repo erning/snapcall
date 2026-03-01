@@ -1,45 +1,27 @@
-:root {
-  font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color: #0f172a;
-  background: #f8fafc;
+@import "tailwindcss";
+
+@theme {
+  --color-accent: var(--color-orange-500);
+  --color-accent-light: var(--color-orange-300);
+  --color-accent-dark: var(--color-orange-600);
+
+  --animate-slide-up: slide-up 0.25s ease-out;
 }
 
-* {
-  box-sizing: border-box;
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 body {
-  margin: 0;
+  font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-.page {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
-
-.card {
-  border: 1px solid #d1d5db;
-  border-radius: 16px;
-  background: #ffffff;
-  padding: 20px;
-}
-
-.button {
-  border: 0;
-  border-radius: 10px;
-  background: #0f766e;
-  color: #ffffff;
-  padding: 10px 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error {
-  color: #b91c1c;
+/* Custom 13-column grid for card/range pickers */
+.grid-cols-13 {
+  grid-template-columns: repeat(13, minmax(0, 1fr));
 }
