@@ -1,8 +1,8 @@
 # SnapCall Knowledge Base
 
-**Generated:** 2026-03-01  
+**Generated:** 2026-03-02  
 **Branch:** master  
-**Commit:** acc35db
+**Commit:** b89387b
 
 Texas Hold'em equity calculator: Rust workspace (`core/`, `cli/`, `bindings/`) + Vite/React web app (`apps/web`).
 
@@ -38,9 +38,12 @@ snapcall/
 # Rust
 cargo build --workspace
 cargo test --workspace
+cargo build -p snapcall-core -p snapcall-cli
 
 # CLI
 cargo run --bin snapcall -- eval "AsKsQsJsTs"
+cargo run --bin snapcall -- equity -H "AhAd" -V "KhKd" -i 10000
+cargo run --bin snapcall -- equity -H "Ah" -V "" -i 5000
 cargo run --bin snapcall -- equity -H "AcKs" -V "KQs" -V "99" -V "22+" -b "5c6c7c8h" -i 100000
 cargo run --bin snapcall -- pot-odds --pot-size 150 --call-amount 50
 
@@ -49,6 +52,9 @@ cd apps/web
 pnpm install
 pnpm run wasm
 pnpm run dev -- --host
+pnpm run typecheck
+pnpm run build
+pnpm run preview
 ```
 
 ## CONVENTIONS

@@ -35,12 +35,12 @@ cargo run --bin snapcall -- eval "AsKsQsJsTs"
 # → Type: Straight Flush
 
 # Calculate equity (AA vs KK)
-cargo run --bin snapcall -- equity -p "AhAd" -p "KhKd" -i 10000
+cargo run --bin snapcall -- equity -H "AhAd" -V "KhKd" -i 10000
 # → Player 1: 81.83%
 # → Player 2: 18.17%
 
 # With community cards (flop)
-cargo run --bin snapcall -- equity -p "AhAd" -p "KhKd" -b "AsKdQh" -i 10000
+cargo run --bin snapcall -- equity -H "AhAd" -V "KhKd" -b "AsKdQh" -i 10000
 # → Parsed Cards:
 # →   Player 1: A♥ A♦
 # →   Player 2: K♥ K♦
@@ -49,10 +49,9 @@ cargo run --bin snapcall -- equity -p "AhAd" -p "KhKd" -b "AsKdQh" -i 10000
 # →   Player 1: 95.12%
 # →   Player 2: 4.88%
 
-# Range vs Range (AKs vs pocket pairs TT+)
-cargo run --bin snapcall -- equity -p "AKs" -p "TT+" -i 10000
-# → Player Ranges:
-# →   Player 1: 4 combos (AKs range)
+# Exact hand vs range (AhKh vs TT+)
+cargo run --bin snapcall -- equity -H "AhKh" -V "TT+" -i 10000
+# → Hero hand: A♥K♥
 # →   Player 2: 30 combos (TT+ range)
 # → Equity Results (10000 iterations):
 # →   Player 1: 40.5%
@@ -80,26 +79,26 @@ SnapCall supports powerful poker hand range syntax via [rs-poker](https://github
 ### Range Examples
 
 ```bash
-# Suited connectors vs pocket pairs
-cargo run --bin snapcall -- equity -p "JTs-87s" -p "88-22"
+# Exact hand vs two ranges
+cargo run --bin snapcall -- equity -H "AhKh" -V "JTs-87s" -V "88-22"
 
-# AK+ and suited aces
-cargo run --bin snapcall -- equity -p "AKo+,A2s+" -p "JJ+"
+# Exact hand vs broad range mix
+cargo run --bin snapcall -- equity -H "AhKh" -V "AKo+,A2s+" -V "JJ+"
 
 # Specific hand vs range on flop
-cargo run --bin snapcall -- equity -p "AhKh" -p "AKs-AQs" -b "JcTc9d"
+cargo run --bin snapcall -- equity -H "AhKh" -V "AKs-AQs" -b "JcTc9d"
 
 # Hand vs random (any two cards)
-cargo run --bin snapcall -- equity -p "AhAd" -p "" -i 5000
+cargo run --bin snapcall -- equity -H "AhAd" -V "" -i 5000
 # → AA has ~85% equity against random hand
 
-# Multi-player equity with --player-count (-n)
+# Multi-player equity with --villain-count (-n)
 # AA vs 2 random opponents (3 players total)
-cargo run --bin snapcall -- equity -p "AhAd" -n 3 -i 5000
+cargo run --bin snapcall -- equity -H "AhAd" -n 3 -i 5000
 # → AA has ~75% equity
 
 # AA vs KK vs 3 random opponents (5 players total)
-cargo run --bin snapcall -- equity -p "AhAd" -p "KhKd" -n 5 -i 5000
+cargo run --bin snapcall -- equity -H "AhAd" -V "KhKd" -n 5 -i 5000
 # → AA has ~55% equity in 5-handed
 ### Pot Odds
 
@@ -124,22 +123,19 @@ cargo run --bin snapcall -- pot-odds --pot-size 300 --call-amount 75
 ### Hand Evaluation
 
 ```rust
-use snapcall_core::{parse_cards, evaluate_hand, hand_type_name};
+use rs_poker::core::{FlatHand, Rankable};
 
-let cards = parse_cards("As Ks Qs Js Ts")?;
-let rank = evaluate_hand(&cards)?;
-println!("{}", hand_type_name(&rank)); // "Straight Flush"
+let hand = FlatHand::new_from_str("AsKsQsJsTs")?;
+println!("{:?}", hand.rank()); // Straight Flush rank
 ```
 
 ### Equity Calculation
 
 ```rust
-use snapcall_core::calculate_equity;
+use snapcall_core::estimate_equity;
 
-let players = vec!["AhAd".to_string(), "KhKd".to_string()];
-let equities = calculate_equity(&players, "AsKdQh", 10000)?;
-// player input supports: "" (random), "Ah" (one known card),
-// exact two cards ("AhAd"), and ranges ("AKs", "TT+")
+let result = estimate_equity("AsKdQh", "AhAd", &["KhKd"], 10_000)?;
+println!("Hero equity: {:.2}%", result.equities[0]);
 ```
 
 Input rules:
