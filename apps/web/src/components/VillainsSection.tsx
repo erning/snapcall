@@ -7,7 +7,6 @@ interface VillainsSectionProps {
   isCalculating: boolean;
   disabledCards: string[];
   onSetVillain: (index: number, value: (string | null)[]) => void;
-  onAddVillain: () => void;
   onRemoveVillain: (index: number) => void;
 }
 
@@ -17,7 +16,6 @@ export function VillainsSection({
   isCalculating,
   disabledCards,
   onSetVillain,
-  onAddVillain,
   onRemoveVillain,
 }: VillainsSectionProps) {
   const getVillainDisabled = useCallback(
@@ -32,19 +30,6 @@ export function VillainsSection({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-sm font-semibold text-stone-900">
-          Villains ({villains.length})
-        </h2>
-        <button
-          type="button"
-          className="text-xs font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1.5 rounded-lg transition-colors duration-200"
-          onClick={onAddVillain}
-        >
-          + Add villain
-        </button>
-      </div>
-
       {villains.map((slots, i) => (
         <VillainRow
           key={i}

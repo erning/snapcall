@@ -53,9 +53,9 @@ export default function App() {
   );
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-        {/* Header */}
+    <main className="h-screen flex flex-col bg-stone-50">
+      {/* Fixed top: Header + Board + Hero */}
+      <div className="shrink-0 max-w-lg w-full mx-auto px-4 pt-6 space-y-4">
         <header className="px-1">
           <h1 className="text-xl font-bold text-stone-900">SnapCall</h1>
           {mode && samples !== null && (
@@ -85,29 +85,46 @@ export default function App() {
           </div>
         )}
 
-        <VillainsSection
-          villains={state.villains}
-          equities={equities}
-          isCalculating={isCalculating}
-          disabledCards={globalDisabledCards}
-          onSetVillain={(i, v) =>
-            dispatch({ type: "SET_VILLAIN", index: i, value: v })
-          }
-          onAddVillain={() => dispatch({ type: "ADD_VILLAIN" })}
-          onRemoveVillain={(i) =>
-            dispatch({ type: "REMOVE_VILLAIN", index: i })
-          }
-        />
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-sm font-semibold text-stone-900">
+            Villains ({state.villains.length})
+          </h2>
+          <button
+            type="button"
+            className="text-xs font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1.5 rounded-lg transition-colors duration-200"
+            onClick={() => dispatch({ type: "ADD_VILLAIN" })}
+          >
+            + Add villain
+          </button>
+        </div>
+      </div>
 
-        <PotOddsSection
-          potSize={state.potSize}
-          callAmount={state.callAmount}
-          heroEquity={equities ? equities[0] : null}
-          onSetPotSize={(v) => dispatch({ type: "SET_POT_SIZE", value: v })}
-          onSetCallAmount={(v) =>
-            dispatch({ type: "SET_CALL_AMOUNT", value: v })
-          }
-        />
+      {/* Scrollable bottom: Villain rows + PotOdds */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
+          <VillainsSection
+            villains={state.villains}
+            equities={equities}
+            isCalculating={isCalculating}
+            disabledCards={globalDisabledCards}
+            onSetVillain={(i, v) =>
+              dispatch({ type: "SET_VILLAIN", index: i, value: v })
+            }
+            onRemoveVillain={(i) =>
+              dispatch({ type: "REMOVE_VILLAIN", index: i })
+            }
+          />
+
+          <PotOddsSection
+            potSize={state.potSize}
+            callAmount={state.callAmount}
+            heroEquity={equities ? equities[0] : null}
+            onSetPotSize={(v) => dispatch({ type: "SET_POT_SIZE", value: v })}
+            onSetCallAmount={(v) =>
+              dispatch({ type: "SET_CALL_AMOUNT", value: v })
+            }
+          />
+        </div>
       </div>
     </main>
   );
