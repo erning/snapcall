@@ -1,13 +1,12 @@
 import { useCallback } from "react";
 import { VillainRow } from "./VillainRow";
-import { parseCards } from "../lib/poker";
 
 interface VillainsSectionProps {
-  villains: string[];
+  villains: (string | null)[][];
   equities: number[] | null;
   isCalculating: boolean;
   disabledCards: string[];
-  onSetVillain: (index: number, value: string) => void;
+  onSetVillain: (index: number, value: (string | null)[]) => void;
   onAddVillain: () => void;
   onRemoveVillain: (index: number) => void;
 }
@@ -23,10 +22,10 @@ export function VillainsSection({
 }: VillainsSectionProps) {
   const getVillainDisabled = useCallback(
     (index: number): string[] => {
-      const otherExact = villains
+      const otherCards = villains
         .filter((_, i) => i !== index)
-        .flatMap((v) => parseCards(v));
-      return [...new Set([...disabledCards, ...otherExact])];
+        .flatMap((slots) => slots.filter((c): c is string => c !== null));
+      return [...new Set([...disabledCards, ...otherCards])];
     },
     [disabledCards, villains],
   );
@@ -46,11 +45,11 @@ export function VillainsSection({
         </button>
       </div>
 
-      {villains.map((villain, i) => (
+      {villains.map((slots, i) => (
         <VillainRow
           key={i}
           index={i}
-          value={villain}
+          slots={slots}
           equity={equities ? equities[i + 1] ?? null : null}
           isCalculating={isCalculating}
           disabledCards={getVillainDisabled(i)}

@@ -18,10 +18,15 @@ export default function App() {
     [state.hero],
   );
 
+  const villainStrs = useMemo(
+    () => state.villains.map((slots) => slots.filter(Boolean).join("")),
+    [state.villains],
+  );
+
   const { equities, mode, samples, isCalculating, error } = useEquity(
     boardStr,
     heroStr,
-    state.villains,
+    villainStrs,
   );
 
   // Collect all cards used across board + hero for disabling in pickers

@@ -3,7 +3,7 @@ import type { AppState, AppAction } from "./types";
 export const initialState: AppState = {
   board: [null, null, null, null, null],
   hero: [null, null],
-  villains: [""],
+  villains: [[null, null]],
   potSize: "",
   callAmount: "",
 };
@@ -20,10 +20,10 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, villains };
     }
     case "ADD_VILLAIN":
-      return { ...state, villains: [...state.villains, ""] };
+      return { ...state, villains: [...state.villains, [null, null]] };
     case "REMOVE_VILLAIN": {
       const villains = state.villains.filter((_, i) => i !== action.index);
-      return { ...state, villains: villains.length === 0 ? [""] : villains };
+      return { ...state, villains: villains.length === 0 ? [[null, null]] : villains };
     }
     case "SET_POT_SIZE":
       return { ...state, potSize: action.value };

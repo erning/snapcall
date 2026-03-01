@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { MiniCardPicker } from "./MiniCardPicker";
-import { parseCards, SUIT_DISPLAY, type Suit } from "../lib/poker";
+import { SUIT_DISPLAY, type Suit } from "../lib/poker";
 
 const SLOT_SUIT_COLOR: Record<string, string> = {
   s: "text-stone-800",
@@ -11,18 +11,18 @@ const SLOT_SUIT_COLOR: Record<string, string> = {
 
 interface VillainRowProps {
   index: number;
-  value: string;
+  slots: (string | null)[];
   equity: number | null;
   isCalculating: boolean;
   disabledCards: string[];
-  onChange: (value: string) => void;
+  onChange: (slots: (string | null)[]) => void;
   onRemove: () => void;
   canRemove: boolean;
 }
 
 export function VillainRow({
   index,
-  value,
+  slots,
   equity,
   isCalculating,
   disabledCards,
@@ -30,8 +30,6 @@ export function VillainRow({
   onRemove,
   canRemove,
 }: VillainRowProps) {
-  const cards = parseCards(value);
-  const slots: (string | null)[] = [cards[0] ?? null, cards[1] ?? null];
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
 
   const pickerDisabled = useCallback(
@@ -46,14 +44,14 @@ export function VillainRow({
   const handleSelect = (slotIndex: number, card: string) => {
     const newSlots = [...slots];
     newSlots[slotIndex] = card;
-    onChange(newSlots.filter(Boolean).join(""));
+    onChange(newSlots);
     setActiveSlot(null);
   };
 
   const handleDelete = (slotIndex: number) => {
     const newSlots = [...slots];
     newSlots[slotIndex] = null;
-    onChange(newSlots.filter(Boolean).join(""));
+    onChange(newSlots);
     setActiveSlot(null);
   };
 
