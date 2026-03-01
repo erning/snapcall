@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { VillainRow } from "./VillainRow";
-import { classifyVillainValue, parseCards } from "../lib/poker";
+import { parseCards } from "../lib/poker";
 
 interface VillainsSectionProps {
   villains: string[];
@@ -25,9 +25,7 @@ export function VillainsSection({
     (index: number): string[] => {
       const otherExact = villains
         .filter((_, i) => i !== index)
-        .flatMap((v) =>
-          classifyVillainValue(v) === "exact" ? parseCards(v) : [],
-        );
+        .flatMap((v) => parseCards(v));
       return [...new Set([...disabledCards, ...otherExact])];
     },
     [disabledCards, villains],
