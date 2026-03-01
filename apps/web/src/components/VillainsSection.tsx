@@ -1,9 +1,12 @@
+import { useCallback } from "react";
 import { VillainRow } from "./VillainRow";
+import { classifyVillainValue, parseCards } from "../lib/poker";
 
 interface VillainsSectionProps {
   villains: string[];
   equities: number[] | null;
   isCalculating: boolean;
+  disabledCards: string[];
   onSetVillain: (index: number, value: string) => void;
   onAddVillain: () => void;
   onRemoveVillain: (index: number) => void;
@@ -13,10 +16,23 @@ export function VillainsSection({
   villains,
   equities,
   isCalculating,
+  disabledCards,
   onSetVillain,
   onAddVillain,
   onRemoveVillain,
 }: VillainsSectionProps) {
+  const getVillainDisabled = useCallback(
+    (index: number): string[] => {
+      const otherExact = villains
+        .filter((_, i) => i !== index)
+        .flatMap((v) =>
+          classifyVillainValue(v) === "exact" ? parseCards(v) : [],
+        );
+      return [...new Set([...disabledCards, ...otherExact])];
+    },
+    [disabledCards, villains],
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
@@ -39,6 +55,7 @@ export function VillainsSection({
           value={villain}
           equity={equities ? equities[i + 1] ?? null : null}
           isCalculating={isCalculating}
+          disabledCards={getVillainDisabled(i)}
           onChange={(v) => onSetVillain(i, v)}
           onRemove={() => onRemoveVillain(i)}
           canRemove={villains.length > 1}

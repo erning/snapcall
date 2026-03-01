@@ -54,6 +54,15 @@ export function rangeStringToSet(rangeStr: string): Set<string> {
   return new Set(rangeStr.split(",").map((s) => s.trim()).filter(Boolean));
 }
 
+// Classify villain value for display mode
+export type VillainDisplayMode = "unknown" | "range" | "exact";
+
+export function classifyVillainValue(value: string): VillainDisplayMode {
+  if (!value.trim()) return "unknown";
+  if (/^([AKQJT98765432][shdc]){1,2}$/.test(value)) return "exact";
+  return "range";
+}
+
 // Parse a card string like "AhKd" into individual cards ["Ah", "Kd"]
 export function parseCards(input: string): string[] {
   const cards: string[] = [];

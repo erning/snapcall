@@ -6,36 +6,31 @@ interface RangePickerProps {
   onSelect: (selected: Set<string>) => void;
 }
 
-const PRESETS: { label: string; combos: string[] }[] = [
-  { label: "AA", combos: ["AA"] },
-  { label: "KK+", combos: ["AA", "KK"] },
-  { label: "QQ+", combos: ["AA", "KK", "QQ"] },
-  { label: "JJ+", combos: ["AA", "KK", "QQ", "JJ"] },
-  { label: "TT+", combos: ["AA", "KK", "QQ", "JJ", "TT"] },
-  { label: "AKs", combos: ["AKs"] },
-  { label: "AQs+", combos: ["AKs", "AQs"] },
-  { label: "AJs+", combos: ["AKs", "AQs", "AJs"] },
-  { label: "ATs+", combos: ["AKs", "AQs", "AJs", "ATs"] },
-];
-
 function getCellStyle(
   category: "pair" | "suited" | "offsuit",
   isSelected: boolean,
 ): string {
   const base =
-    "aspect-square flex items-center justify-center text-[10px] font-medium rounded-sm transition-colors duration-100 select-none cursor-pointer";
+    "aspect-square flex items-center justify-center text-[10px] font-medium rounded transition-colors duration-100 select-none cursor-pointer";
 
   if (!isSelected) {
-    return `${base} bg-stone-50 text-stone-600 hover:bg-stone-100`;
+    switch (category) {
+      case "pair":
+        return `${base} bg-amber-50 border border-stone-200 text-stone-700`;
+      case "suited":
+        return `${base} bg-sky-50 border border-stone-200 text-stone-700`;
+      case "offsuit":
+        return `${base} bg-white border border-stone-200 text-stone-600`;
+    }
   }
 
   switch (category) {
     case "pair":
-      return `${base} bg-orange-400 text-white`;
+      return `${base} bg-orange-400 text-white border border-orange-400`;
     case "suited":
-      return `${base} bg-orange-500 text-white`;
+      return `${base} bg-orange-500 text-white border border-orange-500`;
     case "offsuit":
-      return `${base} bg-orange-300 text-stone-800`;
+      return `${base} bg-orange-300 text-stone-800 border border-orange-300`;
   }
 }
 
@@ -87,46 +82,11 @@ export function RangePicker({ selected, onSelect }: RangePickerProps) {
     dragging.current = false;
   }
 
-  function applyPreset(combos: string[]) {
-    const allSelected = combos.every((c) => selected.has(c));
-    const next = new Set(selected);
-    for (const c of combos) {
-      if (allSelected) {
-        next.delete(c);
-      } else {
-        next.add(c);
-      }
-    }
-    onSelect(next);
-  }
-
   return (
     <div onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
-      {/* Matrix grid */}
-      <div className="grid grid-cols-[auto_repeat(13,1fr)] gap-px">
-        {/* Top-left empty cell */}
-        <div />
-        {/* Column headers */}
-        {RANKS.map((r) => (
-          <div
-            key={r}
-            className="text-center text-[10px] font-semibold text-stone-400 pb-0.5"
-          >
-            {r}
-          </div>
-        ))}
-
-        {/* Rows */}
+      <div className="grid grid-cols-13 gap-px">
         {RANKS.map((_, row) => (
           <>
-            {/* Row header */}
-            <div
-              key={`row-${row}`}
-              className="text-center text-[10px] font-semibold text-stone-400 pr-0.5 flex items-center justify-center"
-            >
-              {RANKS[row]}
-            </div>
-            {/* Cells */}
             {RANKS.map((_, col) => {
               const combo = getRangeLabel(row, col);
               const category = getRangeCategory(row, col);
@@ -146,34 +106,6 @@ export function RangePicker({ selected, onSelect }: RangePickerProps) {
             })}
           </>
         ))}
-      </div>
-
-      {/* Presets */}
-      <div className="flex flex-wrap gap-1.5 mt-3">
-        {PRESETS.map((preset) => {
-          const allActive = preset.combos.every((c) => selected.has(c));
-          return (
-            <button
-              key={preset.label}
-              type="button"
-              className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors duration-150 ${
-                allActive
-                  ? "bg-orange-500 text-white"
-                  : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-              }`}
-              onClick={() => applyPreset(preset.combos)}
-            >
-              {preset.label}
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors duration-150"
-          onClick={() => onSelect(new Set())}
-        >
-          Clear
-        </button>
       </div>
     </div>
   );
