@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { MiniCardPicker } from "./MiniCardPicker";
 import { SUIT_DISPLAY, type Suit } from "../lib/poker";
 
@@ -106,14 +106,12 @@ export function VillainRow({
               className="fixed inset-0 bg-black/20 z-10"
               onClick={() => setActiveSlot(null)}
             />
-            <div className="absolute left-0 right-0 mt-2 z-20">
-              <MiniCardPicker
-                currentCard={slots[activeSlot]}
-                disabledCards={pickerDisabled(activeSlot)}
-                onSelect={(card) => handleSelect(activeSlot, card)}
-                onDelete={() => handleDelete(activeSlot)}
-              />
-            </div>
+            <PopoverPicker
+              currentCard={slots[activeSlot]}
+              disabledCards={pickerDisabled(activeSlot)}
+              onSelect={(card) => handleSelect(activeSlot, card)}
+              onDelete={() => handleDelete(activeSlot)}
+            />
           </>
         )}
       </div>
@@ -163,5 +161,34 @@ function CardSlot({
         <span className="text-stone-300 text-2xl leading-none">+</span>
       )}
     </button>
+  );
+}
+
+function PopoverPicker({
+  currentCard,
+  disabledCards,
+  onSelect,
+  onDelete,
+}: {
+  currentCard: string | null;
+  disabledCards: string[];
+  onSelect: (card: string) => void;
+  onDelete: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, []);
+
+  return (
+    <div ref={ref} className="absolute left-0 right-0 mt-2 z-20">
+      <MiniCardPicker
+        currentCard={currentCard}
+        disabledCards={disabledCards}
+        onSelect={onSelect}
+        onDelete={onDelete}
+      />
+    </div>
   );
 }

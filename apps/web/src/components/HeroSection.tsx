@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { MiniCardPicker } from "./MiniCardPicker";
 import { SUIT_DISPLAY, type Suit } from "../lib/poker";
 
@@ -160,8 +160,14 @@ function PopoverPicker({
   onSelect: (card: string) => void;
   onDelete: () => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, []);
+
   return (
-    <div className="absolute left-0 right-0 mt-2 z-20">
+    <div ref={ref} className="absolute left-0 right-0 mt-2 z-20">
       <MiniCardPicker
         currentCard={currentCard}
         disabledCards={disabledCards}
