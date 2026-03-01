@@ -1,7 +1,6 @@
 import { useReducer, useMemo } from "react";
 import { appReducer, initialState } from "./reducer";
 import { useEquity } from "./hooks/useEquity";
-import { parseCards } from "./lib/poker";
 import { BoardSection } from "./components/BoardSection";
 import { HeroSection } from "./components/HeroSection";
 import { VillainsSection } from "./components/VillainsSection";
@@ -10,15 +9,30 @@ import { PotOddsSection } from "./components/PotOddsSection";
 export default function App() {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
+  const boardStr = useMemo(
+    () => state.board.filter(Boolean).join(""),
+    [state.board],
+  );
+  const heroStr = useMemo(
+    () => state.hero.filter(Boolean).join(""),
+    [state.hero],
+  );
+
   const { equities, mode, samples, isCalculating, error } = useEquity(
-    state.board,
-    state.hero,
+    boardStr,
+    heroStr,
     state.villains,
   );
 
   // Collect all cards used across board + hero for disabling in pickers
-  const boardCards = useMemo(() => parseCards(state.board), [state.board]);
-  const heroCards = useMemo(() => parseCards(state.hero), [state.hero]);
+  const boardCards = useMemo(
+    () => state.board.filter((c): c is string => c !== null),
+    [state.board],
+  );
+  const heroCards = useMemo(
+    () => state.hero.filter((c): c is string => c !== null),
+    [state.hero],
+  );
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -34,17 +48,17 @@ export default function App() {
         </header>
 
         <BoardSection
-          value={state.board}
+          slots={state.board}
           disabledCards={heroCards}
-          onChange={(v) => dispatch({ type: "SET_BOARD", value: v })}
+          onChange={(slots) => dispatch({ type: "SET_BOARD", value: slots })}
         />
 
         <HeroSection
-          value={state.hero}
+          slots={state.hero}
           equity={equities ? equities[0] : null}
           isCalculating={isCalculating}
           disabledCards={boardCards}
-          onChange={(v) => dispatch({ type: "SET_HERO", value: v })}
+          onChange={(slots) => dispatch({ type: "SET_HERO", value: slots })}
         />
 
         {error && (

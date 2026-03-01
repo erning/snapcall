@@ -1,32 +1,58 @@
-import { useState, useCallback } from "react";
-import { CardPicker } from "./CardPicker";
-import { BottomSheet } from "./BottomSheet";
-import { parseCards } from "../lib/poker";
+import { useState, useRef, useCallback } from "react";
+import { MiniCardPicker } from "./MiniCardPicker";
+import { SUIT_DISPLAY, type Suit } from "../lib/poker";
+
+const SLOT_SUIT_COLOR: Record<string, string> = {
+  s: "text-stone-800", // ♠ black
+  c: "text-stone-800", // ♣ black
+  h: "text-red-500",   // ♥ red
+  d: "text-red-500",   // ♦ red
+};
 
 interface HeroSectionProps {
-  value: string;
+  slots: (string | null)[];
   equity: number | null;
   isCalculating: boolean;
   disabledCards: string[];
-  onChange: (value: string) => void;
+  onChange: (slots: (string | null)[]) => void;
 }
 
 export function HeroSection({
-  value,
+  slots,
   equity,
   isCalculating,
   disabledCards,
   onChange,
 }: HeroSectionProps) {
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const selectedCards = parseCards(value);
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handlePickerSelect = useCallback(
-    (cards: string[]) => {
-      onChange(cards.join(""));
+  const pickerDisabled = useCallback(
+    (slotIndex: number) => {
+      const otherSlotCard = slots[slotIndex === 0 ? 1 : 0];
+      const otherCards = otherSlotCard ? [otherSlotCard] : [];
+      return [...new Set([...disabledCards, ...otherCards])];
     },
-    [onChange],
+    [disabledCards, slots],
   );
+
+  const handleSelect = (slotIndex: number, card: string) => {
+    const newSlots = [...slots];
+    newSlots[slotIndex] = card;
+    onChange(newSlots);
+    setActiveSlot(null);
+  };
+
+  const handleDelete = (slotIndex: number) => {
+    const newSlots = [...slots];
+    newSlots[slotIndex] = null;
+    onChange(newSlots);
+    setActiveSlot(null);
+  };
+
+  const handleSlotClick = (index: number) => {
+    setActiveSlot(activeSlot === index ? null : index);
+  };
 
   return (
     <section className="bg-white rounded-2xl shadow-sm p-5">
@@ -41,32 +67,107 @@ export function HeroSection({
               {equity.toFixed(1)}%
             </span>
           )}
-          <button
-            type="button"
-            className="text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors duration-200"
-            onClick={() => setPickerOpen(!pickerOpen)}
-          >
-            {pickerOpen ? "Close" : "Pick cards"}
-          </button>
         </div>
       </div>
 
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="e.g. AhKd"
-        className="w-full text-base py-2.5 px-3 bg-stone-50 rounded-xl border-none outline-none text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-orange-300 transition-all duration-200"
-      />
+      <div ref={containerRef} className="relative">
+        <div className="flex gap-1.5 justify-start">
+          <CardSlot
+            card={slots[0]}
+            active={activeSlot === 0}
+            onClick={() => handleSlotClick(0)}
+          />
+          <CardSlot
+            card={slots[1]}
+            active={activeSlot === 1}
+            onClick={() => handleSlotClick(1)}
+          />
+        </div>
 
-      <BottomSheet open={pickerOpen} onClose={() => setPickerOpen(false)}>
-        <CardPicker
-          selected={selectedCards}
-          disabled={disabledCards}
-          maxSelect={2}
-          onSelect={handlePickerSelect}
-        />
-      </BottomSheet>
+        {/* Overlay + Popover picker */}
+        {activeSlot !== null && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/20 z-10"
+              onClick={() => setActiveSlot(null)}
+            />
+            <PopoverPicker
+              currentCard={slots[activeSlot]}
+              disabledCards={pickerDisabled(activeSlot)}
+              onSelect={(card) => handleSelect(activeSlot, card)}
+              onDelete={() => handleDelete(activeSlot)}
+            />
+          </>
+        )}
+      </div>
     </section>
+  );
+}
+
+function CardSlot({
+  card,
+  active,
+  onClick,
+}: {
+  card: string | null;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const rank = card ? card[0] : null;
+  const suit = card ? (card[1] as Suit) : null;
+  const suitInfo = suit ? SUIT_DISPLAY[suit] : null;
+  const color = suit ? SLOT_SUIT_COLOR[suit] : "";
+
+  let cls =
+    "w-14 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-150 select-none";
+
+  if (card && suitInfo) {
+    cls += " bg-white border border-stone-200";
+  } else {
+    cls += " border-2 border-dashed border-stone-300";
+  }
+
+  if (active) {
+    cls += " ring-2 ring-orange-400";
+  }
+
+  return (
+    <button type="button" className={cls} onClick={onClick}>
+      {card && suitInfo ? (
+        <>
+          <span className={`text-2xl font-bold leading-none ${color}`}>
+            {rank}
+          </span>
+          <span className={`text-2xl font-bold leading-none ${color}`}>
+            {suitInfo.symbol}
+          </span>
+        </>
+      ) : (
+        <span className="text-stone-300 text-2xl leading-none">+</span>
+      )}
+    </button>
+  );
+}
+
+function PopoverPicker({
+  currentCard,
+  disabledCards,
+  onSelect,
+  onDelete,
+}: {
+  currentCard: string | null;
+  disabledCards: string[];
+  onSelect: (card: string) => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="absolute left-0 right-0 mt-2 z-20">
+      <MiniCardPicker
+        currentCard={currentCard}
+        disabledCards={disabledCards}
+        onSelect={onSelect}
+        onDelete={onDelete}
+      />
+    </div>
   );
 }

@@ -1,8 +1,8 @@
 import type { AppState, AppAction } from "./types";
 
 export const initialState: AppState = {
-  board: "",
-  hero: "",
+  board: [null, null, null, null, null],
+  hero: [null, null],
   villains: [""],
   potSize: "",
   callAmount: "",
