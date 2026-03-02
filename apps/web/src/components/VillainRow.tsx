@@ -57,6 +57,7 @@ export function VillainRow({
   const isDragging = useRef(false);
   const directionLocked = useRef<"h" | "v" | null>(null);
   const currentOffset = useRef(0);
+  const pointerTarget = useRef<HTMLElement | null>(null);
 
   // Bug 3B: refs for background swipe-to-close
   const bgStartX = useRef(0);
@@ -85,13 +86,11 @@ export function VillainRow({
   }, [isSwipeOpen, revealWidth]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button, input, [role='button']")) return;
-
     startX.current = e.clientX;
     startY.current = e.clientY;
     isDragging.current = true;
     directionLocked.current = null;
+    pointerTarget.current = e.target as HTMLElement;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const el = foregroundRef.current;
     if (el) {
@@ -144,10 +143,24 @@ export function VillainRow({
         el.addEventListener("transitionend", onEnd);
       }
       directionLocked.current = null;
+      pointerTarget.current = null;
       onSwipeClose();
       return;
     }
 
+    // Pure tap — forward click to original button target
+    if (directionLocked.current === null) {
+      const btn = pointerTarget.current?.closest("button") as HTMLButtonElement | null;
+      pointerTarget.current = null;
+      if (btn) {
+        btn.click();
+        const el = foregroundRef.current;
+        if (el) el.style.willChange = "";
+        return;
+      }
+    }
+
+    pointerTarget.current = null;
     directionLocked.current = null;
 
     const threshold = -revealWidth / 2;
@@ -240,7 +253,7 @@ export function VillainRow({
       {/* Foreground content — Bug 1: p-3, Bug 4: no will-change-transform, Bug 6: dynamic touchAction */}
       <div
         ref={foregroundRef}
-        className="relative bg-white p-3"
+        className="relative bg-white px-5 py-3"
         style={{ touchAction: isSwipeOpen ? "none" : "pan-y" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -481,42 +494,44 @@ function RangeCardStack({
     );
   }
 
-  const shown = combos.slice(0, 3);
-  const extra = combos.length - 3;
-
-  const rotations =
-    shown.length === 1
-      ? ["0deg"]
-      : shown.length === 2
-        ? ["-4deg", "4deg"]
-        : ["-6deg", "0deg", "6deg"];
+  const MAX_INDIVIDUAL = 6;
+  const individual = combos.slice(0, MAX_INDIVIDUAL);
+  const overflow = combos.length - MAX_INDIVIDUAL;
 
   return (
     <button
       type="button"
-      className={`relative w-14 h-16 cursor-pointer select-none transition-all duration-150${active ? " ring-2 ring-orange-400 rounded-xl" : ""}`}
+      className={`flex gap-1.5 cursor-pointer select-none transition-all duration-150${active ? " ring-2 ring-orange-400 rounded-xl" : ""}`}
       onClick={onClick}
     >
-      {shown.map((combo, i) => (
+      {individual.map((combo) => (
         <div
           key={combo}
-          className="w-10 h-14 rounded-lg bg-white border border-stone-200 absolute flex items-center justify-center"
-          style={{
-            left: "50%",
-            top: "50%",
-            transform: `translate(-50%, -50%) rotate(${rotations[i]})`,
-            zIndex: i,
-          }}
+          className="w-10 h-14 rounded-lg bg-white border border-stone-200 flex items-center justify-center shrink-0"
         >
           <span className="text-[10px] font-semibold text-stone-700">
             {combo}
           </span>
         </div>
       ))}
-      {extra > 0 && (
-        <span className="absolute -bottom-0.5 -right-0.5 bg-stone-600 text-white text-[9px] font-semibold rounded-full w-5 h-5 flex items-center justify-center z-10">
-          +{extra}
-        </span>
+      {overflow > 0 && (
+        <div className="relative w-10 h-14 shrink-0">
+          {["-4deg", "4deg"].map((rot, i) => (
+            <div
+              key={i}
+              className="w-8 h-11 rounded bg-stone-100 border border-stone-200 absolute"
+              style={{
+                left: "50%",
+                top: "50%",
+                transform: `translate(-50%, -50%) rotate(${rot})`,
+                zIndex: i,
+              }}
+            />
+          ))}
+          <span className="absolute inset-0 flex items-center justify-center z-10 text-[10px] font-semibold text-stone-500">
+            +{overflow}
+          </span>
+        </div>
       )}
     </button>
   );

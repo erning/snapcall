@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MiniCardPicker } from "./MiniCardPicker";
+import { NumberEditor, Badge } from "./NumberEditor";
+import { calcPotOdds } from "../lib/potOdds";
 import { SUIT_DISPLAY, type Suit } from "../lib/poker";
 
 const SLOT_SUIT_COLOR: Record<string, string> = {
@@ -15,6 +17,9 @@ interface HeroSectionProps {
   isCalculating: boolean;
   disabledCards: string[];
   onChange: (slots: (string | null)[]) => void;
+  callAmount: number;
+  onSetCallAmount: (v: number) => void;
+  potSize: number;
 }
 
 export function HeroSection({
@@ -23,8 +28,12 @@ export function HeroSection({
   isCalculating,
   disabledCards,
   onChange,
+  callAmount,
+  onSetCallAmount,
+  potSize,
 }: HeroSectionProps) {
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [betEditorOpen, setBetEditorOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const pickerDisabled = useCallback(
@@ -51,37 +60,72 @@ export function HeroSection({
   };
 
   const handleSlotClick = (index: number) => {
+    setBetEditorOpen(false);
     setActiveSlot(activeSlot === index ? null : index);
+  };
+
+  const handleBetBadgeClick = () => {
+    setActiveSlot(null);
+    setBetEditorOpen(!betEditorOpen);
   };
 
   return (
     <section className="bg-white rounded-2xl shadow-sm p-5">
-      <div className="flex items-center justify-between mb-3">
+      <div className="relative flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-stone-900">Hero</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {isCalculating && (
             <span className="text-xs text-stone-400">Calculating...</span>
           )}
-          {equity !== null && !isCalculating && (
-            <span className="text-lg font-bold text-orange-500">
-              {equity.toFixed(1)}%
-            </span>
-          )}
+          <Badge
+            label="Bet"
+            value={callAmount}
+            active={betEditorOpen}
+            onClick={handleBetBadgeClick}
+          />
         </div>
+
+        {/* Bet editor popover */}
+        {betEditorOpen && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/20 z-10"
+              onClick={() => setBetEditorOpen(false)}
+            />
+            <div className="absolute right-0 top-full mt-1 z-20">
+              <NumberEditor
+                value={callAmount}
+                onChange={onSetCallAmount}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <div ref={containerRef} className="relative">
-        <div className="flex gap-1.5 justify-start">
-          <CardSlot
-            card={slots[0]}
-            active={activeSlot === 0}
-            onClick={() => handleSlotClick(0)}
-          />
-          <CardSlot
-            card={slots[1]}
-            active={activeSlot === 1}
-            onClick={() => handleSlotClick(1)}
-          />
+        <div className="flex items-start justify-between">
+          {/* Card slots (left) */}
+          <div className="flex gap-1.5">
+            <CardSlot
+              card={slots[0]}
+              active={activeSlot === 0}
+              onClick={() => handleSlotClick(0)}
+            />
+            <CardSlot
+              card={slots[1]}
+              active={activeSlot === 1}
+              onClick={() => handleSlotClick(1)}
+            />
+          </div>
+
+          {/* Equity info (right) */}
+          {equity !== null && !isCalculating && (
+            <EquityDetails
+              equity={equity}
+              potSize={potSize}
+              callAmount={callAmount}
+            />
+          )}
         </div>
 
         {/* Overlay + Popover picker */}
@@ -101,6 +145,53 @@ export function HeroSection({
         )}
       </div>
     </section>
+  );
+}
+
+function EquityDetails({
+  equity,
+  potSize,
+  callAmount,
+}: {
+  equity: number;
+  potSize: number;
+  callAmount: number;
+}) {
+  const potOdds = calcPotOdds(potSize, callAmount);
+
+  const maxBet =
+    equity >= 100
+      ? null
+      : potSize > 0
+        ? Math.floor((equity * potSize) / (100 - equity))
+        : null;
+
+  return (
+    <div className="text-right">
+      <div className="text-lg font-bold text-orange-500">
+        {equity.toFixed(1)}%
+      </div>
+      {potOdds !== null && (
+        <>
+          {equity > potOdds ? (
+            <div className="text-xs font-semibold text-green-600">+EV Call</div>
+          ) : (
+            <div className="text-xs font-semibold text-red-500">-EV Fold</div>
+          )}
+          <div className="text-xs text-stone-500">
+            Odds <span className="font-semibold">{potOdds.toFixed(1)}%</span>
+            {maxBet !== null && (
+              <>
+                {" · "}Max bet <span className="font-semibold">{maxBet}</span>
+              </>
+            )}
+          </div>
+          {equity >= 100 && (
+            <div className="text-xs text-stone-500">All-in</div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MiniCardPicker } from "./MiniCardPicker";
+import { NumberEditor, Badge } from "./NumberEditor";
 import { SUIT_DISPLAY, type Suit } from "../lib/poker";
 
 const SLOT_SUIT_COLOR: Record<string, string> = {
@@ -13,10 +14,13 @@ interface BoardSectionProps {
   slots: (string | null)[];
   disabledCards: string[];
   onChange: (slots: (string | null)[]) => void;
+  potSize: number;
+  onSetPotSize: (v: number) => void;
 }
 
-export function BoardSection({ slots, disabledCards, onChange }: BoardSectionProps) {
+export function BoardSection({ slots, disabledCards, onChange, potSize, onSetPotSize }: BoardSectionProps) {
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
+  const [potEditorOpen, setPotEditorOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Compute disabled cards for picker: external disabledCards + other board slots
@@ -45,12 +49,42 @@ export function BoardSection({ slots, disabledCards, onChange }: BoardSectionPro
   };
 
   const handleSlotClick = (index: number) => {
+    setPotEditorOpen(false);
     setActiveSlot(activeSlot === index ? null : index);
+  };
+
+  const handlePotBadgeClick = () => {
+    setActiveSlot(null);
+    setPotEditorOpen(!potEditorOpen);
   };
 
   return (
     <section className="bg-white rounded-2xl shadow-sm p-5">
-      <h2 className="text-sm font-semibold text-stone-900 mb-3">Board</h2>
+      <div className="relative flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-stone-900">Board</h2>
+        <Badge
+          label="Pot"
+          value={potSize}
+          active={potEditorOpen}
+          onClick={handlePotBadgeClick}
+        />
+
+        {/* Pot editor popover */}
+        {potEditorOpen && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/20 z-10"
+              onClick={() => setPotEditorOpen(false)}
+            />
+            <div className="absolute right-0 top-full mt-1 z-20">
+              <NumberEditor
+                value={potSize}
+                onChange={onSetPotSize}
+              />
+            </div>
+          </>
+        )}
+      </div>
 
       <div ref={containerRef} className="relative">
         {/* Card slots: Flop | Turn | River */}
