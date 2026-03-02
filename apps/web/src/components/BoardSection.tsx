@@ -59,7 +59,7 @@ export function BoardSection({ slots, disabledCards, onChange, potSize, onSetPot
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm p-5">
+    <section className="bg-white rounded-2xl shadow-sm px-5 pt-3 pb-5">
       <div className="relative flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-stone-900">Board</h2>
         <Badge

@@ -70,7 +70,7 @@ export function HeroSection({
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm p-5">
+    <section className="bg-white rounded-2xl shadow-sm px-5 pt-3 pb-5">
       <div className="relative flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-stone-900">Hero</h2>
         <div className="flex items-center gap-2">
@@ -178,7 +178,7 @@ function EquityDetails({
           ) : (
             <div className="text-xs font-semibold text-red-500">-EV Fold</div>
           )}
-          <div className="text-xs text-stone-500">
+          <div className="text-xs text-stone-500 mt-1">
             Odds <span className="font-semibold">{potOdds.toFixed(1)}%</span>
             {maxBet !== null && (
               <>

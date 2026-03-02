@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePersistedReducer } from "./hooks/usePersistedReducer";
 import { useEquity } from "./hooks/useEquity";
 import { BoardSection } from "./components/BoardSection";
@@ -7,6 +7,7 @@ import { VillainsSection } from "./components/VillainsSection";
 
 export default function App() {
   const [state, dispatch] = usePersistedReducer();
+  const [heroCollapsed, setHeroCollapsed] = useState(false);
 
   const boardStr = useMemo(
     () => state.board.filter(Boolean).join(""),
@@ -62,7 +63,7 @@ export default function App() {
   return (
     <main className="h-screen flex flex-col bg-stone-50">
       {/* Fixed: Header + Board + Hero + status + Villains header */}
-      <div className="shrink-0 max-w-lg w-full mx-auto px-4 pt-6 space-y-4">
+      <div className="shrink-0 max-w-lg w-full mx-auto px-4 pt-3 pb-2 space-y-4">
         <header className="px-1 flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold text-stone-900">SnapCall</h1>
@@ -76,42 +77,54 @@ export default function App() {
           </button>
         </header>
 
-        <BoardSection
-          slots={state.board}
-          disabledCards={[...heroCards, ...villainCards]}
-          onChange={(slots) => dispatch({ type: "SET_BOARD", value: slots })}
-          potSize={potSizeNum}
-          onSetPotSize={(v) =>
-            dispatch({ type: "SET_POT_SIZE", value: String(v) })
-          }
-        />
-
-        <HeroSection
-          slots={state.hero}
-          equity={equities ? equities[0] : null}
-          isCalculating={isCalculating}
-          disabledCards={[...boardCards, ...villainCards]}
-          onChange={(slots) =>
-            dispatch({ type: "SET_HERO", value: slots })
-          }
-          callAmount={callAmountNum}
-          onSetCallAmount={(v) =>
-            dispatch({ type: "SET_CALL_AMOUNT", value: String(v) })
-          }
-          potSize={potSizeNum}
-        />
-
-        <div className="px-1 min-h-[20px]">
-          {error ? (
-            <p className="text-sm text-red-500">{error}</p>
-          ) : mode && samples !== null ? (
-            <p className="text-xs text-stone-400">
-              {mode} &middot; {samples.toLocaleString()} samples
-            </p>
-          ) : null}
+        <div className="relative">
+          <BoardSection
+            slots={state.board}
+            disabledCards={[...heroCards, ...villainCards]}
+            onChange={(slots) => dispatch({ type: "SET_BOARD", value: slots })}
+            potSize={potSizeNum}
+            onSetPotSize={(v) =>
+              dispatch({ type: "SET_POT_SIZE", value: String(v) })
+            }
+          />
+          {/* 点击区域覆盖 Board 底部与 Hero 之间的 gap，不占额外空间 */}
+          <div
+            onClick={() => setHeroCollapsed((prev) => !prev)}
+            className="absolute -bottom-3 left-0 right-0 h-6 cursor-pointer z-10 flex items-center justify-center group"
+          >
+            <div className="w-8 h-0.5 rounded-full bg-transparent group-hover:bg-stone-300 transition-colors" />
+          </div>
         </div>
 
-        <div className="flex items-center justify-between px-1">
+        {!heroCollapsed && (
+          <HeroSection
+            slots={state.hero}
+            equity={equities ? equities[0] : null}
+            isCalculating={isCalculating}
+            disabledCards={[...boardCards, ...villainCards]}
+            onChange={(slots) =>
+              dispatch({ type: "SET_HERO", value: slots })
+            }
+            callAmount={callAmountNum}
+            onSetCallAmount={(v) =>
+              dispatch({ type: "SET_CALL_AMOUNT", value: String(v) })
+            }
+            potSize={potSizeNum}
+          />
+        )}
+
+        <div className="space-y-1">
+          <div className="px-1 min-h-[20px]">
+            {error ? (
+              <p className="text-sm text-red-500">{error}</p>
+            ) : mode && samples !== null ? (
+              <p className="text-xs text-stone-400">
+                {mode} &middot; {samples.toLocaleString()} samples
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex items-center justify-between px-1">
           <h2 className="text-sm font-semibold text-stone-900">
             Villains ({state.villains.length})
           </h2>
@@ -122,6 +135,7 @@ export default function App() {
           >
             + Add villain
           </button>
+          </div>
         </div>
       </div>
 
