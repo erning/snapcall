@@ -57,7 +57,6 @@ export function VillainRow({
   const isDragging = useRef(false);
   const directionLocked = useRef<"h" | "v" | null>(null);
   const currentOffset = useRef(0);
-  const pointerTarget = useRef<HTMLElement | null>(null);
 
   // Bug 3B: refs for background swipe-to-close
   const bgStartX = useRef(0);
@@ -86,11 +85,14 @@ export function VillainRow({
   }, [isSwipeOpen, revealWidth]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("input") || target.closest("[data-card-picker]")) {
+      return;
+    }
     startX.current = e.clientX;
     startY.current = e.clientY;
     isDragging.current = true;
     directionLocked.current = null;
-    pointerTarget.current = e.target as HTMLElement;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const el = foregroundRef.current;
     if (el) {
@@ -143,24 +145,10 @@ export function VillainRow({
         el.addEventListener("transitionend", onEnd);
       }
       directionLocked.current = null;
-      pointerTarget.current = null;
       onSwipeClose();
       return;
     }
 
-    // Pure tap — forward click to original button target
-    if (directionLocked.current === null) {
-      const btn = pointerTarget.current?.closest("button") as HTMLButtonElement | null;
-      pointerTarget.current = null;
-      if (btn) {
-        btn.click();
-        const el = foregroundRef.current;
-        if (el) el.style.willChange = "";
-        return;
-      }
-    }
-
-    pointerTarget.current = null;
     directionLocked.current = null;
 
     const threshold = -revealWidth / 2;

@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo } from "react";
 import { usePersistedReducer } from "./hooks/usePersistedReducer";
 import { useEquity } from "./hooks/useEquity";
 import { BoardSection } from "./components/BoardSection";
@@ -7,22 +7,6 @@ import { VillainsSection } from "./components/VillainsSection";
 
 export default function App() {
   const [state, dispatch] = usePersistedReducer();
-
-  const [heroVisible, setHeroVisible] = useState(true);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = heroRef.current;
-    const root = scrollRef.current;
-    if (!el || !root) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setHeroVisible(entry.isIntersecting),
-      { root, threshold: 0 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   const boardStr = useMemo(
     () => state.board.filter(Boolean).join(""),
@@ -77,7 +61,7 @@ export default function App() {
 
   return (
     <main className="h-screen flex flex-col bg-stone-50">
-      {/* Fixed: Header + Board */}
+      {/* Fixed: Header + Board + Hero + status + Villains header */}
       <div className="shrink-0 max-w-lg w-full mx-auto px-4 pt-6 space-y-4">
         <header className="px-1 flex items-start justify-between">
           <div>
@@ -101,97 +85,67 @@ export default function App() {
             dispatch({ type: "SET_POT_SIZE", value: String(v) })
           }
         />
+
+        <HeroSection
+          slots={state.hero}
+          equity={equities ? equities[0] : null}
+          isCalculating={isCalculating}
+          disabledCards={[...boardCards, ...villainCards]}
+          onChange={(slots) =>
+            dispatch({ type: "SET_HERO", value: slots })
+          }
+          callAmount={callAmountNum}
+          onSetCallAmount={(v) =>
+            dispatch({ type: "SET_CALL_AMOUNT", value: String(v) })
+          }
+          potSize={potSizeNum}
+        />
+
+        <div className="px-1 min-h-[20px]">
+          {error ? (
+            <p className="text-sm text-red-500">{error}</p>
+          ) : mode && samples !== null ? (
+            <p className="text-xs text-stone-400">
+              {mode} &middot; {samples.toLocaleString()} samples
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-sm font-semibold text-stone-900">
+            Villains ({state.villains.length})
+          </h2>
+          <button
+            type="button"
+            className="text-xs font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1.5 rounded-lg transition-colors duration-200"
+            onClick={() => dispatch({ type: "ADD_VILLAIN" })}
+          >
+            + Add villain
+          </button>
+        </div>
       </div>
 
-      {/* Scrollable: Hero + status + Villains */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0">
-        <div className="max-w-lg mx-auto px-4">
-          {/* Peek bar — chevron fades in when hero is scrolled out of view */}
-          <div className="sticky top-0 z-10 h-8 flex items-center justify-center">
-            <button
-              type="button"
-              className={`transition-opacity duration-200 text-stone-400 ${
-                heroVisible ? "opacity-0 pointer-events-none" : "opacity-100"
-              }`}
-              onClick={() =>
-                scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })
-              }
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <div className="pb-24 space-y-4">
-            <div ref={heroRef}>
-              <HeroSection
-                slots={state.hero}
-                equity={equities ? equities[0] : null}
-                isCalculating={isCalculating}
-                disabledCards={[...boardCards, ...villainCards]}
-                onChange={(slots) =>
-                  dispatch({ type: "SET_HERO", value: slots })
-                }
-                callAmount={callAmountNum}
-                onSetCallAmount={(v) =>
-                  dispatch({ type: "SET_CALL_AMOUNT", value: String(v) })
-                }
-                potSize={potSizeNum}
-              />
-            </div>
-
-            <div className="px-1 min-h-[20px]">
-              {error ? (
-                <p className="text-sm text-red-500">{error}</p>
-              ) : mode && samples !== null ? (
-                <p className="text-xs text-stone-400">
-                  {mode} &middot; {samples.toLocaleString()} samples
-                </p>
-              ) : null}
-            </div>
-
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-sm font-semibold text-stone-900">
-                Villains ({state.villains.length})
-              </h2>
-              <button
-                type="button"
-                className="text-xs font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1.5 rounded-lg transition-colors duration-200"
-                onClick={() => dispatch({ type: "ADD_VILLAIN" })}
-              >
-                + Add villain
-              </button>
-            </div>
-
-            <VillainsSection
-              villains={state.villains}
-              equities={equities}
-              isCalculating={isCalculating}
-              disabledCards={globalDisabledCards}
-              onSetVillain={(i, v) =>
-                dispatch({ type: "SET_VILLAIN", index: i, value: v })
-              }
-              onSetVillainRange={(i, range) =>
-                dispatch({ type: "SET_VILLAIN_RANGE", index: i, range })
-              }
-              onSetVillainMode={(i, mode) =>
-                dispatch({ type: "SET_VILLAIN_MODE", index: i, mode })
-              }
-              onRemoveVillain={(i) =>
-                dispatch({ type: "REMOVE_VILLAIN", index: i })
-              }
-            />
-          </div>
+      {/* Scrollable: only VillainsSection */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-lg mx-auto px-4 pb-24">
+          <VillainsSection
+            villains={state.villains}
+            equities={equities}
+            isCalculating={isCalculating}
+            disabledCards={globalDisabledCards}
+            onSetVillain={(i, v) =>
+              dispatch({ type: "SET_VILLAIN", index: i, value: v })
+            }
+            onSetVillainRange={(i, range) =>
+              dispatch({ type: "SET_VILLAIN_RANGE", index: i, range })
+            }
+            onSetVillainMode={(i, mode) =>
+              dispatch({ type: "SET_VILLAIN_MODE", index: i, mode })
+            }
+            onRemoveVillain={(i) =>
+              dispatch({ type: "REMOVE_VILLAIN", index: i })
+            }
+          />
         </div>
       </div>
     </main>
