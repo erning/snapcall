@@ -37,6 +37,7 @@ function getCellStyle(
 export function RangePicker({ selected, onSelect }: RangePickerProps) {
   const dragging = useRef(false);
   const dragMode = useRef<"select" | "deselect">("select");
+  const lastCombo = useRef<string | null>(null);
 
   const toggle = useCallback(
     (combo: string) => {
@@ -67,6 +68,7 @@ export function RangePicker({ selected, onSelect }: RangePickerProps) {
   function handlePointerDown(combo: string) {
     dragging.current = true;
     dragMode.current = selected.has(combo) ? "deselect" : "select";
+    lastCombo.current = combo;
     toggle(combo);
   }
 
@@ -78,13 +80,29 @@ export function RangePicker({ selected, onSelect }: RangePickerProps) {
     setCell(combo, dragMode.current === "select");
   }
 
+  function handleGridPointerMove(e: ReactPointerEvent) {
+    if (!dragging.current) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el) return;
+    const cell = (el as HTMLElement).closest<HTMLElement>("[data-combo]");
+    if (!cell) return;
+    const combo = cell.dataset.combo!;
+    if (combo === lastCombo.current) return;
+    lastCombo.current = combo;
+    setCell(combo, dragMode.current === "select");
+  }
+
   function handlePointerUp() {
     dragging.current = false;
+    lastCombo.current = null;
   }
 
   return (
     <div onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp}>
-      <div className="grid grid-cols-13 gap-px">
+      <div
+        className="grid grid-cols-13 gap-px touch-none"
+        onPointerMove={handleGridPointerMove}
+      >
         {RANKS.map((_, row) => (
           <>
             {RANKS.map((_, col) => {
@@ -96,6 +114,7 @@ export function RangePicker({ selected, onSelect }: RangePickerProps) {
                 <button
                   key={combo}
                   type="button"
+                  data-combo={combo}
                   className={getCellStyle(category, isSelected)}
                   onPointerDown={() => handlePointerDown(combo)}
                   onPointerEnter={(e) => handlePointerEnter(combo, e)}

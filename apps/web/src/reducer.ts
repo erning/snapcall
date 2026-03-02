@@ -1,9 +1,11 @@
-import type { AppState, AppAction } from "./types";
+import type { AppState, AppAction, VillainData } from "./types";
+
+const emptyVillain: VillainData = { mode: "range", range: "" };
 
 export const initialState: AppState = {
   board: [null, null, null, null, null],
   hero: [null, null],
-  villains: [[null, null]],
+  villains: [{ mode: "range", range: "" }],
   potSize: "",
   callAmount: "",
 };
@@ -16,18 +18,36 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, hero: action.value };
     case "SET_VILLAIN": {
       const villains = [...state.villains];
-      villains[action.index] = action.value;
+      villains[action.index] = { mode: "cards", slots: action.value };
+      return { ...state, villains };
+    }
+    case "SET_VILLAIN_RANGE": {
+      const villains = [...state.villains];
+      villains[action.index] = { mode: "range", range: action.range };
+      return { ...state, villains };
+    }
+    case "SET_VILLAIN_MODE": {
+      const villains = [...state.villains];
+      villains[action.index] =
+        action.mode === "cards"
+          ? { mode: "cards", slots: [null, null] }
+          : { mode: "range", range: "" };
       return { ...state, villains };
     }
     case "ADD_VILLAIN":
-      return { ...state, villains: [...state.villains, [null, null]] };
+      return { ...state, villains: [...state.villains, { ...emptyVillain }] };
     case "REMOVE_VILLAIN": {
       const villains = state.villains.filter((_, i) => i !== action.index);
-      return { ...state, villains: villains.length === 0 ? [[null, null]] : villains };
+      return {
+        ...state,
+        villains: villains.length === 0 ? [{ ...emptyVillain }] : villains,
+      };
     }
     case "SET_POT_SIZE":
       return { ...state, potSize: action.value };
     case "SET_CALL_AMOUNT":
       return { ...state, callAmount: action.value };
+    case "RESET":
+      return { ...initialState };
   }
 }

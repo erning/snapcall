@@ -1,5 +1,5 @@
-import { useReducer, useMemo } from "react";
-import { appReducer, initialState } from "./reducer";
+import { useMemo } from "react";
+import { usePersistedReducer } from "./hooks/usePersistedReducer";
 import { useEquity } from "./hooks/useEquity";
 import { BoardSection } from "./components/BoardSection";
 import { HeroSection } from "./components/HeroSection";
@@ -7,7 +7,7 @@ import { VillainsSection } from "./components/VillainsSection";
 import { PotOddsSection } from "./components/PotOddsSection";
 
 export default function App() {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+  const [state, dispatch] = usePersistedReducer();
 
   const boardStr = useMemo(
     () => state.board.filter(Boolean).join(""),
@@ -19,7 +19,10 @@ export default function App() {
   );
 
   const villainStrs = useMemo(
-    () => state.villains.map((slots) => slots.filter(Boolean).join("")),
+    () =>
+      state.villains.map((v) =>
+        v.mode === "cards" ? v.slots.filter(Boolean).join("") : v.range,
+      ),
     [state.villains],
   );
 
@@ -41,8 +44,10 @@ export default function App() {
 
   const villainCards = useMemo(
     () =>
-      state.villains.flatMap((slots) =>
-        slots.filter((c): c is string => c !== null),
+      state.villains.flatMap((v) =>
+        v.mode === "cards"
+          ? v.slots.filter((c): c is string => c !== null)
+          : [],
       ),
     [state.villains],
   );
@@ -56,13 +61,22 @@ export default function App() {
     <main className="h-screen flex flex-col bg-stone-50">
       {/* Fixed top: Header + Board + Hero */}
       <div className="shrink-0 max-w-lg w-full mx-auto px-4 pt-6 space-y-4">
-        <header className="px-1">
-          <h1 className="text-xl font-bold text-stone-900">SnapCall</h1>
-          {mode && samples !== null && (
-            <p className="text-xs text-stone-400 mt-0.5">
-              {mode} &middot; {samples.toLocaleString()} samples
-            </p>
-          )}
+        <header className="px-1 flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-stone-900">SnapCall</h1>
+            {mode && samples !== null && (
+              <p className="text-xs text-stone-400 mt-0.5">
+                {mode} &middot; {samples.toLocaleString()} samples
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            className="text-xs font-medium text-stone-400 hover:text-stone-600 px-2 py-1 transition-colors duration-200"
+            onClick={() => dispatch({ type: "RESET" })}
+          >
+            Reset
+          </button>
         </header>
 
         <BoardSection
@@ -109,6 +123,12 @@ export default function App() {
             disabledCards={globalDisabledCards}
             onSetVillain={(i, v) =>
               dispatch({ type: "SET_VILLAIN", index: i, value: v })
+            }
+            onSetVillainRange={(i, range) =>
+              dispatch({ type: "SET_VILLAIN_RANGE", index: i, range })
+            }
+            onSetVillainMode={(i, mode) =>
+              dispatch({ type: "SET_VILLAIN_MODE", index: i, mode })
             }
             onRemoveVillain={(i) =>
               dispatch({ type: "REMOVE_VILLAIN", index: i })

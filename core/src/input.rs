@@ -69,7 +69,7 @@ impl std::str::FromStr for HoleCardsInput {
             }
         }
 
-        let range_hands = rs_poker::holdem::RangeParser::parse_many(&cleaned).map_err(|e| {
+        let range_hands = rs_poker::holdem::RangeParser::parse_many(trimmed).map_err(|e| {
             SnapError::InvalidRange(format!("Failed to parse range '{}': {:?}", trimmed, e))
         })?;
 
@@ -169,6 +169,12 @@ mod tests {
     #[test]
     fn hole_cards_range_suited() {
         let hand: HoleCardsInput = "AKs".parse().unwrap();
+        assert!(matches!(hand, HoleCardsInput::Range(_)));
+    }
+
+    #[test]
+    fn hole_cards_range_multi_token() {
+        let hand: HoleCardsInput = "AKs,QQ,TT+".parse().unwrap();
         assert!(matches!(hand, HoleCardsInput::Range(_)));
     }
 
