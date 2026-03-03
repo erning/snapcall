@@ -20,4 +20,4 @@ export type AppAction =
   | { type: "REMOVE_VILLAIN"; index: number }
   | { type: "SET_POT_SIZE"; value: string }
   | { type: "SET_CALL_AMOUNT"; value: string }
-  | { type: "RESET" };
+  | { type: "RESET"; defaultVillainCount?: number };

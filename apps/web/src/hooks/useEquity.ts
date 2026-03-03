@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { estimateEquity, type EquityResult } from "../lib/wasm";
 
 interface UseEquityResult {
@@ -7,17 +7,20 @@ interface UseEquityResult {
   samples: number | null;
   isCalculating: boolean;
   error: string | null;
+  recalc: () => void;
 }
 
 export function useEquity(
   board: string,
   hero: string,
   villains: string[],
+  iterations: number,
 ): UseEquityResult {
   const [result, setResult] = useState<EquityResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const seqRef = useRef(0);
+  const [recalcKey, setRecalcKey] = useState(0);
 
   // Serialize villains for stable dependency comparison
   const villainsKey = villains.join("\0");
@@ -36,7 +39,7 @@ export function useEquity(
 
     const timer = setTimeout(() => {
       setIsCalculating(true);
-      estimateEquity(board, hero, currentVillains)
+      estimateEquity(board, hero, currentVillains, iterations)
         .then((res) => {
           if (seq !== seqRef.current) return;
           setResult(res);
@@ -56,7 +59,9 @@ export function useEquity(
     return () => {
       clearTimeout(timer);
     };
-  }, [board, hero, villainsKey]);
+  }, [board, hero, villainsKey, iterations, recalcKey]);
+
+  const recalc = useCallback(() => setRecalcKey((k) => k + 1), []);
 
   return {
     equities: result?.equities ?? null,
@@ -64,5 +69,6 @@ export function useEquity(
     samples: result?.samples ?? null,
     isCalculating,
     error,
+    recalc,
   };
 }

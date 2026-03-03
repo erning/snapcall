@@ -20,6 +20,7 @@ interface HeroSectionProps {
   callAmount: number;
   onSetCallAmount: (v: number) => void;
   potSize: number;
+  onRecalc?: () => void;
 }
 
 export function HeroSection({
@@ -31,6 +32,7 @@ export function HeroSection({
   callAmount,
   onSetCallAmount,
   potSize,
+  onRecalc,
 }: HeroSectionProps) {
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [betEditorOpen, setBetEditorOpen] = useState(false);
@@ -74,9 +76,6 @@ export function HeroSection({
       <div className="relative flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-stone-900">Hero</h2>
         <div className="flex items-center gap-2">
-          {isCalculating && (
-            <span className="text-xs text-stone-400">Calculating...</span>
-          )}
           <Badge
             label="Bet"
             value={callAmount}
@@ -124,6 +123,7 @@ export function HeroSection({
               equity={equity}
               potSize={potSize}
               callAmount={callAmount}
+              onRecalc={onRecalc}
             />
           )}
         </div>
@@ -152,10 +152,12 @@ function EquityDetails({
   equity,
   potSize,
   callAmount,
+  onRecalc,
 }: {
   equity: number;
   potSize: number;
   callAmount: number;
+  onRecalc?: () => void;
 }) {
   const potOdds = calcPotOdds(potSize, callAmount);
 
@@ -167,7 +169,7 @@ function EquityDetails({
         : null;
 
   return (
-    <div className="text-right">
+    <div className="text-right cursor-pointer" onDoubleClick={onRecalc}>
       <div className="text-lg font-bold text-orange-500">
         {equity.toFixed(1)}%
       </div>

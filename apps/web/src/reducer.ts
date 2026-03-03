@@ -47,7 +47,14 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, potSize: action.value };
     case "SET_CALL_AMOUNT":
       return { ...state, callAmount: action.value };
-    case "RESET":
-      return { ...initialState };
+    case "RESET": {
+      const count = action.defaultVillainCount ?? 1;
+      return {
+        ...initialState,
+        villains: Array.from({ length: Math.max(1, count) }, () => ({
+          ...emptyVillain,
+        })),
+      };
+    }
   }
 }

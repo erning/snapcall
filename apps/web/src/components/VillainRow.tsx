@@ -256,9 +256,6 @@ export function VillainRow({
             Villain {index + 1}
           </h3>
           <div className="flex items-center gap-3">
-            {isCalculating && (
-              <span className="text-xs text-stone-400">...</span>
-            )}
             {equity !== null && !isCalculating && (
               <span className="text-sm font-bold text-stone-600">
                 {equity.toFixed(1)}%
@@ -411,17 +408,27 @@ function RangePickBody({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const selected = useMemo(() => rangeStringToSet(range), [range]);
+  // Committed state (from parent)
+  const committed = useMemo(() => rangeStringToSet(range), [range]);
 
-  const handleSelect = useCallback(
-    (next: Set<string>) => {
-      onChange(rangeSetToString(next));
-    },
-    [onChange],
-  );
+  // Local draft state while picker is open
+  const [draft, setDraft] = useState<Set<string>>(() => new Set());
+
+  // Sync draft from committed when picker opens
+  const handleOpen = () => {
+    setDraft(new Set(committed));
+    setPickerOpen(true);
+  };
+
+  const handleDone = () => {
+    onChange(rangeSetToString(draft));
+    setPickerOpen(false);
+  };
 
   const handleClear = () => {
     onChange("");
+    setDraft(new Set());
+    setPickerOpen(false);
   };
 
   useEffect(() => {
@@ -438,18 +445,18 @@ function RangePickBody({
   return (
     <div className="relative">
       <RangeCardStack
-        combos={[...selected]}
+        combos={[...(pickerOpen ? draft : committed)]}
         active={pickerOpen}
-        onClick={() => setPickerOpen(!pickerOpen)}
+        onClick={() => pickerOpen ? handleDone() : handleOpen()}
       />
 
       {pickerOpen &&
         createPortal(
           <RangeModal
-            selected={selected}
-            onSelect={handleSelect}
+            selected={draft}
+            onSelect={setDraft}
             onClear={handleClear}
-            onDone={() => setPickerOpen(false)}
+            onDone={handleDone}
           />,
           document.body,
         )}

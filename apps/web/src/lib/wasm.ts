@@ -1,13 +1,4 @@
-import init, { estimate_equity } from "../wasm-pkg/snapcall_wasm";
-
-let initPromise: Promise<void> | null = null;
-
-function ensureInit(): Promise<void> {
-  if (initPromise === null) {
-    initPromise = init().then(() => undefined);
-  }
-  return initPromise;
-}
+import type { WorkerRequest, WorkerResponse } from "./equity.worker";
 
 export interface EquityResult {
   equities: number[];
@@ -15,19 +6,39 @@ export interface EquityResult {
   samples: number;
 }
 
-export async function estimateEquity(
+const worker = new Worker(
+  new URL("./equity.worker.ts", import.meta.url),
+  { type: "module" },
+);
+
+let nextId = 0;
+const pending = new Map<number, {
+  resolve: (v: EquityResult) => void;
+  reject: (e: Error) => void;
+}>();
+
+worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+  const { id, result, error } = e.data;
+  const entry = pending.get(id);
+  if (!entry) return;
+  pending.delete(id);
+  if (error) {
+    entry.reject(new Error(error));
+  } else {
+    entry.resolve(result!);
+  }
+};
+
+export function estimateEquity(
   board: string,
   hero: string,
   villains: string[],
   iterations: number = 100000,
 ): Promise<EquityResult> {
-  await ensureInit();
-
-  const result = estimate_equity(board, hero, villains, iterations);
-
-  return {
-    equities: Array.from(result.equities),
-    mode: result.mode,
-    samples: result.samples,
-  };
+  const id = nextId++;
+  return new Promise<EquityResult>((resolve, reject) => {
+    pending.set(id, { resolve, reject });
+    const msg: WorkerRequest = { id, board, hero, villains, iterations };
+    worker.postMessage(msg);
+  });
 }

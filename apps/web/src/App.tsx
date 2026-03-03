@@ -1,13 +1,18 @@
 import { useMemo, useState } from "react";
+import { Settings as SettingsIcon } from "lucide-react";
 import { usePersistedReducer } from "./hooks/usePersistedReducer";
 import { useEquity } from "./hooks/useEquity";
+import { useSettings } from "./hooks/useSettings";
 import { BoardSection } from "./components/BoardSection";
 import { HeroSection } from "./components/HeroSection";
 import { VillainsSection } from "./components/VillainsSection";
+import { SettingsPage } from "./components/SettingsPage";
 
 export default function App() {
   const [state, dispatch] = usePersistedReducer();
+  const { settings, updateSettings, resetSettings } = useSettings();
   const [heroCollapsed, setHeroCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const boardStr = useMemo(
     () => state.board.filter(Boolean).join(""),
@@ -26,10 +31,11 @@ export default function App() {
     [state.villains],
   );
 
-  const { equities, mode, samples, isCalculating, error } = useEquity(
+  const { equities, mode, samples, isCalculating, error, recalc } = useEquity(
     boardStr,
     heroStr,
     villainStrs,
+    settings.iterations,
   );
 
   // Collect all cards used across board + hero for disabling in pickers
@@ -60,8 +66,31 @@ export default function App() {
   const potSizeNum = parseInt(state.potSize, 10) || 0;
   const callAmountNum = parseInt(state.callAmount, 10) || 0;
 
+  if (settingsOpen) {
+    return (
+      <SettingsPage
+        settings={settings}
+        onUpdate={updateSettings}
+        onReset={resetSettings}
+        onResetGame={() => {
+          dispatch({
+            type: "RESET",
+            defaultVillainCount: settings.defaultVillainCount,
+          });
+          setSettingsOpen(false);
+        }}
+        onBack={() => setSettingsOpen(false)}
+      />
+    );
+  }
+
   return (
-    <main className="h-screen flex flex-col bg-stone-50">
+    <main className="h-screen flex flex-col bg-stone-50 relative">
+      {isCalculating && (
+        <div className="absolute top-0 left-0 right-0 h-0.5 z-50 bg-orange-100 overflow-hidden">
+          <div className="h-full w-1/3 bg-orange-400 rounded-full animate-loading-bar" />
+        </div>
+      )}
       {/* Fixed: Header + Board + Hero + status + Villains header */}
       <div className="shrink-0 max-w-lg w-full mx-auto px-4 pt-3 pb-2 space-y-4">
         <header className="px-1 flex items-start justify-between">
@@ -70,10 +99,10 @@ export default function App() {
           </div>
           <button
             type="button"
-            className="text-xs font-medium text-stone-400 hover:text-stone-600 px-2 py-1 transition-colors duration-200"
-            onClick={() => dispatch({ type: "RESET" })}
+            className="text-stone-400 hover:text-stone-600 p-1 transition-colors duration-200"
+            onClick={() => setSettingsOpen(true)}
           >
-            Reset
+            <SettingsIcon size={18} />
           </button>
         </header>
 
@@ -110,6 +139,7 @@ export default function App() {
               dispatch({ type: "SET_CALL_AMOUNT", value: String(v) })
             }
             potSize={potSizeNum}
+            onRecalc={recalc}
           />
         )}
 
