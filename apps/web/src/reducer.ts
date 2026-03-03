@@ -6,8 +6,8 @@ export const initialState: AppState = {
   board: [null, null, null, null, null],
   hero: [null, null],
   villains: [{ mode: "range", range: "" }],
-  potSize: "",
-  callAmount: "",
+  potSize: "30",
+  callAmount: "20",
 };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -48,13 +48,14 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case "SET_CALL_AMOUNT":
       return { ...state, callAmount: action.value };
     case "RESET": {
-      const count = action.defaultVillainCount ?? 1;
       return {
         ...initialState,
-        villains: Array.from({ length: Math.max(1, count) }, () => ({
-          ...emptyVillain,
-        })),
+        villains: state.villains.map(() => ({ ...emptyVillain })),
+        potSize: String(action.smallBlind + action.bigBlind),
+        callAmount: String(action.bigBlind),
       };
     }
+    case "RESET_VILLAIN_COUNT":
+      return { ...state, villains: [{ ...emptyVillain }] };
   }
 }

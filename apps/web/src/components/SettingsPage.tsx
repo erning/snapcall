@@ -94,13 +94,6 @@ export function SettingsPage({
               Game Defaults
             </h2>
             <SettingsNumberField
-              label="Default villain count"
-              value={settings.defaultVillainCount}
-              onChange={(v) => onUpdate({ defaultVillainCount: v })}
-              min={1}
-              description="Number of villains when resetting the game."
-            />
-            <SettingsNumberField
               label="Big Blind"
               value={settings.bigBlind}
               onChange={(v) => onUpdate({ bigBlind: v })}

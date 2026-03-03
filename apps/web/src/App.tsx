@@ -71,11 +71,15 @@ export default function App() {
       <SettingsPage
         settings={settings}
         onUpdate={updateSettings}
-        onReset={resetSettings}
+        onReset={() => {
+          resetSettings();
+          dispatch({ type: "RESET_VILLAIN_COUNT" });
+        }}
         onResetGame={() => {
           dispatch({
             type: "RESET",
-            defaultVillainCount: settings.defaultVillainCount,
+            bigBlind: settings.bigBlind,
+            smallBlind: settings.smallBlind,
           });
           setSettingsOpen(false);
         }}

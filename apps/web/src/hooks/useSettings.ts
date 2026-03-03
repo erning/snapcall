@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 
 export interface Settings {
   iterations: number;
-  defaultVillainCount: number;
   bigBlind: number;
   smallBlind: number;
 }
@@ -11,7 +10,6 @@ const STORAGE_KEY = "snapcall-settings";
 
 export const defaultSettings: Settings = {
   iterations: 10000,
-  defaultVillainCount: 1,
   bigBlind: 20,
   smallBlind: 10,
 };
@@ -26,11 +24,6 @@ function loadSettings(): Settings {
         typeof parsed.iterations === "number" && parsed.iterations > 0
           ? parsed.iterations
           : defaultSettings.iterations,
-      defaultVillainCount:
-        typeof parsed.defaultVillainCount === "number" &&
-        parsed.defaultVillainCount >= 1
-          ? parsed.defaultVillainCount
-          : defaultSettings.defaultVillainCount,
       bigBlind:
         typeof parsed.bigBlind === "number" && parsed.bigBlind > 0
           ? parsed.bigBlind
