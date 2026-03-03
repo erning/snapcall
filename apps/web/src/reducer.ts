@@ -37,6 +37,19 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
     case "ADD_VILLAIN":
       return { ...state, villains: [...state.villains, { ...emptyVillain }] };
+    case "SET_VILLAIN_COUNT": {
+      const count = Math.max(1, Math.min(21, action.count));
+      const cur = state.villains.length;
+      if (count === cur) return state;
+      const villains =
+        count > cur
+          ? [
+              ...state.villains,
+              ...Array.from({ length: count - cur }, () => ({ ...emptyVillain })),
+            ]
+          : state.villains.slice(0, count);
+      return { ...state, villains };
+    }
     case "REMOVE_VILLAIN": {
       const villains = state.villains.filter((_, i) => i !== action.index);
       return {

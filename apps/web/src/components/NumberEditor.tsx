@@ -1,11 +1,13 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, type RefObject } from "react";
 import { Minus, Plus } from "lucide-react";
 
 interface NumberEditorProps {
   value: number;
   onChange: (v: number) => void;
+  onCommit?: (v: number) => void;
   step?: number;
   min?: number;
+  max?: number;
   stepUp?: (v: number) => number;
   stepDown?: (v: number) => number;
 }
@@ -13,11 +15,24 @@ interface NumberEditorProps {
 export function NumberEditor({
   value,
   onChange,
+  onCommit,
   step = 10,
   min = 0,
+  max,
   stepUp,
   stepDown,
 }: NumberEditorProps) {
+  const clamp = useCallback(
+    (v: number) => {
+      let r = Math.max(min, v);
+      if (max !== undefined) r = Math.min(max, r);
+      return r;
+    },
+    [min, max],
+  );
+  const valueRef = useRef(value) as RefObject<number>;
+  valueRef.current = value;
+
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{
     startX: number;
@@ -54,19 +69,21 @@ export function NumberEditor({
           let v = value;
           const fn = delta > 0 ? stepUp : stepDown;
           for (let i = 0; i < Math.abs(delta); i++) v = fn(v);
-          onChange(v);
+          onChange(clamp(v));
         } else {
-          onChange(Math.max(min, value + delta * step));
+          onChange(clamp(value + delta * step));
         }
       }
     },
-    [value, step, min, stepUp, stepDown, onChange],
+    [value, step, clamp, stepUp, stepDown, onChange],
   );
 
   const handlePointerUp = useCallback(() => {
+    if (!dragRef.current) return;
     dragRef.current = null;
     setDragging(false);
-  }, []);
+    onCommit?.(valueRef.current);
+  }, [onCommit]);
 
   return (
     <div
@@ -80,9 +97,11 @@ export function NumberEditor({
         <span
           data-stepper
           className="text-stone-400 cursor-pointer active:text-stone-600 p-2"
-          onClick={() =>
-            onChange(stepDown ? stepDown(value) : Math.max(min, value - step))
-          }
+          onClick={() => {
+            const v = clamp(stepDown ? stepDown(value) : value - step);
+            onChange(v);
+            onCommit?.(v);
+          }}
         >
           <Minus size={18} className="pointer-events-none" />
         </span>
@@ -90,7 +109,11 @@ export function NumberEditor({
         <span
           data-stepper
           className="text-stone-400 cursor-pointer active:text-stone-600 p-2"
-          onClick={() => onChange(stepUp ? stepUp(value) : value + step)}
+          onClick={() => {
+            const v = clamp(stepUp ? stepUp(value) : value + step);
+            onChange(v);
+            onCommit?.(v);
+          }}
         >
           <Plus size={18} className="pointer-events-none" />
         </span>

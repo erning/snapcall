@@ -20,5 +20,6 @@ export type AppAction =
   | { type: "REMOVE_VILLAIN"; index: number }
   | { type: "SET_POT_SIZE"; value: number }
   | { type: "SET_CALL_AMOUNT"; value: number }
+  | { type: "SET_VILLAIN_COUNT"; count: number }
   | { type: "RESET"; bigBlind: number; smallBlind: number }
   | { type: "RESET_VILLAIN_COUNT" };

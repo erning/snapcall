@@ -7,12 +7,15 @@ import { BoardSection } from "./components/BoardSection";
 import { HeroSection } from "./components/HeroSection";
 import { VillainsSection } from "./components/VillainsSection";
 import { SettingsPage } from "./components/SettingsPage";
+import { NumberEditor } from "./components/NumberEditor";
 
 export default function App() {
   const [state, dispatch] = usePersistedReducer();
   const { settings, updateSettings, resetSettings } = useSettings();
   const [heroCollapsed, setHeroCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [villainEditorOpen, setVillainEditorOpen] = useState(false);
+  const [editVillainCount, setEditVillainCount] = useState(1);
 
   const boardStr = useMemo(
     () => state.board.filter(Boolean).join(""),
@@ -158,17 +161,43 @@ export default function App() {
             ) : null}
           </div>
 
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between px-1 relative">
           <h2 className="text-sm font-semibold text-stone-900">
             Villains ({state.villains.length})
           </h2>
-          <button
-            type="button"
-            className="text-xs font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1.5 rounded-lg transition-colors duration-200"
-            onClick={() => dispatch({ type: "ADD_VILLAIN" })}
-          >
-            + Add villain
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              className="text-xs font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1.5 rounded-lg transition-colors duration-200"
+              onClick={() => {
+                setEditVillainCount(state.villains.length);
+                setVillainEditorOpen(true);
+              }}
+            >
+              + Add villain
+            </button>
+            {villainEditorOpen && (
+              <>
+                <div
+                  className="fixed inset-0 bg-black/20 z-10"
+                  onClick={() => setVillainEditorOpen(false)}
+                  onPointerDown={(e) => e.stopPropagation()}
+                />
+                <div className="absolute right-0 top-full mt-1 z-20">
+                  <NumberEditor
+                    value={editVillainCount}
+                    onChange={setEditVillainCount}
+                    onCommit={(v) =>
+                      dispatch({ type: "SET_VILLAIN_COUNT", count: v })
+                    }
+                    step={1}
+                    min={1}
+                    max={21}
+                  />
+                </div>
+              </>
+            )}
+          </div>
           </div>
         </div>
       </div>
