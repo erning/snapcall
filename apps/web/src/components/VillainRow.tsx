@@ -512,11 +512,19 @@ function RangeCardStack({
       {individual.map((combo) => (
         <div
           key={combo}
-          className={`h-14 rounded-lg bg-white border border-stone-200 flex items-center justify-center shrink-0 ${combo.length <= 3 ? "w-10" : "w-auto px-2"}`}
+          className="w-10 h-14 rounded-lg bg-white border border-stone-200 flex items-center justify-center shrink-0"
         >
-          <span className="text-[10px] font-semibold text-stone-700">
-            {combo}
-          </span>
+          {combo.includes("-") ? (
+            <span className="text-[10px] font-semibold text-stone-700 flex flex-col items-center leading-tight">
+              <span>{combo.split("-")[0]}</span>
+              <span className="text-[8px] text-stone-400">-</span>
+              <span>{combo.split("-")[1]}</span>
+            </span>
+          ) : (
+            <span className="text-[10px] font-semibold text-stone-700">
+              {combo}
+            </span>
+          )}
         </div>
       ))}
       {overflow > 0 && (
