@@ -1,15 +1,22 @@
 import { useState, useRef, useCallback } from "react";
+import { Minus, Plus } from "lucide-react";
 
 interface NumberEditorProps {
   value: number;
   onChange: (v: number) => void;
   step?: number;
+  min?: number;
+  stepUp?: (v: number) => number;
+  stepDown?: (v: number) => number;
 }
 
 export function NumberEditor({
   value,
   onChange,
   step = 10,
+  min = 0,
+  stepUp,
+  stepDown,
 }: NumberEditorProps) {
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{
@@ -43,10 +50,17 @@ export function NumberEditor({
       if (totalSteps !== prevSteps) {
         const delta = totalSteps - prevSteps;
         dragRef.current.accumulated = totalSteps;
-        onChange(Math.max(0, value + delta * step));
+        if (stepUp && stepDown) {
+          let v = value;
+          const fn = delta > 0 ? stepUp : stepDown;
+          for (let i = 0; i < Math.abs(delta); i++) v = fn(v);
+          onChange(v);
+        } else {
+          onChange(Math.max(min, value + delta * step));
+        }
       }
     },
-    [value, step, onChange],
+    [value, step, min, stepUp, stepDown, onChange],
   );
 
   const handlePointerUp = useCallback(() => {
@@ -65,18 +79,20 @@ export function NumberEditor({
       <div className="flex items-center justify-between">
         <span
           data-stepper
-          className="text-sm text-stone-400 font-medium cursor-pointer active:text-stone-600 px-2 py-1"
-          onClick={() => onChange(Math.max(0, value - step))}
+          className="text-stone-400 cursor-pointer active:text-stone-600 p-2"
+          onClick={() =>
+            onChange(stepDown ? stepDown(value) : Math.max(min, value - step))
+          }
         >
-          -{step}
+          <Minus size={18} className="pointer-events-none" />
         </span>
         <span className="text-3xl font-bold text-stone-800">{value}</span>
         <span
           data-stepper
-          className="text-sm text-stone-400 font-medium cursor-pointer active:text-stone-600 px-2 py-1"
-          onClick={() => onChange(value + step)}
+          className="text-stone-400 cursor-pointer active:text-stone-600 p-2"
+          onClick={() => onChange(stepUp ? stepUp(value) : value + step)}
         >
-          +{step}
+          <Plus size={18} className="pointer-events-none" />
         </span>
       </div>
       <p className="text-xs text-stone-400 text-center mt-4">

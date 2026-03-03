@@ -19,6 +19,7 @@ interface HeroSectionProps {
   onChange: (slots: (string | null)[]) => void;
   callAmount: number;
   onSetCallAmount: (v: number) => void;
+  bigBlind: number;
   potSize: number;
   onRecalc?: () => void;
 }
@@ -31,6 +32,7 @@ export function HeroSection({
   onChange,
   callAmount,
   onSetCallAmount,
+  bigBlind,
   potSize,
   onRecalc,
 }: HeroSectionProps) {
@@ -96,6 +98,8 @@ export function HeroSection({
               <NumberEditor
                 value={callAmount}
                 onChange={onSetCallAmount}
+                step={bigBlind}
+                min={bigBlind}
               />
             </div>
           </>

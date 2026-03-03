@@ -116,6 +116,8 @@ export default function App() {
             onSetPotSize={(v) =>
               dispatch({ type: "SET_POT_SIZE", value: v })
             }
+            bigBlind={settings.bigBlind}
+            smallBlind={settings.smallBlind}
           />
           {/* 点击区域覆盖 Board 底部与 Hero 之间的 gap，不占额外空间 */}
           <div
@@ -139,6 +141,7 @@ export default function App() {
             onSetCallAmount={(v) =>
               dispatch({ type: "SET_CALL_AMOUNT", value: v })
             }
+            bigBlind={settings.bigBlind}
             potSize={state.potSize}
             onRecalc={recalc}
           />

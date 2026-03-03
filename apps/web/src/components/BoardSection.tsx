@@ -16,12 +16,43 @@ interface BoardSectionProps {
   onChange: (slots: (string | null)[]) => void;
   potSize: number;
   onSetPotSize: (v: number) => void;
+  bigBlind: number;
+  smallBlind: number;
 }
 
-export function BoardSection({ slots, disabledCards, onChange, potSize, onSetPotSize }: BoardSectionProps) {
+export function BoardSection({ slots, disabledCards, onChange, potSize, onSetPotSize, bigBlind: bb, smallBlind: sb }: BoardSectionProps) {
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [potEditorOpen, setPotEditorOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const potMin = bb + sb;
+
+  const potStepUp = useCallback(
+    (v: number): number => {
+      if (v < potMin) return potMin;
+      const n = Math.floor(v / bb);
+      const candidates = [n * bb + sb, (n + 1) * bb, (n + 1) * bb + sb];
+      for (const c of candidates) {
+        if (c > v && c >= potMin) return c;
+      }
+      return (n + 2) * bb;
+    },
+    [bb, sb, potMin],
+  );
+
+  const potStepDown = useCallback(
+    (v: number): number => {
+      if (v <= potMin) return potMin;
+      const n = Math.floor(v / bb);
+      const candidates = [n * bb + sb, n * bb, (n - 1) * bb + sb, (n - 1) * bb];
+      candidates.sort((a, b) => b - a);
+      for (const c of candidates) {
+        if (c < v && c >= potMin) return c;
+      }
+      return potMin;
+    },
+    [bb, sb, potMin],
+  );
 
   // Compute disabled cards for picker: external disabledCards + other board slots
   const pickerDisabled = useCallback(
@@ -81,6 +112,9 @@ export function BoardSection({ slots, disabledCards, onChange, potSize, onSetPot
               <NumberEditor
                 value={potSize}
                 onChange={onSetPotSize}
+                min={potMin}
+                stepUp={potStepUp}
+                stepDown={potStepDown}
               />
             </div>
           </>
