@@ -54,6 +54,99 @@ export function rangeStringToSet(rangeStr: string): Set<string> {
   return new Set(rangeStr.split(",").map((s) => s.trim()).filter(Boolean));
 }
 
+// ── Range compression ────────────────────────────────────────────────
+
+function findConsecutiveRuns(sorted: number[]): [number, number][] {
+  if (sorted.length === 0) return [];
+  const runs: [number, number][] = [];
+  let start = sorted[0];
+  let end = sorted[0];
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === end + 1) {
+      end = sorted[i];
+    } else {
+      runs.push([start, end]);
+      start = sorted[i];
+      end = sorted[i];
+    }
+  }
+  runs.push([start, end]);
+  return runs;
+}
+
+/**
+ * Compress a set of range combos into standard poker notation tokens.
+ * e.g. {AA, KK, QQ} → ["QQ+"], {88, 77, 66} → ["88-66"]
+ */
+export function compressRange(selected: Set<string>): string[] {
+  if (selected.size === 0) return [];
+
+  const pairIndices: number[] = [];
+  // suited/offsuit: keyed by high-card rank index → list of kicker rank indices
+  const suitedByHigh = new Map<number, number[]>();
+  const offsuitByHigh = new Map<number, number[]>();
+
+  for (const combo of selected) {
+    if (combo.length === 2) {
+      // Pair: e.g. "AA"
+      const idx = RANKS.indexOf(combo[0] as Rank);
+      if (idx >= 0) pairIndices.push(idx);
+    } else if (combo.length === 3) {
+      const r1 = RANKS.indexOf(combo[0] as Rank);
+      const r2 = RANKS.indexOf(combo[1] as Rank);
+      if (r1 < 0 || r2 < 0) continue;
+      const high = Math.min(r1, r2); // lower index = higher rank
+      const kicker = Math.max(r1, r2);
+      const suffix = combo[2];
+      if (suffix === "s") {
+        if (!suitedByHigh.has(high)) suitedByHigh.set(high, []);
+        suitedByHigh.get(high)!.push(kicker);
+      } else if (suffix === "o") {
+        if (!offsuitByHigh.has(high)) offsuitByHigh.set(high, []);
+        offsuitByHigh.get(high)!.push(kicker);
+      }
+    }
+  }
+
+  const tokens: string[] = [];
+
+  // Compress pairs
+  pairIndices.sort((a, b) => a - b);
+  for (const [start, end] of findConsecutiveRuns(pairIndices)) {
+    if (start === end) {
+      tokens.push(`${RANKS[start]}${RANKS[start]}`);
+    } else if (start === 0) {
+      tokens.push(`${RANKS[end]}${RANKS[end]}+`);
+    } else {
+      tokens.push(`${RANKS[start]}${RANKS[start]}-${RANKS[end]}${RANKS[end]}`);
+    }
+  }
+
+  // Compress suited / offsuit groups
+  const compressGroup = (byHigh: Map<number, number[]>, suffix: string) => {
+    const highs = [...byHigh.keys()].sort((a, b) => a - b);
+    for (const h of highs) {
+      const kickers = byHigh.get(h)!;
+      kickers.sort((a, b) => a - b);
+      const bestKicker = h + 1; // the kicker immediately below the high card
+      for (const [start, end] of findConsecutiveRuns(kickers)) {
+        if (start === end) {
+          tokens.push(`${RANKS[h]}${RANKS[start]}${suffix}`);
+        } else if (start === bestKicker) {
+          tokens.push(`${RANKS[h]}${RANKS[end]}${suffix}+`);
+        } else {
+          tokens.push(`${RANKS[h]}${RANKS[start]}${suffix}-${RANKS[h]}${RANKS[end]}${suffix}`);
+        }
+      }
+    }
+  };
+
+  compressGroup(suitedByHigh, "s");
+  compressGroup(offsuitByHigh, "o");
+
+  return tokens;
+}
+
 // Classify villain value for display mode
 export type VillainDisplayMode = "unknown" | "range" | "exact";
 

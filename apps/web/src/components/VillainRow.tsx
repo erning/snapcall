@@ -7,6 +7,7 @@ import {
   type Suit,
   rangeStringToSet,
   rangeSetToString,
+  compressRange,
 } from "../lib/poker";
 import type { VillainData } from "../types";
 
@@ -446,10 +447,15 @@ function RangePickBody({
     };
   }, [pickerOpen]);
 
+  const compressed = useMemo(
+    () => compressRange(pickerOpen ? draft : committed),
+    [pickerOpen, draft, committed],
+  );
+
   return (
     <div className="relative">
       <RangeCardStack
-        combos={[...(pickerOpen ? draft : committed)]}
+        combos={compressed}
         active={pickerOpen}
         onClick={() => pickerOpen ? handleDone() : handleOpen()}
       />
@@ -506,7 +512,7 @@ function RangeCardStack({
       {individual.map((combo) => (
         <div
           key={combo}
-          className="w-10 h-14 rounded-lg bg-white border border-stone-200 flex items-center justify-center shrink-0"
+          className={`h-14 rounded-lg bg-white border border-stone-200 flex items-center justify-center shrink-0 ${combo.length <= 3 ? "w-10" : "w-auto px-2"}`}
         >
           <span className="text-[10px] font-semibold text-stone-700">
             {combo}
