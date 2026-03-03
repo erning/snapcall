@@ -45,7 +45,6 @@ interface SettingsPageProps {
   settings: Settings;
   onUpdate: (partial: Partial<Settings>) => void;
   onReset: () => void;
-  onResetGame: () => void;
   onBack: () => void;
 }
 
@@ -53,7 +52,6 @@ export function SettingsPage({
   settings,
   onUpdate,
   onReset,
-  onResetGame,
   onBack,
 }: SettingsPageProps) {
   return (
@@ -109,13 +107,6 @@ export function SettingsPage({
 
           {/* Actions */}
           <div className="bg-white rounded-2xl p-4 space-y-3 border border-stone-100">
-            <button
-              type="button"
-              onClick={onResetGame}
-              className="w-full rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium py-2.5 transition-colors duration-200"
-            >
-              Reset Game
-            </button>
             <button
               type="button"
               onClick={onReset}
