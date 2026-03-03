@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { Settings as SettingsIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+
 import { usePersistedReducer } from "./hooks/usePersistedReducer";
 import { useEquity } from "./hooks/useEquity";
 import { useSettings } from "./hooks/useSettings";
@@ -7,18 +7,16 @@ import { BoardSection } from "./components/BoardSection";
 import { HeroSection } from "./components/HeroSection";
 import { VillainsSection } from "./components/VillainsSection";
 import { SettingsPage } from "./components/SettingsPage";
+import { HeaderMenu } from "./components/HeaderMenu";
 import { NumberEditor } from "./components/NumberEditor";
 
 export default function App() {
   const [state, dispatch] = usePersistedReducer();
-  const { settings, updateSettings, resetSettings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const [heroCollapsed, setHeroCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [villainEditorOpen, setVillainEditorOpen] = useState(false);
   const [editVillainCount, setEditVillainCount] = useState(1);
-  const [restartHint, setRestartHint] = useState(false);
-  const restartTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
-  const restartFiredRef = useRef(false);
 
   const boardStr = useMemo(
     () => state.board.filter(Boolean).join(""),
@@ -73,10 +71,9 @@ export default function App() {
     return (
       <SettingsPage
         settings={settings}
-        onUpdate={updateSettings}
-        onReset={() => {
-          resetSettings();
-          dispatch({ type: "RESET_VILLAIN_COUNT" });
+        onSave={(next) => updateSettings(next)}
+        onRestart={(bb, sb) => {
+          dispatch({ type: "RESET", bigBlind: bb, smallBlind: sb });
         }}
         onBack={() => setSettingsOpen(false)}
       />
@@ -96,50 +93,16 @@ export default function App() {
           <div>
             <h1 className="text-xl font-bold text-stone-900">SnapCall</h1>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="relative">
-            <button
-              type="button"
-              className="text-stone-400 hover:text-stone-600 text-xs font-medium px-2 py-1 transition-colors duration-200 select-none"
-              onPointerDown={() => {
-                restartFiredRef.current = false;
-                restartTimerRef.current = setTimeout(() => {
-                  restartFiredRef.current = true;
-                  dispatch({
-                    type: "RESET",
-                    bigBlind: settings.bigBlind,
-                    smallBlind: settings.smallBlind,
-                  });
-                  setRestartHint(false);
-                }, 500);
-              }}
-              onPointerUp={() => {
-                if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-                if (!restartFiredRef.current) {
-                  setRestartHint(true);
-                  setTimeout(() => setRestartHint(false), 1500);
-                }
-              }}
-              onPointerLeave={() => {
-                if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-              }}
-            >
-              Restart
-            </button>
-            {restartHint && (
-              <p className="absolute top-full right-0 whitespace-nowrap text-xs font-medium text-orange-500">
-                Long press to restart
-              </p>
-            )}
-            </div>
-            <button
-              type="button"
-              className="text-stone-400 hover:text-stone-600 p-1 transition-colors duration-200"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <SettingsIcon size={18} />
-            </button>
-          </div>
+          <HeaderMenu
+            onSettings={() => setSettingsOpen(true)}
+            onRestart={() => {
+              dispatch({
+                type: "RESET",
+                bigBlind: settings.bigBlind,
+                smallBlind: settings.smallBlind,
+              });
+            }}
+          />
         </header>
 
         <div className="relative">

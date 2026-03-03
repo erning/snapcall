@@ -1,59 +1,36 @@
+import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import type { Settings } from "../hooks/useSettings";
-
-interface SettingsNumberFieldProps {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-  min?: number;
-  step?: number;
-  description?: string;
-}
-
-function SettingsNumberField({
-  label,
-  value,
-  onChange,
-  min = 1,
-  step = 1,
-  description,
-}: SettingsNumberFieldProps) {
-  return (
-    <div className="space-y-1">
-      <label className="block text-sm font-medium text-stone-700">
-        {label}
-      </label>
-      <input
-        type="number"
-        value={value}
-        min={min}
-        step={step}
-        onChange={(e) => {
-          const n = parseInt(e.target.value, 10);
-          if (!isNaN(n) && n >= min) onChange(n);
-        }}
-        className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
-      />
-      {description && (
-        <p className="text-xs text-stone-400">{description}</p>
-      )}
-    </div>
-  );
-}
+import { defaultSettings } from "../hooks/useSettings";
+import { NumberEditor } from "./NumberEditor";
 
 interface SettingsPageProps {
   settings: Settings;
-  onUpdate: (partial: Partial<Settings>) => void;
-  onReset: () => void;
+  onSave: (next: Settings) => void;
+  onRestart: (bb: number, sb: number) => void;
   onBack: () => void;
 }
 
 export function SettingsPage({
   settings,
-  onUpdate,
-  onReset,
+  onSave,
+  onRestart,
   onBack,
 }: SettingsPageProps) {
+  const [draft, setDraft] = useState<Settings>({ ...settings });
+
+  const blindsChanged =
+    draft.bigBlind !== settings.bigBlind ||
+    draft.smallBlind !== settings.smallBlind;
+
+  function handleSave() {
+    onSave(draft);
+    if (blindsChanged) {
+      onRestart(draft.bigBlind, draft.smallBlind);
+    }
+    onBack();
+  }
+
   return (
     <main className="h-screen flex flex-col bg-stone-50">
       <div className="shrink-0 max-w-lg w-full mx-auto px-4 pt-3 pb-2">
@@ -72,47 +49,75 @@ export function SettingsPage({
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-lg mx-auto px-4 pb-24 space-y-4">
           {/* Calculation */}
-          <div className="bg-white rounded-2xl p-4 space-y-4 border border-stone-100">
+          <div className="bg-white rounded-2xl p-4 space-y-2 border border-stone-100">
             <h2 className="text-sm font-semibold text-stone-900">
               Calculation
             </h2>
-            <SettingsNumberField
-              label="Monte Carlo iterations"
-              value={settings.iterations}
-              onChange={(v) => onUpdate({ iterations: v })}
-              min={100}
+            <label className="block text-xs font-medium text-stone-500 px-1">
+              Monte Carlo iterations
+            </label>
+            <NumberEditor
+              value={draft.iterations}
+              onChange={(v) => setDraft((d) => ({ ...d, iterations: v }))}
               step={1000}
-              description="Higher values give more accurate equity but take longer to compute."
+              min={1000}
+              compact
             />
           </div>
 
           {/* Game Defaults */}
-          <div className="bg-white rounded-2xl p-4 space-y-4 border border-stone-100">
+          <div className="bg-white rounded-2xl p-4 space-y-2 border border-stone-100">
             <h2 className="text-sm font-semibold text-stone-900">
               Game Defaults
             </h2>
-            <SettingsNumberField
-              label="Big Blind"
-              value={settings.bigBlind}
-              onChange={(v) => onUpdate({ bigBlind: v })}
+            <label className="block text-xs font-medium text-stone-500 px-1">
+              Big Blind
+            </label>
+            <NumberEditor
+              value={draft.bigBlind}
+              onChange={(v) => setDraft((d) => ({ ...d, bigBlind: v }))}
+              step={1}
               min={1}
+              compact
             />
-            <SettingsNumberField
-              label="Small Blind"
-              value={settings.smallBlind}
-              onChange={(v) => onUpdate({ smallBlind: v })}
+            <label className="block text-xs font-medium text-stone-500 px-1 pt-2">
+              Small Blind
+            </label>
+            <NumberEditor
+              value={draft.smallBlind}
+              onChange={(v) => setDraft((d) => ({ ...d, smallBlind: v }))}
+              step={1}
               min={1}
+              compact
             />
           </div>
 
-          {/* Actions */}
-          <div className="bg-white rounded-2xl p-4 space-y-3 border border-stone-100">
+          {/* Cancel / Save */}
+          <div className="flex gap-3 px-1">
             <button
               type="button"
-              onClick={onReset}
-              className="w-full text-center text-xs text-stone-400 hover:text-stone-600 transition-colors duration-200"
+              onClick={onBack}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors duration-200"
             >
-              Reset Settings to Defaults
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 transition-colors duration-200"
+            >
+              {blindsChanged ? "Save and Restart Game" : "Save"}
+            </button>
+          </div>
+
+          {/* Reset to Defaults */}
+          <div className="border-t border-stone-200 pt-4 px-1">
+            <button
+              type="button"
+              onClick={() => setDraft({ ...defaultSettings })}
+              className="text-xs text-stone-400 hover:text-stone-600 transition-colors duration-200"
+            >
+              Reset to Defaults
             </button>
           </div>
         </div>
