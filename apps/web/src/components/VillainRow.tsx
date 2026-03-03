@@ -382,7 +382,11 @@ function CardPickBody({
         createPortal(
           <>
             {/* Bug 5A: pointer-events-none so scroll passes through */}
-            <div className="fixed inset-0 bg-black/20 z-10 pointer-events-none" />
+            <div
+              className="fixed inset-0 bg-black/20 z-10"
+              onClick={() => setActiveSlot(null)}
+              onPointerDown={(e) => e.stopPropagation()}
+            />
             <PopoverPicker
               currentCard={slots[activeSlot]}
               disabledCards={pickerDisabled(activeSlot)}
@@ -550,6 +554,7 @@ function RangeModal({
       <div
         className="fixed inset-0 bg-black/40 z-40"
         onClick={onDone}
+        onPointerDown={(e) => e.stopPropagation()}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div

@@ -90,6 +90,7 @@ export function HeroSection({
             <div
               className="fixed inset-0 bg-black/20 z-10"
               onClick={() => setBetEditorOpen(false)}
+              onPointerDown={(e) => e.stopPropagation()}
             />
             <div className="absolute right-0 top-full mt-1 z-20">
               <NumberEditor
@@ -134,6 +135,7 @@ export function HeroSection({
             <div
               className="fixed inset-0 bg-black/20 z-10"
               onClick={() => setActiveSlot(null)}
+              onPointerDown={(e) => e.stopPropagation()}
             />
             <PopoverPicker
               currentCard={slots[activeSlot]}
@@ -180,7 +182,7 @@ function EquityDetails({
           ) : (
             <div className="text-xs font-semibold text-red-500">-EV Fold</div>
           )}
-          <div className="text-xs text-stone-500 mt-1">
+          <div className="text-xs text-stone-500 mt-4">
             Odds <span className="font-semibold">{potOdds.toFixed(1)}%</span>
             {maxBet !== null && (
               <>

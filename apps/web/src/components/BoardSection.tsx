@@ -75,6 +75,7 @@ export function BoardSection({ slots, disabledCards, onChange, potSize, onSetPot
             <div
               className="fixed inset-0 bg-black/20 z-10"
               onClick={() => setPotEditorOpen(false)}
+              onPointerDown={(e) => e.stopPropagation()}
             />
             <div className="absolute right-0 top-full mt-1 z-20">
               <NumberEditor
@@ -124,6 +125,7 @@ export function BoardSection({ slots, disabledCards, onChange, potSize, onSetPot
             <div
               className="fixed inset-0 bg-black/20 z-10"
               onClick={() => setActiveSlot(null)}
+              onPointerDown={(e) => e.stopPropagation()}
             />
             <PopoverPicker
               currentCard={slots[activeSlot]}
