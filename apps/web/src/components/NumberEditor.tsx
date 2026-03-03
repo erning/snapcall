@@ -56,7 +56,7 @@ export function NumberEditor({
 
   return (
     <div
-      className={`bg-stone-100 rounded-xl shadow-lg p-4 py-5 min-w-[200px] select-none ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+      className={`bg-stone-100 rounded-xl shadow-lg px-6 py-10 min-w-[260px] select-none ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
       style={{ touchAction: "none" }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -65,22 +65,22 @@ export function NumberEditor({
       <div className="flex items-center justify-between">
         <span
           data-stepper
-          className="text-[11px] text-stone-400 font-medium cursor-pointer active:text-stone-600"
+          className="text-sm text-stone-400 font-medium cursor-pointer active:text-stone-600 px-2 py-1"
           onClick={() => onChange(Math.max(0, value - step))}
         >
           -{step}
         </span>
-        <span className="text-2xl font-bold text-stone-800">{value}</span>
+        <span className="text-3xl font-bold text-stone-800">{value}</span>
         <span
           data-stepper
-          className="text-[11px] text-stone-400 font-medium cursor-pointer active:text-stone-600"
+          className="text-sm text-stone-400 font-medium cursor-pointer active:text-stone-600 px-2 py-1"
           onClick={() => onChange(value + step)}
         >
           +{step}
         </span>
       </div>
-      <p className="text-[10px] text-stone-400 text-center mt-2">
-        ↕↔ drag to adjust
+      <p className="text-xs text-stone-400 text-center mt-4">
+        drag to adjust
       </p>
     </div>
   );

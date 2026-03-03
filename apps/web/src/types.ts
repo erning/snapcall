@@ -6,8 +6,8 @@ export interface AppState {
   board: (string | null)[];
   hero: (string | null)[];
   villains: VillainData[];
-  potSize: string;
-  callAmount: string;
+  potSize: number;
+  callAmount: number;
 }
 
 export type AppAction =
@@ -18,7 +18,7 @@ export type AppAction =
   | { type: "SET_VILLAIN_MODE"; index: number; mode: "cards" | "range" }
   | { type: "ADD_VILLAIN" }
   | { type: "REMOVE_VILLAIN"; index: number }
-  | { type: "SET_POT_SIZE"; value: string }
-  | { type: "SET_CALL_AMOUNT"; value: string }
+  | { type: "SET_POT_SIZE"; value: number }
+  | { type: "SET_CALL_AMOUNT"; value: number }
   | { type: "RESET"; bigBlind: number; smallBlind: number }
   | { type: "RESET_VILLAIN_COUNT" };

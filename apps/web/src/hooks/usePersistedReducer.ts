@@ -17,7 +17,17 @@ function loadState(): AppState {
       Array.isArray(parsed.villains) &&
       parsed.villains.length >= 1
     ) {
-      return parsed as AppState;
+      return {
+        ...parsed,
+        potSize:
+          typeof parsed.potSize === "number" ? parsed.potSize
+          : typeof parsed.potSize === "string" ? (parseInt(parsed.potSize, 10) || 0)
+          : initialState.potSize,
+        callAmount:
+          typeof parsed.callAmount === "number" ? parsed.callAmount
+          : typeof parsed.callAmount === "string" ? (parseInt(parsed.callAmount, 10) || 0)
+          : initialState.callAmount,
+      } as AppState;
     }
   } catch {
     // ignore

@@ -63,9 +63,6 @@ export default function App() {
     [boardCards, heroCards, villainCards],
   );
 
-  const potSizeNum = parseInt(state.potSize, 10) || 0;
-  const callAmountNum = parseInt(state.callAmount, 10) || 0;
-
   if (settingsOpen) {
     return (
       <SettingsPage
@@ -115,15 +112,15 @@ export default function App() {
             slots={state.board}
             disabledCards={[...heroCards, ...villainCards]}
             onChange={(slots) => dispatch({ type: "SET_BOARD", value: slots })}
-            potSize={potSizeNum}
+            potSize={state.potSize}
             onSetPotSize={(v) =>
-              dispatch({ type: "SET_POT_SIZE", value: String(v) })
+              dispatch({ type: "SET_POT_SIZE", value: v })
             }
           />
           {/* 点击区域覆盖 Board 底部与 Hero 之间的 gap，不占额外空间 */}
           <div
             onClick={() => setHeroCollapsed((prev) => !prev)}
-            className="absolute -bottom-3 left-0 right-0 h-6 cursor-pointer z-10 flex items-center justify-center group"
+            className="absolute -bottom-3 left-0 right-0 h-6 cursor-pointer flex items-center justify-center group"
           >
             <div className="w-8 h-0.5 rounded-full bg-transparent group-hover:bg-stone-300 transition-colors" />
           </div>
@@ -138,11 +135,11 @@ export default function App() {
             onChange={(slots) =>
               dispatch({ type: "SET_HERO", value: slots })
             }
-            callAmount={callAmountNum}
+            callAmount={state.callAmount}
             onSetCallAmount={(v) =>
-              dispatch({ type: "SET_CALL_AMOUNT", value: String(v) })
+              dispatch({ type: "SET_CALL_AMOUNT", value: v })
             }
-            potSize={potSizeNum}
+            potSize={state.potSize}
             onRecalc={recalc}
           />
         )}

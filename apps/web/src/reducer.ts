@@ -1,4 +1,5 @@
 import type { AppState, AppAction, VillainData } from "./types";
+import { defaultSettings } from "./hooks/useSettings";
 
 const emptyVillain: VillainData = { mode: "range", range: "" };
 
@@ -6,8 +7,8 @@ export const initialState: AppState = {
   board: [null, null, null, null, null],
   hero: [null, null],
   villains: [{ mode: "range", range: "" }],
-  potSize: "30",
-  callAmount: "20",
+  potSize: defaultSettings.smallBlind + defaultSettings.bigBlind,
+  callAmount: defaultSettings.bigBlind,
 };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -51,8 +52,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...initialState,
         villains: state.villains.map(() => ({ ...emptyVillain })),
-        potSize: String(action.smallBlind + action.bigBlind),
-        callAmount: String(action.bigBlind),
+        potSize: action.smallBlind + action.bigBlind,
+        callAmount: action.bigBlind,
       };
     }
     case "RESET_VILLAIN_COUNT":
