@@ -19,20 +19,23 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, hero: action.value };
     case "SET_VILLAIN": {
       const villains = [...state.villains];
-      villains[action.index] = { mode: "cards", slots: action.value };
+      const { folded } = villains[action.index];
+      villains[action.index] = { mode: "cards", slots: action.value, folded };
       return { ...state, villains };
     }
     case "SET_VILLAIN_RANGE": {
       const villains = [...state.villains];
-      villains[action.index] = { mode: "range", range: action.range };
+      const { folded } = villains[action.index];
+      villains[action.index] = { mode: "range", range: action.range, folded };
       return { ...state, villains };
     }
     case "SET_VILLAIN_MODE": {
       const villains = [...state.villains];
+      const { folded } = villains[action.index];
       villains[action.index] =
         action.mode === "cards"
-          ? { mode: "cards", slots: [null, null] }
-          : { mode: "range", range: "" };
+          ? { mode: "cards", slots: [null, null], folded }
+          : { mode: "range", range: "", folded };
       return { ...state, villains };
     }
     case "ADD_VILLAIN":

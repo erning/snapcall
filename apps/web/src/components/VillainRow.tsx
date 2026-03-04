@@ -268,35 +268,32 @@ export function VillainRow({
         {/* Bug 3A: overlay blocks interaction when swiped open */}
         {isSwipeOpen && <div className="absolute inset-0 z-[1]" />}
 
-        {/* Folded overlay */}
-        {folded && !isSwipeOpen && (
-          <div className="absolute inset-0 bg-white/60 z-[1] flex items-center justify-center">
-            <span className="text-sm font-bold text-amber-600 tracking-wider">FOLD</span>
+        <div className={folded ? "opacity-50" : ""}>
+          <div className="flex items-center justify-between mb-1.5">
+            <h3 className={`text-sm font-semibold ${folded ? "text-stone-400 line-through" : "text-stone-900"}`}>
+              Villain {index + 1}
+            </h3>
+            <div className="flex items-center gap-3">
+              {folded ? (
+                <span className="text-xs font-bold text-stone-400 tracking-wider">FOLD</span>
+              ) : equity !== null && !isCalculating ? (
+                <span className="text-sm font-bold text-stone-600">
+                  {equity.toFixed(1)}%
+                </span>
+              ) : null}
+            </div>
           </div>
-        )}
 
-        <div className="flex items-center justify-between mb-1.5">
-          <h3 className={`text-sm font-semibold ${folded ? "text-stone-400 line-through" : "text-stone-900"}`}>
-            Villain {index + 1}
-          </h3>
-          <div className="flex items-center gap-3">
-            {equity !== null && !isCalculating && (
-              <span className="text-sm font-bold text-stone-600">
-                {equity.toFixed(1)}%
-              </span>
-            )}
-          </div>
+          {villain.mode === "cards" ? (
+            <CardPickBody
+              slots={villain.slots}
+              disabledCards={disabledCards}
+              onChange={onChangeSlots}
+            />
+          ) : (
+            <RangePickBody range={villain.range} onChange={onChangeRange} />
+          )}
         </div>
-
-        {villain.mode === "cards" ? (
-          <CardPickBody
-            slots={villain.slots}
-            disabledCards={disabledCards}
-            onChange={onChangeSlots}
-          />
-        ) : (
-          <RangePickBody range={villain.range} onChange={onChangeRange} />
-        )}
       </div>
     </div>
   );
