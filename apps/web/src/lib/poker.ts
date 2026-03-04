@@ -10,10 +10,18 @@ export const ALL_CARDS: string[] = RANKS.flatMap((r) =>
 
 // Suit display info for CardPicker
 export const SUIT_DISPLAY: Record<Suit, { symbol: string; color: string }> = {
-  s: { symbol: "\u2660", color: "text-stone-800" },
+  s: { symbol: "\u2660", color: "text-stone-800 dark:text-stone-200" },
   h: { symbol: "\u2665", color: "text-red-500" },
   d: { symbol: "\u2666", color: "text-blue-500" },
-  c: { symbol: "\u2663", color: "text-green-600" },
+  c: { symbol: "\u2663", color: "text-green-600 dark:text-green-500" },
+};
+
+// Suit colors for card slots (simpler 2-color scheme)
+export const SLOT_SUIT_COLOR: Record<string, string> = {
+  s: "text-stone-800 dark:text-stone-200",
+  c: "text-stone-800 dark:text-stone-200",
+  h: "text-red-500",
+  d: "text-red-500",
 };
 
 // 13x13 range matrix labels

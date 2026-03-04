@@ -59,20 +59,20 @@ export function VillainsSection({
           {error ? (
             <p className="text-sm text-red-500">{error}</p>
           ) : mode && samples !== null ? (
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-stone-400 dark:text-stone-500">
               {mode} &middot; {samples.toLocaleString()} samples
             </p>
           ) : null}
         </div>
 
         <div className="flex items-center justify-between px-1 relative">
-          <h2 className="text-sm font-semibold text-stone-900">
+          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">
             Villains ({villains.length})
           </h2>
           <div className="relative">
             <button
               type="button"
-              className="text-xs font-medium bg-stone-100 hover:bg-stone-200 text-stone-600 px-3 py-1.5 rounded-lg transition-colors duration-200"
+              className="text-xs font-medium bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-400 px-3 py-1.5 rounded-lg transition-colors duration-200"
               onClick={() => {
                 setEditVillainCount(villains.length);
                 setVillainEditorOpen(true);

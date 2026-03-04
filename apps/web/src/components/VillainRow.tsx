@@ -4,19 +4,13 @@ import { MiniCardPicker } from "./MiniCardPicker";
 import { RangePicker } from "./RangePicker";
 import {
   SUIT_DISPLAY,
+  SLOT_SUIT_COLOR,
   type Suit,
   rangeStringToSet,
   rangeSetToString,
   compressRange,
 } from "../lib/poker";
 import type { VillainData } from "../types";
-
-const SLOT_SUIT_COLOR: Record<string, string> = {
-  s: "text-stone-800",
-  c: "text-stone-800",
-  h: "text-red-500",
-  d: "text-red-500",
-};
 
 const BUTTON_WIDTH = 56;
 
@@ -258,7 +252,7 @@ export function VillainRow({
       {/* Foreground content — Bug 1: p-3, Bug 4: no will-change-transform, Bug 6: dynamic touchAction */}
       <div
         ref={foregroundRef}
-        className="relative bg-white px-5 py-3"
+        className="relative bg-white dark:bg-stone-900 px-5 py-3"
         style={{ touchAction: isSwipeOpen ? "none" : "pan-y" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -270,14 +264,14 @@ export function VillainRow({
 
         <div className={folded ? "opacity-50" : ""}>
           <div className="flex items-center justify-between mb-1.5">
-            <h3 className={`text-sm font-semibold ${folded ? "text-stone-400 line-through" : "text-stone-900"}`}>
+            <h3 className={`text-sm font-semibold ${folded ? "text-stone-400 dark:text-stone-500 line-through" : "text-stone-900 dark:text-stone-100"}`}>
               Villain {index + 1}
             </h3>
             <div className="flex items-center gap-3">
               {folded ? (
-                <span className="text-xs font-bold text-stone-400 tracking-wider">FOLD</span>
+                <span className="text-xs font-bold text-stone-400 dark:text-stone-500 tracking-wider">FOLD</span>
               ) : equity !== null && !isCalculating ? (
-                <span className="text-sm font-bold text-stone-600">
+                <span className="text-sm font-bold text-stone-600 dark:text-stone-400">
                   {equity.toFixed(1)}%
                 </span>
               ) : null}
@@ -507,10 +501,10 @@ function RangeCardStack({
     return (
       <button
         type="button"
-        className={`w-10 h-14 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-150 select-none border-2 border-dashed border-stone-300${active ? " ring-2 ring-orange-400" : ""}`}
+        className={`w-10 h-14 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-150 select-none border-2 border-dashed border-stone-300 dark:border-stone-600${active ? " ring-2 ring-orange-400" : ""}`}
         onClick={onClick}
       >
-        <span className="text-stone-300 text-base font-bold leading-none">
+        <span className="text-stone-300 dark:text-stone-600 text-base font-bold leading-none">
           R
         </span>
       </button>
@@ -530,16 +524,16 @@ function RangeCardStack({
       {individual.map((combo) => (
         <div
           key={combo}
-          className="w-10 h-14 rounded-lg bg-white border border-stone-200 flex items-center justify-center shrink-0"
+          className="w-10 h-14 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-center justify-center shrink-0"
         >
           {combo.includes("-") ? (
-            <span className="text-[10px] font-semibold text-stone-700 flex flex-col items-center leading-tight">
+            <span className="text-[10px] font-semibold text-stone-700 dark:text-stone-300 flex flex-col items-center leading-tight">
               <span>{combo.split("-")[0]}</span>
-              <span className="text-[8px] text-stone-400">-</span>
+              <span className="text-[8px] text-stone-400 dark:text-stone-500">-</span>
               <span>{combo.split("-")[1]}</span>
             </span>
           ) : (
-            <span className="text-[10px] font-semibold text-stone-700">
+            <span className="text-[10px] font-semibold text-stone-700 dark:text-stone-300">
               {combo}
             </span>
           )}
@@ -550,7 +544,7 @@ function RangeCardStack({
           {["-4deg", "4deg"].map((rot, i) => (
             <div
               key={i}
-              className="w-8 h-11 rounded bg-stone-100 border border-stone-200 absolute"
+              className="w-8 h-11 rounded bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 absolute"
               style={{
                 left: "50%",
                 top: "50%",
@@ -559,7 +553,7 @@ function RangeCardStack({
               }}
             />
           ))}
-          <span className="absolute inset-0 flex items-center justify-center z-10 text-[10px] font-semibold text-stone-500">
+          <span className="absolute inset-0 flex items-center justify-center z-10 text-[10px] font-semibold text-stone-500 dark:text-stone-400">
             +{overflow}
           </span>
         </div>
@@ -590,16 +584,16 @@ function RangeModal({
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-4 pointer-events-auto"
+          className="bg-white dark:bg-stone-900 rounded-2xl shadow-xl max-w-sm w-full p-4 pointer-events-auto"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-stone-600">
+            <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
               {selected.size} combo{selected.size !== 1 ? "s" : ""}
             </span>
             <div className="flex gap-3">
               <button
                 type="button"
-                className="text-xs font-medium text-stone-400 hover:text-stone-600 transition-colors"
+                className="text-xs font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
                 onClick={onClear}
               >
                 Clear
@@ -640,9 +634,9 @@ function CardSlot({
     "w-10 h-14 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-150 select-none";
 
   if (card && suitInfo) {
-    cls += " bg-white border border-stone-200";
+    cls += " bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700";
   } else {
-    cls += " border-2 border-dashed border-stone-300";
+    cls += " border-2 border-dashed border-stone-300 dark:border-stone-600";
   }
 
   if (active) {
@@ -661,7 +655,7 @@ function CardSlot({
           </span>
         </>
       ) : (
-        <span className="text-stone-300 text-base leading-none">+</span>
+        <span className="text-stone-300 dark:text-stone-600 text-base leading-none">+</span>
       )}
     </button>
   );

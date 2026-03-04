@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { usePersistedReducer } from "./hooks/usePersistedReducer";
 import { useEquity } from "./hooks/useEquity";
 import { useSettings } from "./hooks/useSettings";
+import { useTheme } from "./hooks/useTheme";
 import { BoardSection } from "./components/BoardSection";
 import { HeroSection } from "./components/HeroSection";
 import { VillainsSection } from "./components/VillainsSection";
@@ -12,6 +13,7 @@ import { HeaderMenu } from "./components/HeaderMenu";
 export default function App() {
   const [state, dispatch] = usePersistedReducer();
   const { settings, updateSettings } = useSettings();
+  useTheme(settings.theme);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const boardStr = useMemo(
@@ -86,7 +88,7 @@ export default function App() {
     return (
       <SettingsPage
         settings={settings}
-        onSave={(next) => updateSettings(next)}
+        onSave={(partial) => updateSettings(partial)}
         onRestart={(bb, sb) => {
           dispatch({ type: "RESET", bigBlind: bb, smallBlind: sb });
         }}
@@ -96,16 +98,16 @@ export default function App() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-50 relative">
+    <main className="min-h-screen bg-stone-50 dark:bg-stone-950 relative">
       {isCalculating && (
-        <div className="fixed top-0 left-0 right-0 h-0.5 z-50 bg-orange-100 overflow-hidden">
+        <div className="fixed top-0 left-0 right-0 h-0.5 z-50 bg-orange-100 dark:bg-orange-500/20 overflow-hidden">
           <div className="h-full w-1/3 bg-orange-400 rounded-full animate-loading-bar" />
         </div>
       )}
       <div className="max-w-lg w-full mx-auto px-4 pt-3 pb-4 space-y-4">
         <header className="px-1 flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-stone-900">SnapCall</h1>
+            <h1 className="text-xl font-bold text-stone-900 dark:text-stone-100">SnapCall</h1>
           </div>
           <HeaderMenu
             onSettings={() => setSettingsOpen(true)}
@@ -178,10 +180,10 @@ export default function App() {
       </div>
 
       <footer className="max-w-lg mx-auto px-4 pt-4 pb-8">
-        <div className="border-t border-stone-200 pt-3 text-center">
+        <div className="border-t border-stone-200 dark:border-stone-700 pt-3 text-center">
           <button
             type="button"
-            className="text-xs text-stone-300"
+            className="text-xs text-stone-300 dark:text-stone-600"
             onClick={() => location.reload()}
           >
             {__APP_VERSION__} ({__GIT_HASH__})

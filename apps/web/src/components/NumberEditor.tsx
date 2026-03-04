@@ -137,7 +137,7 @@ export function NumberEditor({
 
   return (
     <div
-      className={`bg-stone-100 rounded-xl select-none ${compact ? "px-4 py-3" : "shadow-lg px-6 py-10 min-w-[260px]"} ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+      className={`bg-stone-100 dark:bg-stone-800 rounded-xl select-none ${compact ? "px-4 py-3" : "shadow-lg px-6 py-10 min-w-[260px]"} ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
       style={{ touchAction: "none" }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -146,7 +146,7 @@ export function NumberEditor({
       <div className="flex items-center justify-between">
         <span
           data-stepper
-          className="text-stone-400 cursor-pointer active:text-stone-600 p-2"
+          className="text-stone-400 dark:text-stone-500 cursor-pointer active:text-stone-600 dark:active:text-stone-300 p-2"
           onPointerDown={(e) => { e.preventDefault(); startRepeat(-1); }}
           onPointerUp={stopRepeat}
           onPointerCancel={stopRepeat}
@@ -154,10 +154,10 @@ export function NumberEditor({
         >
           <Minus size={18} className="pointer-events-none" />
         </span>
-        <span className={`font-bold text-stone-800 ${compact ? "text-xl" : "text-3xl"}`}>{value.toLocaleString()}</span>
+        <span className={`font-bold text-stone-800 dark:text-stone-200 ${compact ? "text-xl" : "text-3xl"}`}>{value.toLocaleString()}</span>
         <span
           data-stepper
-          className="text-stone-400 cursor-pointer active:text-stone-600 p-2"
+          className="text-stone-400 dark:text-stone-500 cursor-pointer active:text-stone-600 dark:active:text-stone-300 p-2"
           onPointerDown={(e) => { e.preventDefault(); startRepeat(1); }}
           onPointerUp={stopRepeat}
           onPointerCancel={stopRepeat}
@@ -167,7 +167,7 @@ export function NumberEditor({
         </span>
       </div>
       {!compact && (
-        <p className="text-xs text-stone-400 text-center mt-4">
+        <p className="text-xs text-stone-400 dark:text-stone-500 text-center mt-4">
           drag to adjust
         </p>
       )}
@@ -187,8 +187,8 @@ export function Badge({
   onClick: () => void;
 }) {
   const cls = active
-    ? "ring-2 ring-orange-400 bg-orange-50 text-orange-700"
-    : "bg-stone-100 text-stone-600";
+    ? "ring-2 ring-orange-400 bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400"
+    : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400";
 
   return (
     <button

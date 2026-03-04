@@ -51,11 +51,11 @@ export function MiniCardPicker({
     let cls =
       "w-9 h-9 rounded-lg text-sm font-bold transition-colors duration-100 select-none";
     if (disabled) {
-      cls += " opacity-30 cursor-not-allowed bg-white border border-stone-200 text-stone-400";
+      cls += " opacity-30 cursor-not-allowed bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 text-stone-400 dark:text-stone-500";
     } else if (active) {
       cls += " bg-orange-500 text-white border border-orange-500 shadow-sm";
     } else {
-      cls += " bg-white shadow-sm border border-stone-200 text-stone-800 active:bg-stone-100";
+      cls += " bg-white dark:bg-stone-800 shadow-sm border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 active:bg-stone-100 dark:active:bg-stone-700";
     }
 
     return (
@@ -72,7 +72,7 @@ export function MiniCardPicker({
   };
 
   return (
-    <div className="bg-stone-100 rounded-xl shadow-lg p-3 w-fit mx-auto">
+    <div className="bg-stone-100 dark:bg-stone-900 rounded-xl shadow-lg p-3 w-fit mx-auto">
       {/* Rank row 1: A-8 */}
       <div className="flex gap-1 mb-1 justify-center">
         {RANK_ROW1.map(renderRankButton)}
@@ -92,9 +92,9 @@ export function MiniCardPicker({
           let cls =
             "w-9 h-9 rounded-lg text-lg font-bold transition-colors duration-100 select-none";
           if (disabled) {
-            cls += " opacity-30 cursor-not-allowed bg-white border border-stone-200 text-stone-700";
+            cls += " opacity-30 cursor-not-allowed bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-400";
           } else {
-            cls += " bg-white shadow-sm border border-stone-200 text-stone-700 active:bg-stone-100";
+            cls += " bg-white dark:bg-stone-800 shadow-sm border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 active:bg-stone-100 dark:active:bg-stone-700";
           }
 
           return (
@@ -112,7 +112,7 @@ export function MiniCardPicker({
         {/* Backspace */}
         <button
           type="button"
-          className="w-9 h-9 rounded-lg text-base font-bold bg-white shadow-sm border border-stone-200 text-stone-500 active:bg-stone-100 transition-colors duration-100 select-none"
+          className="w-9 h-9 rounded-lg text-base font-bold bg-white dark:bg-stone-800 shadow-sm border border-stone-200 dark:border-stone-700 text-stone-500 dark:text-stone-400 active:bg-stone-100 dark:active:bg-stone-700 transition-colors duration-100 select-none"
           onClick={onDelete}
         >
           ⌫

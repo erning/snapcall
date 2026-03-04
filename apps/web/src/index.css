@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-accent: var(--color-orange-500);
   --color-accent-light: var(--color-orange-300);

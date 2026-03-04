@@ -16,11 +16,11 @@ function getCellStyle(
   if (!isSelected) {
     switch (category) {
       case "pair":
-        return `${base} bg-amber-50 border border-stone-200 text-stone-700`;
+        return `${base} bg-amber-50 dark:bg-amber-500/10 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300`;
       case "suited":
-        return `${base} bg-sky-50 border border-stone-200 text-stone-700`;
+        return `${base} bg-sky-50 dark:bg-sky-500/10 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300`;
       case "offsuit":
-        return `${base} bg-white border border-stone-200 text-stone-600`;
+        return `${base} bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400`;
     }
   }
 

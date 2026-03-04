@@ -1,9 +1,12 @@
 import { useState, useCallback } from "react";
 
+export type Theme = "system" | "dark" | "light";
+
 export interface Settings {
   iterations: number;
   bigBlind: number;
   smallBlind: number;
+  theme: Theme;
 }
 
 const STORAGE_KEY = "snapcall-settings";
@@ -12,7 +15,10 @@ export const defaultSettings: Settings = {
   iterations: 10000,
   bigBlind: 20,
   smallBlind: 10,
+  theme: "system",
 };
+
+const VALID_THEMES: Theme[] = ["system", "dark", "light"];
 
 function loadSettings(): Settings {
   try {
@@ -32,6 +38,9 @@ function loadSettings(): Settings {
         typeof parsed.smallBlind === "number" && parsed.smallBlind > 0
           ? parsed.smallBlind
           : defaultSettings.smallBlind,
+      theme: VALID_THEMES.includes(parsed.theme)
+        ? parsed.theme
+        : defaultSettings.theme,
     };
   } catch {
     return { ...defaultSettings };

@@ -3,14 +3,7 @@ import { FoldVertical, UnfoldVertical } from "lucide-react";
 import { MiniCardPicker } from "./MiniCardPicker";
 import { NumberEditor, Badge } from "./NumberEditor";
 import { calcPotOdds } from "../lib/potOdds";
-import { SUIT_DISPLAY, type Suit } from "../lib/poker";
-
-const SLOT_SUIT_COLOR: Record<string, string> = {
-  s: "text-stone-800", // ♠ black
-  c: "text-stone-800", // ♣ black
-  h: "text-red-500",   // ♥ red
-  d: "text-red-500",   // ♦ red
-};
+import { SUIT_DISPLAY, SLOT_SUIT_COLOR, type Suit } from "../lib/poker";
 
 interface HeroSectionProps {
   slots: (string | null)[];
@@ -77,14 +70,14 @@ export function HeroSection({
 
   if (collapsed) {
     return (
-      <section className="bg-white rounded-2xl shadow-sm px-5 py-3">
+      <section className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm px-5 py-3">
         <div className="relative flex items-center justify-between">
           <div
             className="flex items-center gap-1.5 cursor-pointer select-none flex-1 min-w-0"
             onClick={() => setCollapsed(false)}
           >
-            <h2 className="text-sm font-semibold text-stone-900">Hero</h2>
-            <UnfoldVertical size={14} className="text-stone-400" />
+            <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">Hero</h2>
+            <UnfoldVertical size={14} className="text-stone-400 dark:text-stone-500" />
           </div>
           <div className="flex items-center gap-2">
             <Badge
@@ -118,7 +111,7 @@ export function HeroSection({
   }
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm px-5 pt-3 pb-5">
+    <section className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm px-5 pt-3 pb-5">
       <div className="relative flex items-center justify-between mb-3">
         <div
           className="flex items-center gap-1.5 cursor-pointer select-none flex-1 min-w-0"
@@ -128,8 +121,8 @@ export function HeroSection({
             setBetEditorOpen(false);
           }}
         >
-          <h2 className="text-sm font-semibold text-stone-900">Hero</h2>
-          <FoldVertical size={14} className="text-stone-400" />
+          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">Hero</h2>
+          <FoldVertical size={14} className="text-stone-400 dark:text-stone-500" />
         </div>
         <div className="flex items-center gap-2">
           <Badge
@@ -240,7 +233,7 @@ function EquityDetails({
           ) : (
             <div className="text-xs font-semibold text-red-500">-EV Fold</div>
           )}
-          <div className="text-xs text-stone-500 mt-4">
+          <div className="text-xs text-stone-500 dark:text-stone-400 mt-4">
             Odds <span className="font-semibold">{potOdds.toFixed(1)}%</span>
             {maxBet !== null && (
               <>
@@ -249,7 +242,7 @@ function EquityDetails({
             )}
           </div>
           {equity >= 100 && (
-            <div className="text-xs text-stone-500">All-in</div>
+            <div className="text-xs text-stone-500 dark:text-stone-400">All-in</div>
           )}
         </>
       )}
@@ -275,9 +268,9 @@ function CardSlot({
     "w-14 h-20 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all duration-150 select-none";
 
   if (card && suitInfo) {
-    cls += " bg-white border border-stone-200";
+    cls += " bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700";
   } else {
-    cls += " border-2 border-dashed border-stone-300";
+    cls += " border-2 border-dashed border-stone-300 dark:border-stone-600";
   }
 
   if (active) {
@@ -296,7 +289,7 @@ function CardSlot({
           </span>
         </>
       ) : (
-        <span className="text-stone-300 text-2xl leading-none">+</span>
+        <span className="text-stone-300 dark:text-stone-600 text-2xl leading-none">+</span>
       )}
     </button>
   );
