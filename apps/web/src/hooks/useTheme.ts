@@ -10,6 +10,7 @@ export function useTheme(theme: Theme) {
           matchMedia("(prefers-color-scheme: dark)").matches);
 
       document.documentElement.classList.toggle("dark", isDark);
+      document.documentElement.style.backgroundColor = "";
 
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) {
