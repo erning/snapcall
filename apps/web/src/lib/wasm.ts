@@ -37,7 +37,14 @@ export function estimateEquity(
 ): Promise<EquityResult> {
   const id = nextId++;
   return new Promise<EquityResult>((resolve, reject) => {
-    pending.set(id, { resolve, reject });
+    const timer = setTimeout(() => {
+      pending.delete(id);
+      reject(new Error("Equity calculation timed out after 30s"));
+    }, 30_000);
+    pending.set(id, {
+      resolve: (v) => { clearTimeout(timer); resolve(v); },
+      reject: (e) => { clearTimeout(timer); reject(e); },
+    });
     const msg: WorkerRequest = { id, board, hero, villains, iterations };
     worker.postMessage(msg);
   });

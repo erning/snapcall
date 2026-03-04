@@ -135,6 +135,15 @@ fn run_equity_command(
 }
 
 fn run_pot_odds_command(pot_size: f64, call_amount: f64) {
+    if pot_size <= 0.0 {
+        eprintln!("Error: pot size must be positive, got {}", pot_size);
+        return;
+    }
+    if call_amount <= 0.0 {
+        eprintln!("Error: call amount must be positive, got {}", call_amount);
+        return;
+    }
+
     let total_pot_after_call = pot_size + call_amount;
     let pot_odds_pct = (call_amount / total_pot_after_call) * 100.0;
 

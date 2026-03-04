@@ -81,13 +81,13 @@ pub(crate) fn estimate_equity_exact_enumeration(
     // unknown_count: need 2 cards each
     let mut partial_count = 0usize;
     let mut unknown_count = 0usize;
-    let mut range_indices: Vec<usize> = Vec::new();
+    let mut range_players: Vec<(usize, &Vec<FlatHand>)> = Vec::new();
 
     for (idx, p) in players.iter().enumerate() {
         match p {
             HoleCardsInput::Partial(_) => partial_count += 1,
             HoleCardsInput::Unknown => unknown_count += 1,
-            HoleCardsInput::Range(_) => range_indices.push(idx),
+            HoleCardsInput::Range(hands) => range_players.push((idx, hands)),
             HoleCardsInput::Exact(_) => {}
         }
     }
@@ -104,12 +104,12 @@ pub(crate) fn estimate_equity_exact_enumeration(
             Card::new(Value::Two, Suit::Spade),
             Card::new(Value::Two, Suit::Spade)
         ];
-        range_indices.len()
+        range_players.len()
     ];
 
     enumerate_ranges(
         players,
-        &range_indices,
+        &range_players,
         0,
         &mut range_assignments,
         &available,
@@ -142,7 +142,7 @@ pub(crate) fn estimate_equity_exact_enumeration(
 #[allow(clippy::too_many_arguments)]
 fn enumerate_ranges(
     players: &[HoleCardsInput],
-    range_indices: &[usize],
+    range_players: &[(usize, &Vec<FlatHand>)],
     depth: usize,
     range_assignments: &mut Vec<[Card; 2]>,
     available: &[Card],
@@ -154,10 +154,10 @@ fn enumerate_ranges(
     wins: &mut Vec<usize>,
     total_combos: &mut usize,
 ) {
-    if depth == range_indices.len() {
+    if depth == range_players.len() {
         // All ranges assigned — collect cards used by ranges
         let mut range_used: HashSet<Card> = HashSet::new();
-        for assignment in range_assignments.iter().take(range_indices.len()) {
+        for assignment in range_assignments.iter().take(range_players.len()) {
             range_used.insert(assignment[0]);
             range_used.insert(assignment[1]);
         }
@@ -241,11 +241,7 @@ fn enumerate_ranges(
     }
 
     // Current range player
-    let player_idx = range_indices[depth];
-    let hands = match &players[player_idx] {
-        HoleCardsInput::Range(h) => h,
-        _ => unreachable!(),
-    };
+    let (_player_idx, hands) = range_players[depth];
 
     // Collect cards already used by previous range assignments
     let mut used_by_prior: HashSet<Card> = HashSet::new();
@@ -274,7 +270,7 @@ fn enumerate_ranges(
 
         enumerate_ranges(
             players,
-            range_indices,
+            range_players,
             depth + 1,
             range_assignments,
             available,

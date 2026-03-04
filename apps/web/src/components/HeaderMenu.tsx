@@ -16,12 +16,13 @@ export function HeaderMenu({ onRestart, onSettings }: HeaderMenuProps) {
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  });
+  }, [open]);
 
   return (
     <div className="relative">
       <button
         type="button"
+        aria-label="Menu"
         className="text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 p-1 transition-colors duration-200"
         onClick={() => setOpen((v) => !v)}
       >

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use rand::prelude::{IndexedRandom, SliceRandom};
-use rs_poker::core::{Card, Deck, FlatHand, Rankable};
+use rs_poker::core::{Card, Deck, FlatHand, Rank, Rankable};
 
 use crate::input::HoleCardsInput;
 use crate::types::{EquityEstimateMode, EquityResult, SnapError};
@@ -19,33 +19,47 @@ pub(crate) fn estimate_equity_monte_carlo(
     let mut samples = 0usize;
     let missing_board = 5 - board_cards.len();
 
-    'outer: for _ in 0..iterations {
-        let mut used: HashSet<Card> = board_set.clone();
-        for p in players {
-            match p {
-                HoleCardsInput::Exact(hand) => {
-                    for c in hand.iter() {
-                        used.insert(*c);
-                    }
+    // Pre-collect fixed cards (board + exact/partial) to avoid recomputing each iteration
+    let mut fixed_cards: Vec<Card> = board_set.iter().copied().collect();
+    for p in players {
+        match p {
+            HoleCardsInput::Exact(hand) => {
+                for c in hand.iter() {
+                    fixed_cards.push(*c);
                 }
-                HoleCardsInput::Partial(c) => {
-                    used.insert(*c);
-                }
-                _ => {}
             }
+            HoleCardsInput::Partial(c) => {
+                fixed_cards.push(*c);
+            }
+            _ => {}
         }
+    }
+
+    // Pre-allocate reusable buffers outside the hot loop
+    let mut used: HashSet<Card> = HashSet::with_capacity(fixed_cards.len() + num_players * 2);
+    let mut available: Vec<Card> = Vec::with_capacity(full_deck.len());
+    let mut hole_cards: Vec<[Card; 2]> = vec![[full_deck[0], full_deck[0]]; num_players];
+    let mut full_board: Vec<Card> = Vec::with_capacity(5);
+    let mut seven_cards: Vec<Card> = Vec::with_capacity(7);
+    let mut ranks: Vec<Rank> = Vec::with_capacity(num_players);
+
+    'outer: for _ in 0..iterations {
+        // Reset used set and fill with fixed cards
+        used.clear();
+        used.extend(&fixed_cards);
 
         // First pass: deal Range players via rejection sampling
-        let mut hole_cards: Vec<[Card; 2]> = vec![[full_deck[0], full_deck[0]]; num_players];
-
         for (idx, p) in players.iter().enumerate() {
             if let HoleCardsInput::Range(hands) = p {
                 let mut found = false;
                 for _ in 0..100 {
-                    let hand = hands.choose(&mut rng).expect("non-empty after filtering");
+                    let Some(hand) = hands.choose(&mut rng) else {
+                        continue 'outer;
+                    };
                     let mut iter = hand.iter().copied();
-                    let c1 = iter.next().unwrap();
-                    let c2 = iter.next().unwrap();
+                    let (Some(c1), Some(c2)) = (iter.next(), iter.next()) else {
+                        continue 'outer;
+                    };
                     if !used.contains(&c1) && !used.contains(&c2) {
                         used.insert(c1);
                         used.insert(c2);
@@ -60,12 +74,9 @@ pub(crate) fn estimate_equity_monte_carlo(
             }
         }
 
-        // Shuffle available cards
-        let mut available: Vec<Card> = full_deck
-            .iter()
-            .copied()
-            .filter(|c| !used.contains(c))
-            .collect();
+        // Rebuild available cards from full deck, reusing the Vec
+        available.clear();
+        available.extend(full_deck.iter().copied().filter(|c| !used.contains(c)));
         available.shuffle(&mut rng);
         let mut cursor = 0;
 
@@ -75,7 +86,11 @@ pub(crate) fn estimate_equity_monte_carlo(
             match p {
                 HoleCardsInput::Exact(hand) => {
                     let mut iter = hand.iter().copied();
-                    hole_cards[idx] = [iter.next().unwrap(), iter.next().unwrap()];
+                    let (Some(c1), Some(c2)) = (iter.next(), iter.next()) else {
+                        valid = false;
+                        break;
+                    };
+                    hole_cards[idx] = [c1, c2];
                 }
                 HoleCardsInput::Partial(known) => {
                     if cursor >= available.len() {
@@ -100,8 +115,9 @@ pub(crate) fn estimate_equity_monte_carlo(
             continue;
         }
 
-        // Complete the board
-        let mut full_board = board_cards.to_vec();
+        // Complete the board, reusing the Vec
+        full_board.clear();
+        full_board.extend_from_slice(board_cards);
         for _ in 0..missing_board {
             if cursor >= available.len() {
                 continue 'outer;
@@ -110,16 +126,14 @@ pub(crate) fn estimate_equity_monte_carlo(
             cursor += 1;
         }
 
-        // Evaluate hands
-        let ranks: Vec<_> = hole_cards
-            .iter()
-            .map(|hole| {
-                let mut cards = Vec::with_capacity(7);
-                cards.extend_from_slice(hole);
-                cards.extend_from_slice(&full_board);
-                FlatHand::new_with_cards(cards).rank()
-            })
-            .collect();
+        // Evaluate hands using reusable buffers
+        ranks.clear();
+        for hole in hole_cards.iter() {
+            seven_cards.clear();
+            seven_cards.extend_from_slice(hole);
+            seven_cards.extend_from_slice(&full_board);
+            ranks.push(FlatHand::new_with_cards(seven_cards.clone()).rank());
+        }
 
         if let Some(best) = ranks.iter().max() {
             for (i, r) in ranks.iter().enumerate() {

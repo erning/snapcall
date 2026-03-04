@@ -58,7 +58,6 @@ export function VillainRow({
   const directionLocked = useRef<"h" | "v" | null>(null);
   const currentOffset = useRef(0);
 
-  // Bug 3B: refs for background swipe-to-close
   const bgStartX = useRef(0);
   const bgTracking = useRef(false);
 
@@ -71,7 +70,6 @@ export function VillainRow({
       if (el) {
         el.style.transition = "transform 250ms ease-out";
         el.style.transform = `translateX(${target}px)`;
-        // Bug 4: clear compositing layer when closing
         if (target === 0) {
           const onEnd = () => {
             el.style.willChange = "";
@@ -97,7 +95,6 @@ export function VillainRow({
     const el = foregroundRef.current;
     if (el) {
       el.style.transition = "none";
-      // Bug 4: enable compositing only during drag
       el.style.willChange = "transform";
     }
   };
@@ -130,7 +127,6 @@ export function VillainRow({
     if (!isDragging.current) return;
     isDragging.current = false;
 
-    // Bug 3A: Tap to close when swiped open (no significant movement)
     if (isSwipeOpen && directionLocked.current === null) {
       currentOffset.current = 0;
       const el = foregroundRef.current;
@@ -160,7 +156,6 @@ export function VillainRow({
     if (el) {
       el.style.transition = "transform 250ms ease-out";
       el.style.transform = `translateX(${target}px)`;
-      // Bug 4: clear compositing layer when closing
       if (target === 0) {
         const onEnd = () => {
           el.style.willChange = "";
@@ -178,7 +173,6 @@ export function VillainRow({
     }
   };
 
-  // Bug 3B: background swipe-right handlers
   const handleBgPointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest("button")) return;
     bgStartX.current = e.clientX;
@@ -211,7 +205,6 @@ export function VillainRow({
         onPointerUp={handleBgPointerUp}
         onPointerCancel={handleBgPointerUp}
       >
-        {/* Bug 2: always bg-blue-500 */}
         <button
           type="button"
           className="flex items-center justify-center text-xs font-semibold text-white bg-blue-500"
@@ -249,7 +242,6 @@ export function VillainRow({
         )}
       </div>
 
-      {/* Foreground content — Bug 1: p-3, Bug 4: no will-change-transform, Bug 6: dynamic touchAction */}
       <div
         ref={foregroundRef}
         className="relative bg-white dark:bg-stone-900 px-5 py-3"
@@ -259,7 +251,6 @@ export function VillainRow({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       >
-        {/* Bug 3A: overlay blocks interaction when swiped open */}
         {isSwipeOpen && <div className="absolute inset-0 z-[1]" />}
 
         <div className={folded ? "opacity-50" : ""}>
@@ -316,7 +307,6 @@ function CardPickBody({
     }
   }, [activeSlot]);
 
-  // Bug 5C: update anchorRect on scroll
   useEffect(() => {
     if (activeSlot === null) return;
     let raf = 0;
@@ -335,7 +325,6 @@ function CardPickBody({
     };
   }, [activeSlot]);
 
-  // Bug 5B: dismiss picker on outside pointerdown
   useEffect(() => {
     if (activeSlot === null) return;
     const onDown = (e: PointerEvent) => {
@@ -394,7 +383,6 @@ function CardPickBody({
         anchorRect &&
         createPortal(
           <>
-            {/* Bug 5A: pointer-events-none so scroll passes through */}
             <div
               className="fixed inset-0 bg-black/20 z-10"
               onClick={() => setActiveSlot(null)}
