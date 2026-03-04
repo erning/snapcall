@@ -92,14 +92,15 @@ else:
 
 ### 第三阶段B：Monte Carlo 模拟（MonteCarlo）
 
-位于 `core/src/monte_carlo.rs`。每次迭代执行以下步骤：
+位于 `core/src/monte_carlo.rs`。所有缓冲区（`used`、`available`、`full_board`、`ranks` 等）在循环外预分配，每次迭代通过 `clear()` + `extend()` 复用。固定牌（board + Exact + Partial）预收集一次。
 
-#### 步骤 1：构建已用牌集合
+每次迭代执行以下步骤：
+
+#### 步骤 1：重置已用牌集合
 
 ```
-used = board_cards
-     ∪ { c1, c2 | Exact([c1, c2]) }
-     ∪ { c | Partial(c) }
+used.clear()
+used.extend(固定牌)    // 预收集的 board + Exact + Partial 牌
 ```
 
 #### 步骤 2：两遍发牌
@@ -183,7 +184,7 @@ equities[i] = wins[i] / total × 100.0
 
 - **精确枚举**: 时间复杂度 O(enum_count × players)，结果 100% 准确
 - **Monte Carlo**: 时间复杂度 O(iterations × players)，每次迭代中洗牌为 O(deck_size)
-- 每次迭代重建 `used` 集合和 `available` 向量
+- `used`、`available`、`full_board`、`ranks` 等缓冲区在循环外预分配，每次迭代通过 `clear()` + `extend()` 复用，避免热路径堆分配
 - Range 的 rejection sampling 最多尝试 100 次/玩家/迭代
 - 如果某次迭代发牌失败（牌不够或 rejection 失败），该迭代被跳过，不计入 samples
 

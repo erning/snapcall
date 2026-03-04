@@ -1,8 +1,8 @@
 # SnapCall Knowledge Base
 
-**Generated:** 2026-03-02  
-**Branch:** master  
-**Commit:** b89387b
+**Generated:** 2026-03-04
+**Branch:** master
+**Commit:** 012ecbf
 
 Texas Hold'em equity calculator: Rust workspace (`core/`, `cli/`, `bindings/`) + Vite/React web app (`apps/web`).
 
@@ -29,7 +29,10 @@ snapcall/
 | Input parsing | `core/src/input.rs` | `HoleCardsInput` + `BoardCardsInput` (`Exact/Partial/Unknown/Range`) |
 | CLI interface | `cli/src/main.rs` | clap commands: `eval`, `equity`, `pot-odds` |
 | WASM exports | `bindings/wasm/src/lib.rs` | wraps core, returns `JsError` on failure |
-| Web WASM glue | `apps/web/src/lib/wasm.ts` | caches `init()` promise and calls `estimate_equity()` |
+| Web WASM glue | `apps/web/src/lib/wasm.ts` | Worker-based: sends requests to `equity.worker.ts` with 30s timeout |
+| Web Worker | `apps/web/src/lib/equity.worker.ts` | loads WASM and runs `estimate_equity()` off main thread |
+| Web hooks | `apps/web/src/hooks/` | `useEquity`, `useTheme`, `useSettings`, `usePersistedReducer` |
+| Web pages | `apps/web/src/components/` | `SettingsPage`, `HelpPage`, `HeaderMenu`, `NumberEditor` |
 | Algorithm write-up | `docs/equity-algorithm.md` | invariants + why range players are dealt first |
 
 ## COMMANDS
@@ -68,9 +71,10 @@ pnpm run preview
 
 - Do not `panic!` in FFI-exposed code paths; return an error instead (`docs/INITIAL_AGENTS.md`).
 - Do not open `apps/web/index.html` directly; use the Vite dev server (`README.md`).
-- Avoid adding allocations in the Monte Carlo hot loop (`docs/INITIAL_AGENTS.md`).
+- Avoid adding allocations in the Monte Carlo hot loop; buffers (`used`, `available`, `full_board`, `ranks`) are pre-allocated outside the loop — maintain this pattern.
 
 ## NOTES
 
 - No CI workflows in-repo yet (no `.github/workflows/`, `Makefile`, `justfile`).
 - `apps/web/src/wasm-pkg/` is generated output from `wasm-pack`.
+- CLI `pot-odds` command validates that `pot_size` and `call_amount` are positive values.

@@ -2,11 +2,30 @@
 
 基于对 Rust Core 和 Web 前端的全面代码审查，按优先级分层整理的改进项。
 
+## 实施状态总览
+
+| # | 改进项 | 状态 |
+|---|--------|------|
+| 1 | HeaderMenu useEffect 依赖数组 | ✅ 已完成 |
+| 2 | VillainRow Bug 标注清理 | ✅ 已完成 |
+| 3 | Monte Carlo 热路径内存分配优化 | ✅ 已完成 |
+| 4 | Monte Carlo 热路径 unwrap/expect | ✅ 已完成 |
+| 5 | 前端测试基础设施 | ⏳ 待完成 |
+| 6 | 可访问性 (a11y) 改进 | 🔶 部分完成（HeaderMenu aria-label） |
+| 7 | Criterion Benchmarks | ⏳ 待完成 |
+| 8 | 属性测试 | ⏳ 待完成 |
+| 9 | enumeration.rs unreachable!() | ✅ 已完成 |
+| 10 | UniFFI 绑定完善 | ⏳ 待完成 |
+| 11 | WASM Worker 超时机制 | ✅ 已完成 |
+| 12 | WASM Getter clone | ⏳ 待完成 |
+| 13 | CLI pot-odds 负值验证 | ✅ 已完成 |
+| 14 | React Error Boundary | ⏳ 待完成 |
+
 ---
 
 ## P0 — 缺陷修复
 
-### 1. `HeaderMenu.tsx` useEffect 缺少依赖数组
+### 1. `HeaderMenu.tsx` useEffect 缺少依赖数组 ✅
 
 **文件:** `apps/web/src/components/HeaderMenu.tsx:12-19`
 
@@ -26,7 +45,7 @@ useEffect(() => {
 }, [open]);
 ```
 
-### 2. `VillainRow.tsx` 已知 Bug 标注清理
+### 2. `VillainRow.tsx` 已知 Bug 标注清理 ✅
 
 **文件:** `apps/web/src/components/VillainRow.tsx`
 
@@ -36,7 +55,7 @@ useEffect(() => {
 
 ## P1 — 质量提升
 
-### 3. Monte Carlo 热路径内存分配优化
+### 3. Monte Carlo 热路径内存分配优化 ✅
 
 **文件:** `core/src/monte_carlo.rs`
 
@@ -51,7 +70,7 @@ useEffect(() => {
 
 **预估影响:** 对 10 万次迭代场景，减少约 40 万次堆分配。
 
-### 4. Monte Carlo 热路径 unwrap/expect
+### 4. Monte Carlo 热路径 unwrap/expect ✅
 
 **文件:** `core/src/monte_carlo.rs`
 
@@ -83,7 +102,7 @@ useEffect(() => {
 
 ## P2 — 最佳实践
 
-### 6. 可访问性 (a11y) 改进
+### 6. 可访问性 (a11y) 改进 🔶 部分完成
 
 **现状:** 全站零 `aria-*` 属性，零 `role` 属性。
 
@@ -119,7 +138,7 @@ useEffect(() => {
 - `equities.len() == num_players`
 - 精确枚举与 Monte Carlo（高迭代）结果应在 ±2% 内收敛
 
-### 9. `enumeration.rs:247` unreachable!() 宏
+### 9. `enumeration.rs:247` unreachable!() 宏 ✅
 
 **文件:** `core/src/enumeration.rs:247`
 
@@ -142,7 +161,7 @@ let hands = match &players[player_idx] {
 
 **与 ROADMAP 关系:** ROADMAP Phase 4 已详细规划了 UniFFI 绑定生成，此项与之完全对齐，无需额外规划。
 
-### 11. WASM Worker 超时机制
+### 11. WASM Worker 超时机制 ✅
 
 **文件:** `apps/web/src/lib/wasm.ts`
 
@@ -172,7 +191,7 @@ pub fn mode(&self) -> String { self.mode.clone() }
 - 将 `EstimateResult` 改为直接序列化为 `JsValue`（`serde-wasm-bindgen`），一次性传输，避免多次 getter 调用
 - 或使用 `#[wasm_bindgen(getter, js_name = "equities")]` 搭配 `js_sys::Float64Array` 零拷贝返回
 
-### 13. CLI pot-odds 负值验证
+### 13. CLI pot-odds 负值验证 ✅
 
 **文件:** `cli/src/main.rs:137`
 
@@ -192,7 +211,7 @@ pub fn mode(&self) -> String { self.mode.clone() }
 
 | ROADMAP 技术债务 | 本文对应项 | 状态 |
 |-----------------|-----------|------|
-| CLI 需要更好的错误提示 | #13 CLI pot-odds 负值验证 | 互补（本文更具体） |
-| 需要更多单元测试 | #5 前端测试, #7 Benchmarks, #8 属性测试 | 互补（本文分前后端细化） |
-| WASM 错误处理 | #11 Worker 超时, #14 Error Boundary | 互补（本文更具体） |
-| 性能基准测试 | #7 Criterion Benchmarks | 完全对齐 |
+| CLI 需要更好的错误提示 | #13 CLI pot-odds 负值验证 | ✅ #13 已完成，其余待改进 |
+| 需要更多单元测试 | #5 前端测试, #7 Benchmarks, #8 属性测试 | ⏳ 待完成 |
+| WASM 错误处理 | #11 Worker 超时, #14 Error Boundary | ✅ #11 已完成，#14 待完成 |
+| 性能基准测试 | #7 Criterion Benchmarks | ⏳ 待完成 |

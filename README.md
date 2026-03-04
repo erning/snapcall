@@ -12,9 +12,12 @@ SnapCall calculates the probability of winning (equity) in Texas Hold'em poker. 
 **Key Features:**
 - ⚡ **Fast**: ~25 nanoseconds per hand evaluation (50M+ hands/sec)
 - 🎯 **Hybrid Equity Engine**: Exact enumeration when affordable, Monte Carlo fallback for large state spaces
+- 🌐 **Web App**: Full-featured WASM-powered calculator with dark mode support
 - 📱 **Cross-platform**: iOS and Android (coming soon)
 - 🎹 **Two-tap input**: Poker-optimized keyboard for quick entry
 - 📊 **Range support**: Enter entire hand ranges, not just specific hands
+- 🌙 **Dark mode**: System-aware theme with manual toggle
+- 📁 **Villain management**: Fold/unfold villains to quickly compare scenarios
 
 ## Quick Start
 
@@ -100,6 +103,8 @@ cargo run --bin snapcall -- equity -H "AhAd" -n 3 -i 5000
 # AA vs KK vs 3 random opponents (5 players total)
 cargo run --bin snapcall -- equity -H "AhAd" -V "KhKd" -n 5 -i 5000
 # → AA has ~55% equity in 5-handed
+```
+
 ### Pot Odds
 
 Calculate pot odds to make better calling decisions:
@@ -200,6 +205,17 @@ Notes:
 │  • Range parsing: "AKs" → [(A,K,suited), ...]               │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
+                              │
+                    wasm-bindgen Bridge
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                  Web App (React + Vite)                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐    │
+│  │ MiniCard     │  │ Range        │  │ Equity Display  │    │
+│  │ Picker       │  │ Picker       │  │ + Pot Odds      │    │
+│  └──────────────┘  └──────────────┘  └─────────────────┘    │
+│  Worker (equity.worker.ts) ←→ WASM (30s timeout)            │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Project Status
@@ -208,6 +224,7 @@ Notes:
 |-----------|--------|-------|
 | Rust Core | ✅ Done | Using rs-poker 4.1 |
 | CLI Tool | ✅ Done | `snapcall` binary |
+| Web App | ✅ Done | WASM + React + Vite |
 | FFI Layer | ✅ Ready | UniFFI bindings |
 | iOS App | ⏳ Planned | SwiftUI |
 | Android App | ⏳ Planned | Jetpack Compose |
@@ -217,6 +234,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for details.
 ## Tech Stack
 
 - **Core**: Rust + [rs-poker](https://github.com/elliottneilclark/rs-poker)
+- **Web**: WASM (wasm-bindgen) + React + Vite + Tailwind CSS v4
 - **FFI**: UniFFI (generates Swift/Kotlin bindings)
 - **iOS**: Swift + SwiftUI
 - **Android**: Kotlin + Jetpack Compose

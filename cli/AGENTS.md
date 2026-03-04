@@ -26,6 +26,7 @@ cargo run --bin snapcall -- pot-odds --pot-size 300 --call-amount 75
 - `eval`: strips whitespace/commas before parsing (`FlatHand::new_from_str`).
 - `equity`: if `--villain-count/-n` is larger than provided villains, missing villains are treated as unknown hands (`""`).
 - Output prints computation mode (`exact` vs `monte_carlo`) plus sample count.
+- `pot-odds`: validates that `pot_size` and `call_amount` are positive values (rejects zero and negative inputs).
 
 ## ANTI-PATTERNS
 

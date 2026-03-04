@@ -37,12 +37,22 @@
 
 ## 待完成 ⏳
 
-### Phase 3: Web App (WASM) 🔄 RESET (Rebuild in progress)
-旧版 Web 已移除，当前按新架构重建：`bindings/wasm` + `apps/web`
+### Phase 3: Web App (WASM) ✅
+`bindings/wasm` + `apps/web` 架构，功能完整。
 
 - [x] 新架构拆分：`core` / `bindings/uniffi` / `bindings/wasm` / `apps/web`
 - [x] 新 Web MVP：Hello World + 静态 equity 调用
-- [ ] 新 Web UI 重写（不继承旧技术债）
+- [x] 新 Web UI 重写（不继承旧技术债）
+- [x] MiniCardPicker 卡牌输入
+- [x] Range Picker（13×13 矩阵）
+- [x] 暗色模式（系统感知 + 手动切换）
+- [x] Villain fold/unfold 切换
+- [x] 滑动操作面板（删除/模式切换）
+- [x] Settings 页面 + Help 页面
+- [x] 自动防抖计算（useEquity hook）
+- [x] Pot-odds 集成
+- [x] usePersistedReducer 状态持久化到 localStorage
+- [x] Worker 通信 + 30s 超时机制
 
 **WASM Build:** `cd apps/web && pnpm run wasm` 或 `cargo build -p snapcall-wasm --target wasm32-unknown-unknown`
 **Dev Server:** `cd apps/web && pnpm install && pnpm run dev -- --host`
@@ -82,9 +92,10 @@
 
 ## 技术债务
 - [x] Range 解析 (已实现完整支持)
-- [ ] CLI 需要更好的错误提示
+- [x] CLI pot-odds 正值验证
+- [ ] CLI 需要更好的错误提示（部分完成）
 - [ ] 需要更多单元测试
-- [ ] WASM 错误处理
+- [x] WASM Worker 超时机制（30s timeout）
 
 ---
 
@@ -94,10 +105,10 @@
 Phase 1: CLI (已完成)
    │
    ▼
-Phase 3: Web + WASM (已完成)
-   │    • 快速验证 UI/UX
-   │    • 跨平台访问
-   │    • 无需应用商店
+Phase 3: Web + WASM ✅
+   │    • 完整功能 Web 应用
+   │    • 暗色模式 + 状态持久化
+   │    • Worker + 30s 超时机制
    │
    ▼
 Phase 5-6: iOS / Android

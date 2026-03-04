@@ -26,5 +26,5 @@
 
 ## ANTI-PATTERNS
 
-- Avoid adding allocations in Monte Carlo per-iteration paths (hot loop guideline from `docs/INITIAL_AGENTS.md`).
+- Avoid adding allocations in Monte Carlo per-iteration paths. Buffers (`used`, `available`, `full_board`, `ranks`, etc.) are pre-allocated outside the loop and reused via `clear()` + `extend()` — maintain this pattern.
 - Do not introduce `panic!` on paths reachable from bindings (keep errors as `SnapError`).
