@@ -8,6 +8,7 @@ import { BoardSection } from "./components/BoardSection";
 import { HeroSection } from "./components/HeroSection";
 import { VillainsSection } from "./components/VillainsSection";
 import { SettingsPage } from "./components/SettingsPage";
+import { HelpPage } from "./components/HelpPage";
 import { HeaderMenu } from "./components/HeaderMenu";
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
   const { settings, updateSettings } = useSettings();
   useTheme(settings.theme);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const boardStr = useMemo(
     () => state.board.filter(Boolean).join(""),
@@ -97,6 +99,10 @@ export default function App() {
     );
   }
 
+  if (helpOpen) {
+    return <HelpPage onBack={() => setHelpOpen(false)} />;
+  }
+
   return (
     <main className="min-h-screen bg-stone-50 dark:bg-stone-950 relative">
       {isCalculating && (
@@ -111,6 +117,7 @@ export default function App() {
           </div>
           <HeaderMenu
             onSettings={() => setSettingsOpen(true)}
+            onHelp={() => setHelpOpen(true)}
             onRestart={() => {
               dispatch({
                 type: "RESET",
