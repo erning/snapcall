@@ -305,8 +305,6 @@ function CardPickBody({
   // Bug 5C: update anchorRect on scroll
   useEffect(() => {
     if (activeSlot === null) return;
-    const scrollEl = containerRef.current?.closest(".overflow-y-auto");
-    if (!scrollEl) return;
     let raf = 0;
     const onScroll = () => {
       cancelAnimationFrame(raf);
@@ -316,10 +314,10 @@ function CardPickBody({
         }
       });
     };
-    scrollEl.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
-      scrollEl.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
     };
   }, [activeSlot]);
 
@@ -665,21 +663,21 @@ function PopoverPicker({
   anchorRect: DOMRect;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [flipped, setFlipped] = useState(false);
 
-  // Bug 5D: manual scroll-into-view
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const scrollContainer = document.querySelector(".overflow-y-auto");
-    if (!scrollContainer) return;
-    const scrollRect = scrollContainer.getBoundingClientRect();
-    const pickerBottom = anchorRect.bottom + 8 + el.offsetHeight;
-    const overflow = pickerBottom - scrollRect.bottom;
-    if (overflow > 0) {
-      scrollContainer.scrollBy({ top: overflow + 16, behavior: "smooth" });
+    const pickerHeight = el.offsetHeight;
+    if (anchorRect.bottom + 8 + pickerHeight > window.innerHeight) {
+      setFlipped(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const topPos = flipped
+    ? anchorRect.top - 8 - (ref.current?.offsetHeight ?? 0)
+    : anchorRect.bottom + 8;
 
   return (
     <div
@@ -687,7 +685,7 @@ function PopoverPicker({
       data-card-picker
       className="fixed z-20"
       style={{
-        top: anchorRect.bottom + 8,
+        top: topPos,
         left: anchorRect.left,
         width: anchorRect.width,
       }}
