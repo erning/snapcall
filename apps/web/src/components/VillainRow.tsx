@@ -30,6 +30,8 @@ interface VillainRowProps {
   onChangeRange: (range: string) => void;
   onChangeMode: (mode: "cards" | "range") => void;
   onRemove: () => void;
+  folded: boolean;
+  onFold: () => void;
   canRemove: boolean;
   isSwipeOpen: boolean;
   onSwipeOpen: () => void;
@@ -46,12 +48,15 @@ export function VillainRow({
   onChangeRange,
   onChangeMode,
   onRemove,
+  folded,
+  onFold,
   canRemove,
   isSwipeOpen,
   onSwipeOpen,
   onSwipeClose,
 }: VillainRowProps) {
-  const revealWidth = canRemove ? BUTTON_WIDTH * 2 : BUTTON_WIDTH;
+  const buttonCount = 1 + 1 + (canRemove ? 1 : 0); // mode + fold + delete?
+  const revealWidth = BUTTON_WIDTH * buttonCount;
   const foregroundRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
   const startY = useRef(0);
@@ -224,6 +229,17 @@ export function VillainRow({
         >
           {targetMode === "range" ? "Range" : "Cards"}
         </button>
+        <button
+          type="button"
+          className="flex items-center justify-center text-xs font-semibold text-white bg-amber-500"
+          style={{ width: BUTTON_WIDTH }}
+          onClick={() => {
+            onFold();
+            onSwipeClose();
+          }}
+        >
+          {folded ? "Unfold" : "Fold"}
+        </button>
         {canRemove && (
           <button
             type="button"
@@ -252,8 +268,15 @@ export function VillainRow({
         {/* Bug 3A: overlay blocks interaction when swiped open */}
         {isSwipeOpen && <div className="absolute inset-0 z-[1]" />}
 
+        {/* Folded overlay */}
+        {folded && !isSwipeOpen && (
+          <div className="absolute inset-0 bg-white/60 z-[1] flex items-center justify-center">
+            <span className="text-sm font-bold text-amber-600 tracking-wider">FOLD</span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-1.5">
-          <h3 className="text-sm font-semibold text-stone-900">
+          <h3 className={`text-sm font-semibold ${folded ? "text-stone-400 line-through" : "text-stone-900"}`}>
             Villain {index + 1}
           </h3>
           <div className="flex items-center gap-3">

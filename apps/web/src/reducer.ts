@@ -69,6 +69,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         callAmount: action.bigBlind,
       };
     }
+    case "FOLD_VILLAIN": {
+      const villains = [...state.villains];
+      villains[action.index] = { ...villains[action.index], folded: !villains[action.index].folded };
+      return { ...state, villains };
+    }
     case "RESET_VILLAIN_COUNT":
       return { ...state, villains: [{ ...emptyVillain }] };
   }

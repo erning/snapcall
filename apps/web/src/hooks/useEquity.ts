@@ -24,11 +24,12 @@ export function useEquity(
 
   // Serialize villains for stable dependency comparison
   const villainsKey = villains.join("\0");
+  const villainsCount = villains.length;
 
   useEffect(() => {
-    const currentVillains = villainsKey.split("\0");
+    const currentVillains = villainsCount === 0 ? [] : villainsKey.split("\0");
 
-    if (!hero.trim()) {
+    if (!hero.trim() || villainsCount === 0) {
       setResult(null);
       setError(null);
       setIsCalculating(false);
@@ -59,7 +60,7 @@ export function useEquity(
     return () => {
       clearTimeout(timer);
     };
-  }, [board, hero, villainsKey, iterations, recalcKey]);
+  }, [board, hero, villainsKey, villainsCount, iterations, recalcKey]);
 
   const recalc = useCallback(() => setRecalcKey((k) => k + 1), []);
 

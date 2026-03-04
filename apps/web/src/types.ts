@@ -1,6 +1,6 @@
 export type VillainData =
-  | { mode: "cards"; slots: (string | null)[] }
-  | { mode: "range"; range: string };
+  | { mode: "cards"; slots: (string | null)[]; folded?: boolean }
+  | { mode: "range"; range: string; folded?: boolean };
 
 export interface AppState {
   board: (string | null)[];
@@ -22,4 +22,5 @@ export type AppAction =
   | { type: "SET_CALL_AMOUNT"; value: number }
   | { type: "SET_VILLAIN_COUNT"; count: number }
   | { type: "RESET"; bigBlind: number; smallBlind: number }
+  | { type: "FOLD_VILLAIN"; index: number }
   | { type: "RESET_VILLAIN_COUNT" };

@@ -5,7 +5,7 @@ import type { VillainData } from "../types";
 
 interface VillainsSectionProps {
   villains: VillainData[];
-  equities: number[] | null;
+  equities: (number | null)[] | null;
   isCalculating: boolean;
   disabledCards: string[];
   error: string | null;
@@ -15,6 +15,7 @@ interface VillainsSectionProps {
   onSetVillainRange: (index: number, range: string) => void;
   onSetVillainMode: (index: number, mode: "cards" | "range") => void;
   onRemoveVillain: (index: number) => void;
+  onFoldVillain: (index: number) => void;
   onSetVillainCount: (count: number) => void;
 }
 
@@ -30,6 +31,7 @@ export function VillainsSection({
   onSetVillainRange,
   onSetVillainMode,
   onRemoveVillain,
+  onFoldVillain,
   onSetVillainCount,
 }: VillainsSectionProps) {
   const [openSwipeIndex, setOpenSwipeIndex] = useState<number | null>(null);
@@ -120,6 +122,8 @@ export function VillainsSection({
             onChangeRange={(range) => onSetVillainRange(i, range)}
             onChangeMode={(mode) => onSetVillainMode(i, mode)}
             onRemove={() => onRemoveVillain(i)}
+            folded={!!villain.folded}
+            onFold={() => onFoldVillain(i)}
             canRemove={villains.length > 1}
             isSwipeOpen={openSwipeIndex === i}
             onSwipeOpen={() => setOpenSwipeIndex(i)}

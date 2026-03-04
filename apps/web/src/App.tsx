@@ -23,20 +23,39 @@ export default function App() {
     [state.hero],
   );
 
-  const villainStrs = useMemo(
-    () =>
-      state.villains.map((v) =>
-        v.mode === "cards" ? v.slots.filter(Boolean).join("") : v.range,
-      ),
+  const activeIndices = useMemo(
+    () => state.villains.map((v, i) => (!v.folded ? i : -1)).filter((i) => i >= 0),
     [state.villains],
   );
 
-  const { equities, mode, samples, isCalculating, error, recalc } = useEquity(
+  const villainStrs = useMemo(
+    () =>
+      activeIndices.map((i) => {
+        const v = state.villains[i];
+        return v.mode === "cards" ? v.slots.filter(Boolean).join("") : v.range;
+      }),
+    [state.villains, activeIndices],
+  );
+
+  const { equities: rawEquities, mode, samples, isCalculating, error, recalc } = useEquity(
     boardStr,
     heroStr,
     villainStrs,
     settings.iterations,
   );
+
+  // Map equities back: hero at [0], then one per villain (folded → null)
+  const equities = useMemo(() => {
+    if (!rawEquities) return null;
+    if (rawEquities.length !== activeIndices.length + 1) return null;
+    const heroEquity = rawEquities[0];
+    const villainEquities = state.villains.map((v, i) => {
+      if (v.folded) return null;
+      const activeIdx = activeIndices.indexOf(i);
+      return activeIdx >= 0 ? (rawEquities[activeIdx + 1] ?? null) : null;
+    });
+    return [heroEquity, ...villainEquities] as (number | null)[];
+  }, [rawEquities, state.villains, activeIndices]);
 
   // Collect all cards used across board + hero for disabling in pickers
   const boardCards = useMemo(
@@ -102,7 +121,7 @@ export default function App() {
 
         <HeroSection
           slots={state.hero}
-          equity={equities ? equities[0] : null}
+          equity={equities ? equities[0] ?? null : null}
           isCalculating={isCalculating}
           disabledCards={[...boardCards, ...villainCards]}
           onChange={(slots) =>
@@ -148,6 +167,9 @@ export default function App() {
           }
           onRemoveVillain={(i) =>
             dispatch({ type: "REMOVE_VILLAIN", index: i })
+          }
+          onFoldVillain={(i) =>
+            dispatch({ type: "FOLD_VILLAIN", index: i })
           }
           onSetVillainCount={(count) =>
             dispatch({ type: "SET_VILLAIN_COUNT", count })
