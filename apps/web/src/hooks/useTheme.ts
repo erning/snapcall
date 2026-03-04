@@ -13,7 +13,7 @@ export function useTheme(theme: Theme) {
 
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) {
-        meta.setAttribute("content", isDark ? "#0c0a09" : "#f97316");
+        meta.setAttribute("content", isDark ? "#0c0a09" : "#fafaf9");
       }
     }
 

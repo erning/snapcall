@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MiniCardPicker } from "./MiniCardPicker";
 import { NumberEditor, Badge } from "./NumberEditor";
-import { SUIT_DISPLAY, SLOT_SUIT_COLOR, type Suit } from "../lib/poker";
+import { SUIT_DISPLAY, SLOT_SUIT_COLOR, displayRank, type Suit } from "../lib/poker";
 
 interface BoardSectionProps {
   slots: (string | null)[];
@@ -199,7 +199,7 @@ function CardSlot({
       {card && suitInfo ? (
         <>
           <span className={`text-2xl font-bold leading-none ${color}`}>
-            {rank}
+            {rank ? displayRank(rank) : null}
           </span>
           <span className={`text-2xl font-bold leading-none ${color}`}>
             {suitInfo.symbol}

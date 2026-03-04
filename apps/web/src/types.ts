@@ -23,4 +23,5 @@ export type AppAction =
   | { type: "SET_VILLAIN_COUNT"; count: number }
   | { type: "RESET"; bigBlind: number; smallBlind: number }
   | { type: "FOLD_VILLAIN"; index: number }
-  | { type: "RESET_VILLAIN_COUNT" };
+  | { type: "RESET_VILLAIN_COUNT" }
+  | { type: "RANDOM_DEMO"; bigBlind: number; smallBlind: number };

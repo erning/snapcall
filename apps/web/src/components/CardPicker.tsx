@@ -1,4 +1,4 @@
-import { RANKS, SUITS, SUIT_DISPLAY } from "../lib/poker";
+import { RANKS, SUITS, SUIT_DISPLAY, displayRank } from "../lib/poker";
 
 interface CardPickerProps {
   selected: string[];
@@ -35,7 +35,7 @@ export function CardPicker({
             key={rank}
             className="text-center text-[10px] font-semibold text-stone-400"
           >
-            {rank}
+            {displayRank(rank)}
           </div>
         ))}
       </div>
@@ -70,7 +70,7 @@ export function CardPicker({
                 disabled={isDisabled}
               >
                 <span className="leading-none">
-                  {rank}
+                  {displayRank(rank)}
                   <span className="text-[8px]">{suitInfo.symbol}</span>
                 </span>
               </button>

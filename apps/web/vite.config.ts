@@ -27,7 +27,7 @@ export default defineConfig({
         name: "SnapCall - Poker Equity Calculator",
         short_name: "SnapCall",
         description: "High-performance Texas Hold'em equity calculator",
-        theme_color: "#f97316",
+        theme_color: "#fafaf9",
         background_color: "#fafaf9",
         display: "standalone",
         orientation: "portrait",

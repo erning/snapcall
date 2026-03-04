@@ -4,6 +4,11 @@ export const SUITS = ["s", "h", "d", "c"] as const;
 export type Rank = (typeof RANKS)[number];
 export type Suit = (typeof SUITS)[number];
 
+/** Display rank for card UI: "T" → "10", others unchanged. Range displays should use raw rank. */
+export function displayRank(rank: string): string {
+  return rank === "T" ? "10" : rank;
+}
+
 export const ALL_CARDS: string[] = RANKS.flatMap((r) =>
   SUITS.map((s) => `${r}${s}`),
 );

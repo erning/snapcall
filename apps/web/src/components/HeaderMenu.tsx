@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { EllipsisVertical, Settings, CircleHelp, RotateCcw } from "lucide-react";
+import { EllipsisVertical, Settings, CircleHelp, RotateCcw, Shuffle } from "lucide-react";
 
 interface HeaderMenuProps {
   onRestart: () => void;
   onSettings: () => void;
   onHelp: () => void;
+  onRandomDemo: () => void;
 }
 
-export function HeaderMenu({ onRestart, onSettings, onHelp }: HeaderMenuProps) {
+export function HeaderMenu({ onRestart, onSettings, onHelp, onRandomDemo }: HeaderMenuProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -61,6 +62,18 @@ export function HeaderMenu({ onRestart, onSettings, onHelp }: HeaderMenuProps) {
               >
                 <CircleHelp size={15} />
                 Help
+              </button>
+              <div className="border-t border-stone-100 dark:border-stone-800" />
+              <button
+                type="button"
+                className="w-full text-left px-4 py-2.5 text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors flex items-center gap-2"
+                onClick={() => {
+                  onRandomDemo();
+                  setOpen(false);
+                }}
+              >
+                <Shuffle size={15} />
+                Random Demo
               </button>
               <div className="border-t border-stone-100 dark:border-stone-800" />
               <button

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { RANKS, SUITS, SUIT_DISPLAY } from "../lib/poker";
+import { RANKS, SUITS, SUIT_DISPLAY, displayRank } from "../lib/poker";
 
 interface MiniCardPickerProps {
   currentCard: string | null;
@@ -66,7 +66,7 @@ export function MiniCardPicker({
         onClick={() => handleRankClick(rank)}
         disabled={disabled}
       >
-        {rank}
+        {displayRank(rank)}
       </button>
     );
   };

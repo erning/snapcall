@@ -118,6 +118,13 @@ export default function App() {
           <HeaderMenu
             onSettings={() => setSettingsOpen(true)}
             onHelp={() => setHelpOpen(true)}
+            onRandomDemo={() => {
+              dispatch({
+                type: "RANDOM_DEMO",
+                bigBlind: settings.bigBlind,
+                smallBlind: settings.smallBlind,
+              });
+            }}
             onRestart={() => {
               dispatch({
                 type: "RESET",

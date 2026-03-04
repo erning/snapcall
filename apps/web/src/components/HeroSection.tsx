@@ -3,7 +3,7 @@ import { FoldVertical, UnfoldVertical } from "lucide-react";
 import { MiniCardPicker } from "./MiniCardPicker";
 import { NumberEditor, Badge } from "./NumberEditor";
 import { calcPotOdds } from "../lib/potOdds";
-import { SUIT_DISPLAY, SLOT_SUIT_COLOR, type Suit } from "../lib/poker";
+import { SUIT_DISPLAY, SLOT_SUIT_COLOR, displayRank, type Suit } from "../lib/poker";
 
 interface HeroSectionProps {
   slots: (string | null)[];
@@ -282,7 +282,7 @@ function CardSlot({
       {card && suitInfo ? (
         <>
           <span className={`text-2xl font-bold leading-none ${color}`}>
-            {rank}
+            {rank ? displayRank(rank) : null}
           </span>
           <span className={`text-2xl font-bold leading-none ${color}`}>
             {suitInfo.symbol}

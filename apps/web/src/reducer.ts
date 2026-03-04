@@ -1,7 +1,70 @@
 import type { AppState, AppAction, VillainData } from "./types";
 import { defaultSettings } from "./hooks/useSettings";
+import { ALL_CARDS, buildAllCombos } from "./lib/poker";
 
 const emptyVillain: VillainData = { mode: "range", range: "" };
+
+const ALL_COMBOS = buildAllCombos();
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function generateRandomDemo(
+  bigBlind: number,
+  smallBlind: number,
+  villainCount: number,
+): AppState {
+  const shuffled = shuffleArray(ALL_CARDS);
+  let idx = 0;
+
+  // Deal hero
+  const hero = [shuffled[idx++], shuffled[idx++]];
+
+  // Random board size: 3, 4, or 5
+  const boardSize = 3 + Math.floor(Math.random() * 3);
+  const board: (string | null)[] = [];
+  for (let i = 0; i < boardSize; i++) board.push(shuffled[idx++]);
+  while (board.length < 5) board.push(null);
+
+  // Random pot size: n*BB, 50% chance to add SB
+  // 50% of the time cap at 200, otherwise cap at 1000
+  const cap = Math.random() < 0.5 ? 200 : 1000;
+  const maxN = Math.floor(cap / bigBlind);
+  const n = 1 + Math.floor(Math.random() * maxN);
+  const addSB = Math.random() < 0.5;
+  const potSize = n * bigBlind + (addSB ? smallBlind : 0);
+
+  const callAmount = bigBlind;
+
+  // Villains: 50% unknown, 50% random range combos (1–5)
+  const villains: VillainData[] = [];
+  const shuffledCombos = shuffleArray(ALL_COMBOS);
+  let comboIdx = 0;
+  for (let i = 0; i < villainCount; i++) {
+    if (Math.random() < 0.5) {
+      villains.push({ mode: "range", range: "" });
+    } else {
+      const comboCount = 1 + Math.floor(Math.random() * 5); // 1–5
+      const picked = shuffledCombos.slice(comboIdx, comboIdx + comboCount);
+      comboIdx += comboCount;
+      villains.push({ mode: "range", range: picked.join(",") });
+    }
+  }
+
+  return {
+    board,
+    hero,
+    villains,
+    potSize,
+    callAmount,
+  };
+}
 
 export const initialState: AppState = {
   board: [null, null, null, null, null],
@@ -79,5 +142,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
     case "RESET_VILLAIN_COUNT":
       return { ...state, villains: [{ ...emptyVillain }] };
+    case "RANDOM_DEMO":
+      return generateRandomDemo(action.bigBlind, action.smallBlind, state.villains.length);
   }
 }

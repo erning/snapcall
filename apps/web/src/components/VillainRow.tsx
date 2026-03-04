@@ -5,6 +5,7 @@ import { RangePicker } from "./RangePicker";
 import {
   SUIT_DISPLAY,
   SLOT_SUIT_COLOR,
+  displayRank,
   type Suit,
   rangeStringToSet,
   rangeSetToString,
@@ -636,7 +637,7 @@ function CardSlot({
       {card && suitInfo ? (
         <>
           <span className={`text-base font-bold leading-none ${color}`}>
-            {rank}
+            {rank ? displayRank(rank) : null}
           </span>
           <span className={`text-base font-bold leading-none ${color}`}>
             {suitInfo.symbol}
