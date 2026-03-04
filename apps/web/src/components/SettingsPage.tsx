@@ -147,7 +147,10 @@ export function SettingsPage({
           <div className="border-t border-stone-200 dark:border-stone-700 pt-4 px-1">
             <button
               type="button"
-              onClick={() => setDraft({ ...defaultSettings, theme: settings.theme })}
+              onClick={() => {
+                setDraft({ ...defaultSettings });
+                onSave({ theme: defaultSettings.theme });
+              }}
               className="text-xs text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 transition-colors duration-200"
             >
               Reset to Defaults

@@ -12,7 +12,7 @@ export interface Settings {
 const STORAGE_KEY = "snapcall-settings";
 
 export const defaultSettings: Settings = {
-  iterations: 10000,
+  iterations: 100000,
   bigBlind: 20,
   smallBlind: 10,
   theme: "system",
