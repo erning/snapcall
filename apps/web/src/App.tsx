@@ -12,7 +12,6 @@ import { HeaderMenu } from "./components/HeaderMenu";
 export default function App() {
   const [state, dispatch] = usePersistedReducer();
   const { settings, updateSettings } = useSettings();
-  const [heroCollapsed, setHeroCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const boardStr = useMemo(
@@ -101,45 +100,34 @@ export default function App() {
           />
         </header>
 
-        <div className="relative">
-          <BoardSection
-            slots={state.board}
-            disabledCards={[...heroCards, ...villainCards]}
-            onChange={(slots) => dispatch({ type: "SET_BOARD", value: slots })}
-            potSize={state.potSize}
-            onSetPotSize={(v) =>
-              dispatch({ type: "SET_POT_SIZE", value: v })
-            }
-            bigBlind={settings.bigBlind}
-            smallBlind={settings.smallBlind}
-          />
-          {/* 点击区域覆盖 Board 底部与 Hero 之间的 gap，不占额外空间 */}
-          <div
-            onClick={() => setHeroCollapsed((prev) => !prev)}
-            className="absolute -bottom-3 left-0 right-0 h-6 cursor-pointer flex items-center justify-center group"
-          >
-            <div className="w-8 h-0.5 rounded-full bg-transparent group-hover:bg-stone-300 transition-colors" />
-          </div>
-        </div>
+        <HeroSection
+          slots={state.hero}
+          equity={equities ? equities[0] : null}
+          isCalculating={isCalculating}
+          disabledCards={[...boardCards, ...villainCards]}
+          onChange={(slots) =>
+            dispatch({ type: "SET_HERO", value: slots })
+          }
+          callAmount={state.callAmount}
+          onSetCallAmount={(v) =>
+            dispatch({ type: "SET_CALL_AMOUNT", value: v })
+          }
+          bigBlind={settings.bigBlind}
+          potSize={state.potSize}
+          onRecalc={recalc}
+        />
 
-        {!heroCollapsed && (
-          <HeroSection
-            slots={state.hero}
-            equity={equities ? equities[0] : null}
-            isCalculating={isCalculating}
-            disabledCards={[...boardCards, ...villainCards]}
-            onChange={(slots) =>
-              dispatch({ type: "SET_HERO", value: slots })
-            }
-            callAmount={state.callAmount}
-            onSetCallAmount={(v) =>
-              dispatch({ type: "SET_CALL_AMOUNT", value: v })
-            }
-            bigBlind={settings.bigBlind}
-            potSize={state.potSize}
-            onRecalc={recalc}
-          />
-        )}
+        <BoardSection
+          slots={state.board}
+          disabledCards={[...heroCards, ...villainCards]}
+          onChange={(slots) => dispatch({ type: "SET_BOARD", value: slots })}
+          potSize={state.potSize}
+          onSetPotSize={(v) =>
+            dispatch({ type: "SET_POT_SIZE", value: v })
+          }
+          bigBlind={settings.bigBlind}
+          smallBlind={settings.smallBlind}
+        />
 
         <VillainsSection
           villains={state.villains}

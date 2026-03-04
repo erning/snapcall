@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { FoldVertical, UnfoldVertical } from "lucide-react";
 import { MiniCardPicker } from "./MiniCardPicker";
 import { NumberEditor, Badge } from "./NumberEditor";
 import { calcPotOdds } from "../lib/potOdds";
@@ -38,6 +39,7 @@ export function HeroSection({
 }: HeroSectionProps) {
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [betEditorOpen, setBetEditorOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const pickerDisabled = useCallback(
@@ -73,10 +75,62 @@ export function HeroSection({
     setBetEditorOpen(!betEditorOpen);
   };
 
+  if (collapsed) {
+    return (
+      <section className="bg-white rounded-2xl shadow-sm px-5 py-3">
+        <div className="relative flex items-center justify-between">
+          <div
+            className="flex items-center gap-1.5 cursor-pointer select-none flex-1 min-w-0"
+            onClick={() => setCollapsed(false)}
+          >
+            <h2 className="text-sm font-semibold text-stone-900">Hero</h2>
+            <UnfoldVertical size={14} className="text-stone-400" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge
+              label="Bet"
+              value={callAmount}
+              active={betEditorOpen}
+              onClick={handleBetBadgeClick}
+            />
+          </div>
+
+          {betEditorOpen && (
+            <>
+              <div
+                className="fixed inset-0 bg-black/20 z-10"
+                onClick={() => setBetEditorOpen(false)}
+                onPointerDown={(e) => e.stopPropagation()}
+              />
+              <div className="absolute right-0 top-full mt-1 z-20">
+                <NumberEditor
+                  value={callAmount}
+                  onChange={onSetCallAmount}
+                  step={bigBlind}
+                  min={bigBlind}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="bg-white rounded-2xl shadow-sm px-5 pt-3 pb-5">
       <div className="relative flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-stone-900">Hero</h2>
+        <div
+          className="flex items-center gap-1.5 cursor-pointer select-none flex-1 min-w-0"
+          onClick={() => {
+            setCollapsed(true);
+            setActiveSlot(null);
+            setBetEditorOpen(false);
+          }}
+        >
+          <h2 className="text-sm font-semibold text-stone-900">Hero</h2>
+          <FoldVertical size={14} className="text-stone-400" />
+        </div>
         <div className="flex items-center gap-2">
           <Badge
             label="Bet"
