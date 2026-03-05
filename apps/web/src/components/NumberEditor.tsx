@@ -39,7 +39,8 @@ export function NumberEditor({
   const dragRef = useRef<{
     lastX: number;
     lastY: number;
-    fractional: number;
+    fractionalX: number;
+    fractionalY: number;
   } | null>(null);
 
   const handlePointerDown = useCallback(
@@ -49,7 +50,8 @@ export function NumberEditor({
       dragRef.current = {
         lastX: e.clientX,
         lastY: e.clientY,
-        fractional: 0,
+        fractionalX: 0,
+        fractionalY: 0,
       };
       setDragging(true);
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -65,22 +67,37 @@ export function NumberEditor({
       dragRef.current.lastX = e.clientX;
       dragRef.current.lastY = e.clientY;
 
-      const speed = Math.abs(moveDx) + Math.abs(moveDy);
-      const multiplier = 1 + speed / 10;
+      let delta = 0;
 
-      dragRef.current.fractional += ((moveDx + moveDy) / 10) * multiplier;
-
-      const wholeSteps = Math.trunc(dragRef.current.fractional);
-      if (wholeSteps !== 0) {
-        dragRef.current.fractional -= wholeSteps;
+      // Horizontal: coarse stepping (stepUp/stepDown or step)
+      const speedX = Math.abs(moveDx);
+      const multiplierX = 1 + speedX / 10;
+      dragRef.current.fractionalX += (moveDx / 10) * multiplierX;
+      const stepsX = Math.trunc(dragRef.current.fractionalX);
+      if (stepsX !== 0) {
+        dragRef.current.fractionalX -= stepsX;
         if (stepUp && stepDown) {
-          let v = value;
-          const fn = wholeSteps > 0 ? stepUp : stepDown;
-          for (let i = 0; i < Math.abs(wholeSteps); i++) v = fn(v);
-          onChange(clamp(v));
+          let v = value + delta;
+          const fn = stepsX > 0 ? stepUp : stepDown;
+          for (let i = 0; i < Math.abs(stepsX); i++) v = fn(v);
+          delta = v - value;
         } else {
-          onChange(clamp(value + wholeSteps * step));
+          delta += stepsX * step;
         }
+      }
+
+      // Vertical: fine stepping (always ±1)
+      const speedY = Math.abs(moveDy);
+      const multiplierY = 1 + speedY / 10;
+      dragRef.current.fractionalY += (moveDy / 10) * multiplierY;
+      const stepsY = Math.trunc(dragRef.current.fractionalY);
+      if (stepsY !== 0) {
+        dragRef.current.fractionalY -= stepsY;
+        delta += stepsY;
+      }
+
+      if (delta !== 0) {
+        onChange(clamp(value + delta));
       }
     },
     [value, step, compact, clamp, stepUp, stepDown, onChange],

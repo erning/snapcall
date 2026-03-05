@@ -181,6 +181,11 @@ export function HelpPage({ onBack }: HelpPageProps) {
                 Tap the <Kw>version number</Kw> at the bottom to reload the
                 app.
               </li>
+              <li>
+                In the bet/pot editor, <Kw>swipe horizontally</Kw> to adjust
+                by blind increments; <Kw>swipe vertically</Kw> to fine-tune
+                by ±1.
+              </li>
             </ul>
           </Section>
 
