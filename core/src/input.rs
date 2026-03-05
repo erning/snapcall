@@ -135,7 +135,7 @@ mod tests {
     // ── HoleCardsInput parsing ────────────────────────────────────────
 
     #[test]
-    fn hole_cards_exact() {
+    fn parses_two_cards_as_exact() {
         let hand: HoleCardsInput = "AhAd".parse().unwrap();
         assert!(matches!(hand, HoleCardsInput::Exact(_)));
     }
@@ -153,13 +153,13 @@ mod tests {
     }
 
     #[test]
-    fn hole_cards_partial() {
+    fn parses_single_card_as_partial() {
         let partial: HoleCardsInput = "Ah".parse().unwrap();
         assert!(matches!(partial, HoleCardsInput::Partial(_)));
     }
 
     #[test]
-    fn hole_cards_unknown() {
+    fn parses_empty_string_as_unknown() {
         let unknown: HoleCardsInput = "".parse().unwrap();
         assert!(matches!(unknown, HoleCardsInput::Unknown));
     }

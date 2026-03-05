@@ -10,6 +10,9 @@ description = "CLI for SnapCall poker equity calculator"
 name = "snapcall"
 path = "src/main.rs"
 
+[lints]
+workspace = true
+
 [dependencies]
 snapcall-core = { path = "../core" }
 clap = { version = "4.5.60", features = ["derive"] }

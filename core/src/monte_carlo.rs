@@ -1,11 +1,15 @@
 use std::collections::HashSet;
 
 use rand::prelude::{IndexedRandom, SliceRandom};
-use rs_poker::core::{Card, Deck, FlatHand, Rank, Rankable};
+use rs_poker::core::{Card, Deck, Rank, Rankable};
 
 use crate::input::HoleCardsInput;
 use crate::types::{EquityEstimateMode, EquityResult, SnapError};
 
+/// Monte Carlo equity estimation via random sampling.
+///
+/// Deals random cards to incomplete hands, evaluates all players,
+/// and accumulates win counts over `iterations` samples.
 pub(crate) fn estimate_equity_monte_carlo(
     board_cards: &[Card],
     board_set: &HashSet<Card>,
@@ -132,7 +136,7 @@ pub(crate) fn estimate_equity_monte_carlo(
             seven_cards.clear();
             seven_cards.extend_from_slice(hole);
             seven_cards.extend_from_slice(&full_board);
-            ranks.push(FlatHand::new_with_cards(seven_cards.clone()).rank());
+            ranks.push(seven_cards.as_slice().rank());
         }
 
         if let Some(best) = ranks.iter().max() {

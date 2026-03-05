@@ -12,6 +12,10 @@ crate-type = ["rlib"]
 [dependencies]
 rand = "0.10.0"
 rs_poker = { workspace = true }
+thiserror = "2"
+
+[lints]
+workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }

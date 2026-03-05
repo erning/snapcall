@@ -208,10 +208,10 @@ fn enumerate_ranges(ctx: &EnumerationContext, depth: usize, state: &mut Enumerat
                     HoleCardsInput::Exact(hand) => {
                         debug_assert!(hand.len() >= 2);
                         let mut iter = hand.iter().copied();
-                        hole_cards_buf[idx] = [
-                            iter.next().expect("validated 2-card hand"),
-                            iter.next().expect("validated 2-card hand"),
-                        ];
+                        let (Some(c1), Some(c2)) = (iter.next(), iter.next()) else {
+                            return;
+                        };
+                        hole_cards_buf[idx] = [c1, c2];
                     }
                     HoleCardsInput::Partial(known) => {
                         hole_cards_buf[idx] = [*known, combo[cursor]];
@@ -240,7 +240,7 @@ fn enumerate_ranges(ctx: &EnumerationContext, depth: usize, state: &mut Enumerat
                 seven_cards_buf.clear();
                 seven_cards_buf.extend_from_slice(hole);
                 seven_cards_buf.extend_from_slice(full_board_buf);
-                ranks_buf.push(FlatHand::new_with_cards(seven_cards_buf.clone()).rank());
+                ranks_buf.push(seven_cards_buf.as_slice().rank());
             }
 
             if let Some(best) = ranks_buf.iter().max() {
@@ -263,8 +263,9 @@ fn enumerate_ranges(ctx: &EnumerationContext, depth: usize, state: &mut Enumerat
     for hand in hands {
         debug_assert!(hand.len() >= 2);
         let mut iter = hand.iter().copied();
-        let c1 = iter.next().expect("range hand must be 2 cards");
-        let c2 = iter.next().expect("range hand must be 2 cards");
+        let (Some(c1), Some(c2)) = (iter.next(), iter.next()) else {
+            continue;
+        };
 
         // Skip if either card conflicts with fixed_known, board, or prior range cards
         if ctx.fixed_known.contains(&c1)
@@ -302,18 +303,28 @@ pub(crate) fn estimate_enumeration_count(
 mod tests {
     use super::*;
 
-    #[test]
-    fn n_choose_k_basic() {
-        assert_eq!(n_choose_k(5, 0), 1);
-        assert_eq!(n_choose_k(5, 1), 5);
-        assert_eq!(n_choose_k(5, 2), 10);
-        assert_eq!(n_choose_k(5, 5), 1);
-        assert_eq!(n_choose_k(52, 5), 2_598_960);
-        assert_eq!(n_choose_k(3, 5), 0); // k > n
+    mod n_choose_k {
+        #[test]
+        fn returns_one_for_k_zero_or_k_equals_n() {
+            assert_eq!(super::super::n_choose_k(5, 0), 1);
+            assert_eq!(super::super::n_choose_k(5, 5), 1);
+        }
+
+        #[test]
+        fn returns_correct_values_for_common_inputs() {
+            assert_eq!(super::super::n_choose_k(5, 1), 5);
+            assert_eq!(super::super::n_choose_k(5, 2), 10);
+            assert_eq!(super::super::n_choose_k(52, 5), 2_598_960);
+        }
+
+        #[test]
+        fn returns_zero_when_k_exceeds_n() {
+            assert_eq!(super::super::n_choose_k(3, 5), 0);
+        }
     }
 
     #[test]
-    fn for_each_combination_count() {
+    fn for_each_combination_produces_correct_count() {
         let cards: Vec<Card> = rs_poker::core::Deck::default()
             .into_iter()
             .take(10)
@@ -324,7 +335,7 @@ mod tests {
     }
 
     #[test]
-    fn exact_river_deterministic() {
+    fn exact_enumeration_is_deterministic_on_river() {
         // Full board, exact hands → only 1 combination, deterministic result
         use crate::estimate::estimate_equity;
         let r1 = estimate_equity("2h5h9cTdJs", "AhKh", &["QsQc"], 100).unwrap();
@@ -344,7 +355,7 @@ mod tests {
     }
 
     #[test]
-    fn exact_vs_mc_consistency() {
+    fn exact_and_monte_carlo_produce_consistent_results() {
         // Same scenario: exact enumeration vs forced MC should produce similar results
         use crate::estimate::estimate_equity;
         // Turn with exact hands — small enough for exact
@@ -362,7 +373,7 @@ mod tests {
     }
 
     #[test]
-    fn falls_back_to_mc() {
+    fn falls_back_to_monte_carlo_when_combos_exceed_budget() {
         // Preflop with unknown villain: C(48, 7) = 314,457,495 — way more than 10k
         use crate::estimate::estimate_equity;
         let result = estimate_equity("", "AhAd", &[""], 10_000).unwrap();

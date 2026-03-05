@@ -968,6 +968,7 @@ dependencies = [
  "criterion",
  "rand 0.10.0",
  "rs_poker",
+ "thiserror",
 ]
 
 [[package]]

@@ -7,6 +7,9 @@ license.workspace = true
 publish = false
 description = "SnapCall WASM bindings"
 
+[lints]
+workspace = true
+
 [lib]
 crate-type = ["cdylib"]
 
