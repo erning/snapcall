@@ -39,6 +39,8 @@ target/
 *.log
 .envrc
 .envrc.d/
+skills-lock.json
+/.agents/
 /.claude/
 /worktrees/
 

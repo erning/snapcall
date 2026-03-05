@@ -25,6 +25,11 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const [draft, setDraft] = useState<Settings>({ ...settings });
 
+  const isDirty =
+    draft.iterations !== settings.iterations ||
+    draft.bigBlind !== settings.bigBlind ||
+    draft.smallBlind !== settings.smallBlind;
+
   const blindsChanged =
     draft.bigBlind !== settings.bigBlind ||
     draft.smallBlind !== settings.smallBlind;
@@ -137,7 +142,11 @@ export function SettingsPage({
             <button
               type="button"
               onClick={handleSave}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 transition-colors duration-200"
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 ${
+                isDirty
+                  ? "text-white bg-orange-500 hover:bg-orange-600"
+                  : "text-stone-400 dark:text-stone-500 bg-stone-100 dark:bg-stone-800"
+              }`}
             >
               {blindsChanged ? "Save and Restart Game" : "Save"}
             </button>
