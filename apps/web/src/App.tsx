@@ -106,7 +106,7 @@ export default function App() {
   return (
     <main className="min-h-screen bg-stone-50 dark:bg-stone-950 relative">
       {isCalculating && (
-        <div className="fixed top-0 left-0 right-0 h-0.5 z-50 bg-orange-100 dark:bg-orange-500/20 overflow-hidden">
+        <div className="fixed top-0 left-0 right-0 h-0.5 z-50 overflow-hidden">
           <div className="h-full w-1/3 bg-orange-400 rounded-full animate-loading-bar" />
         </div>
       )}
