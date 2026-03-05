@@ -57,7 +57,11 @@ impl std::str::FromStr for HoleCardsInput {
         if let Ok(hand) = FlatHand::new_from_str(&cleaned) {
             match hand.len() {
                 1 => {
-                    return Ok(Self::Partial(hand.cards().next().unwrap()));
+                    return Ok(Self::Partial(
+                        hand.cards()
+                            .next()
+                            .ok_or(SnapError::InvalidHand("empty hand".to_string()))?,
+                    ));
                 }
                 2 => return Ok(Self::Exact(hand)),
                 n => {

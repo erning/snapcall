@@ -38,7 +38,7 @@ pub fn estimate_equity(
         .map_err(|e| JsError::new(&e.to_string()))?;
     Ok(EstimateResult {
         equities: result.equities,
-        mode: format!("{:?}", result.mode),
+        mode: result.mode.to_string(),
         samples: result.samples,
     })
 }

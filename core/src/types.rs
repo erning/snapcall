@@ -30,6 +30,15 @@ pub enum EquityEstimateMode {
     MonteCarlo,
 }
 
+impl std::fmt::Display for EquityEstimateMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EquityEstimateMode::ExactEnumeration => write!(f, "exact"),
+            EquityEstimateMode::MonteCarlo => write!(f, "monte_carlo"),
+        }
+    }
+}
+
 /// Full equity result with per-player equity percentages and computation metadata.
 ///
 /// - `equities[0]` is hero's equity; all values sum to 100.0.

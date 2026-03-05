@@ -72,6 +72,7 @@ pub fn estimate_equity(
         match p {
             HoleCardsInput::Exact(hand) => {
                 let cards: Vec<Card> = hand.iter().copied().collect();
+                debug_assert!(cards.len() >= 2, "exact hand must have 2 cards");
                 if cards[0] == cards[1] {
                     return Err(SnapError::InvalidHand(
                         "Player hand contains duplicate cards".to_string(),

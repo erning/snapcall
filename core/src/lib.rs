@@ -23,5 +23,5 @@ mod monte_carlo;
 mod types;
 
 pub use estimate::estimate_equity;
-pub use input::*;
-pub use types::*;
+pub use input::{BoardCardsInput, HoleCardsInput};
+pub use types::{EquityEstimateMode, EquityResult, SnapError};

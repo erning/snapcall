@@ -1,6 +1,8 @@
+use std::process::ExitCode;
+
 use clap::{Parser, Subcommand};
 use rs_poker::core::{FlatHand, Rankable};
-use snapcall_core::{estimate_equity, EquityEstimateMode};
+use snapcall_core::estimate_equity;
 
 #[derive(Parser)]
 #[command(name = "snapcall")]
@@ -53,10 +55,10 @@ enum Commands {
     },
 }
 
-fn main() {
+fn main() -> ExitCode {
     let cli = Cli::parse();
 
-    match cli.command {
+    let result = match cli.command {
         Commands::Evaluate { hand } => run_evaluate_command(&hand),
         Commands::Equity {
             board,
@@ -69,29 +71,32 @@ fn main() {
             pot_size,
             call_amount,
         } => run_pot_odds_command(pot_size, call_amount),
+    };
+
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(msg) => {
+            eprintln!("Error: {msg}");
+            ExitCode::FAILURE
+        }
     }
 }
 
-fn run_evaluate_command(hand: &str) {
+fn run_evaluate_command(hand: &str) -> Result<(), String> {
     let cleaned: String = hand
         .chars()
         .filter(|c| !c.is_whitespace() && *c != ',')
         .collect();
 
-    let fh = match FlatHand::new_from_str(&cleaned) {
-        Ok(h) => h,
-        Err(e) => {
-            eprintln!("Error parsing hand '{}': {:?}", hand, e);
-            return;
-        }
-    };
+    let fh = FlatHand::new_from_str(&cleaned)
+        .map_err(|e| format!("parsing hand '{}': {:?}", hand, e))?;
 
     if fh.len() < 5 || fh.len() > 7 {
-        eprintln!("Hand must have 5-7 cards, got {}", fh.len());
-        return;
+        return Err(format!("hand must have 5-7 cards, got {}", fh.len()));
     }
 
     println!("Rank: {:?}", fh.rank());
+    Ok(())
 }
 
 fn run_equity_command(
@@ -100,11 +105,10 @@ fn run_equity_command(
     villains: Vec<String>,
     villain_count: Option<usize>,
     iterations: u32,
-) {
+) -> Result<(), String> {
     let count = villain_count.unwrap_or(villains.len());
     if count == 0 {
-        eprintln!("Error: provide at least one opponent via --villain or --villain-count");
-        return;
+        return Err("provide at least one opponent via --villain or --villain-count".to_string());
     }
 
     let board_str = board.unwrap_or_default();
@@ -113,35 +117,28 @@ fn run_equity_command(
         villains_str.push("");
     }
 
-    match estimate_equity(&board_str, &hero, &villains_str, iterations as usize) {
-        Ok(result) => {
-            let mode = match result.mode {
-                EquityEstimateMode::ExactEnumeration => "exact",
-                EquityEstimateMode::MonteCarlo => "monte_carlo",
-            };
-            println!("Computation:");
-            println!("  Mode: {}", mode);
-            println!("  Samples: {}", result.samples);
-            println!();
+    let result = estimate_equity(&board_str, &hero, &villains_str, iterations as usize)
+        .map_err(|e| format!("calculating equity: {e}"))?;
 
-            println!("Equity Results:");
-            println!("  Hero:      {:.2}%", result.equities[0]);
-            for (i, eq) in result.equities[1..].iter().enumerate() {
-                println!("  Villain {}: {:.2}%", i + 1, eq);
-            }
-        }
-        Err(e) => eprintln!("Error calculating equity: {}", e),
+    println!("Computation:");
+    println!("  Mode: {}", result.mode);
+    println!("  Samples: {}", result.samples);
+    println!();
+
+    println!("Equity Results:");
+    println!("  Hero:      {:.2}%", result.equities[0]);
+    for (i, eq) in result.equities[1..].iter().enumerate() {
+        println!("  Villain {}: {:.2}%", i + 1, eq);
     }
+    Ok(())
 }
 
-fn run_pot_odds_command(pot_size: f64, call_amount: f64) {
+fn run_pot_odds_command(pot_size: f64, call_amount: f64) -> Result<(), String> {
     if pot_size <= 0.0 {
-        eprintln!("Error: pot size must be positive, got {}", pot_size);
-        return;
+        return Err(format!("pot size must be positive, got {}", pot_size));
     }
     if call_amount <= 0.0 {
-        eprintln!("Error: call amount must be positive, got {}", call_amount);
-        return;
+        return Err(format!("call amount must be positive, got {}", call_amount));
     }
 
     let total_pot_after_call = pot_size + call_amount;
@@ -158,4 +155,5 @@ fn run_pot_odds_command(pot_size: f64, call_amount: f64) {
         "  You need at least {:.2}% equity to break even",
         pot_odds_pct
     );
+    Ok(())
 }

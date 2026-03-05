@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use rs_poker::core::{Card, FlatHand, Rankable, Suit, Value};
+use rs_poker::core::{Card, FlatHand, Rank, Rankable, Suit, Value};
 
 use crate::input::HoleCardsInput;
 use crate::types::{EquityEstimateMode, EquityResult};
@@ -55,6 +55,30 @@ fn for_each_combination(cards: &[Card], k: usize, mut callback: impl FnMut(&[Car
     }
 }
 
+/// Immutable context for exact enumeration.
+struct EnumerationContext<'a> {
+    players: &'a [HoleCardsInput],
+    range_players: Vec<(usize, &'a Vec<FlatHand>)>,
+    available: Vec<Card>,
+    board_set: &'a HashSet<Card>,
+    fixed_known: &'a HashSet<Card>,
+    board_cards: &'a [Card],
+    missing_board: usize,
+    non_range_slots: usize,
+}
+
+/// Mutable state for exact enumeration, including reusable buffers.
+struct EnumerationState {
+    range_assignments: Vec<[Card; 2]>,
+    wins: Vec<usize>,
+    total_combos: usize,
+    // Reusable buffers for the hot loop
+    hole_cards_buf: Vec<[Card; 2]>,
+    full_board_buf: Vec<Card>,
+    seven_cards_buf: Vec<Card>,
+    ranks_buf: Vec<Rank>,
+}
+
 /// Exact enumeration of all possible outcomes.
 ///
 /// Enumerates every valid deal and evaluates hands, producing a 100%-accurate
@@ -93,40 +117,38 @@ pub(crate) fn estimate_equity_exact_enumeration(
     }
 
     let non_range_slots = partial_count + 2 * unknown_count + missing_board;
+    let placeholder = Card::new(Value::Two, Suit::Spade);
 
-    let mut wins: Vec<usize> = vec![0; num_players];
-    let mut total_combos: usize = 0;
-
-    // Recursively enumerate Range player cartesian product, then for each
-    // valid range assignment enumerate the remaining C(pool, non_range_slots).
-    let mut range_assignments: Vec<[Card; 2]> = vec![
-        [
-            Card::new(Value::Two, Suit::Spade),
-            Card::new(Value::Two, Suit::Spade)
-        ];
-        range_players.len()
-    ];
-
-    enumerate_ranges(
+    let ctx = EnumerationContext {
         players,
-        &range_players,
-        0,
-        &mut range_assignments,
-        &available,
+        range_players,
+        available,
         board_set,
         fixed_known,
         board_cards,
         missing_board,
         non_range_slots,
-        &mut wins,
-        &mut total_combos,
-    );
+    };
 
-    let total_wins: usize = wins.iter().sum();
+    let mut state = EnumerationState {
+        range_assignments: vec![[placeholder, placeholder]; ctx.range_players.len()],
+        wins: vec![0; num_players],
+        total_combos: 0,
+        hole_cards_buf: vec![[placeholder, placeholder]; num_players],
+        full_board_buf: Vec::with_capacity(5),
+        seven_cards_buf: Vec::with_capacity(7),
+        ranks_buf: Vec::with_capacity(num_players),
+    };
+
+    enumerate_ranges(&ctx, 0, &mut state);
+
+    let total_wins: usize = state.wins.iter().sum();
     let equities = if total_wins == 0 {
         vec![100.0 / num_players as f64; num_players]
     } else {
-        wins.iter()
+        state
+            .wins
+            .iter()
             .map(|&w| (w as f64 / total_wins as f64) * 100.0)
             .collect()
     };
@@ -134,100 +156,95 @@ pub(crate) fn estimate_equity_exact_enumeration(
     EquityResult {
         equities,
         mode: EquityEstimateMode::ExactEnumeration,
-        samples: total_combos,
+        samples: state.total_combos,
     }
 }
 
 /// Recursively enumerate the cartesian product of Range players' hands.
-#[allow(clippy::too_many_arguments)]
-fn enumerate_ranges(
-    players: &[HoleCardsInput],
-    range_players: &[(usize, &Vec<FlatHand>)],
-    depth: usize,
-    range_assignments: &mut Vec<[Card; 2]>,
-    available: &[Card],
-    board_set: &HashSet<Card>,
-    fixed_known: &HashSet<Card>,
-    board_cards: &[Card],
-    missing_board: usize,
-    non_range_slots: usize,
-    wins: &mut Vec<usize>,
-    total_combos: &mut usize,
-) {
-    if depth == range_players.len() {
-        // All ranges assigned — collect cards used by ranges
-        let mut range_used: HashSet<Card> = HashSet::new();
-        for assignment in range_assignments.iter().take(range_players.len()) {
-            range_used.insert(assignment[0]);
-            range_used.insert(assignment[1]);
-        }
-
-        // Pool for non-range slots = available − range_used
-        let pool: Vec<Card> = available
+fn enumerate_ranges(ctx: &EnumerationContext, depth: usize, state: &mut EnumerationState) {
+    if depth == ctx.range_players.len() {
+        // All ranges assigned — build pool excluding range-assigned cards
+        // Uses linear scan instead of HashSet since range_players is typically ≤ 3
+        let range_count = ctx.range_players.len();
+        let pool: Vec<Card> = ctx
+            .available
             .iter()
             .copied()
-            .filter(|c| !range_used.contains(c))
+            .filter(|c| {
+                !state
+                    .range_assignments
+                    .iter()
+                    .take(range_count)
+                    .any(|a| a[0] == *c || a[1] == *c)
+            })
             .collect();
 
-        if pool.len() < non_range_slots {
+        if pool.len() < ctx.non_range_slots {
             return;
         }
 
+        // Destructure state for disjoint field borrows in the closure
+        let EnumerationState {
+            ref range_assignments,
+            ref mut wins,
+            ref mut total_combos,
+            ref mut hole_cards_buf,
+            ref mut full_board_buf,
+            ref mut seven_cards_buf,
+            ref mut ranks_buf,
+        } = *state;
+
         // Enumerate C(pool, non_range_slots)
-        for_each_combination(&pool, non_range_slots, |combo| {
+        for_each_combination(&pool, ctx.non_range_slots, |combo| {
             // Distribute combo cards in fixed order:
             // 1) Partial players (1 card each)
             // 2) Unknown players (2 cards each)
             // 3) Board fill (missing_board cards)
             let mut cursor = 0;
-            let mut hole_cards: Vec<[Card; 2]> = vec![
-                [
-                    Card::new(Value::Two, Suit::Spade),
-                    Card::new(Value::Two, Suit::Spade)
-                ];
-                players.len()
-            ];
             let mut range_cursor = 0;
 
-            for (idx, p) in players.iter().enumerate() {
+            for (idx, p) in ctx.players.iter().enumerate() {
                 match p {
                     HoleCardsInput::Exact(hand) => {
+                        debug_assert!(hand.len() >= 2);
                         let mut iter = hand.iter().copied();
-                        hole_cards[idx] = [iter.next().unwrap(), iter.next().unwrap()];
+                        hole_cards_buf[idx] = [
+                            iter.next().expect("validated 2-card hand"),
+                            iter.next().expect("validated 2-card hand"),
+                        ];
                     }
                     HoleCardsInput::Partial(known) => {
-                        hole_cards[idx] = [*known, combo[cursor]];
+                        hole_cards_buf[idx] = [*known, combo[cursor]];
                         cursor += 1;
                     }
                     HoleCardsInput::Unknown => {
-                        hole_cards[idx] = [combo[cursor], combo[cursor + 1]];
+                        hole_cards_buf[idx] = [combo[cursor], combo[cursor + 1]];
                         cursor += 2;
                     }
                     HoleCardsInput::Range(_) => {
-                        hole_cards[idx] = range_assignments[range_cursor];
+                        hole_cards_buf[idx] = range_assignments[range_cursor];
                         range_cursor += 1;
                     }
                 }
             }
 
-            let mut full_board = board_cards.to_vec();
-            for i in 0..missing_board {
-                full_board.push(combo[cursor + i]);
+            full_board_buf.clear();
+            full_board_buf.extend_from_slice(ctx.board_cards);
+            for i in 0..ctx.missing_board {
+                full_board_buf.push(combo[cursor + i]);
             }
 
-            // Evaluate
-            let ranks: Vec<_> = hole_cards
-                .iter()
-                .map(|hole| {
-                    let mut cards = Vec::with_capacity(7);
-                    cards.extend_from_slice(hole);
-                    cards.extend_from_slice(&full_board);
-                    FlatHand::new_with_cards(cards).rank()
-                })
-                .collect();
+            // Evaluate hands using reusable buffers
+            ranks_buf.clear();
+            for hole in hole_cards_buf.iter() {
+                seven_cards_buf.clear();
+                seven_cards_buf.extend_from_slice(hole);
+                seven_cards_buf.extend_from_slice(full_board_buf);
+                ranks_buf.push(FlatHand::new_with_cards(seven_cards_buf.clone()).rank());
+            }
 
-            if let Some(best) = ranks.iter().max() {
-                for (i, r) in ranks.iter().enumerate() {
+            if let Some(best) = ranks_buf.iter().max() {
+                for (i, r) in ranks_buf.iter().enumerate() {
                     if r == best {
                         wins[i] += 1;
                     }
@@ -241,47 +258,31 @@ fn enumerate_ranges(
     }
 
     // Current range player
-    let (_player_idx, hands) = range_players[depth];
-
-    // Collect cards already used by previous range assignments
-    let mut used_by_prior: HashSet<Card> = HashSet::new();
-    for assignment in range_assignments.iter().take(depth) {
-        used_by_prior.insert(assignment[0]);
-        used_by_prior.insert(assignment[1]);
-    }
+    let (_player_idx, hands) = ctx.range_players[depth];
 
     for hand in hands {
+        debug_assert!(hand.len() >= 2);
         let mut iter = hand.iter().copied();
-        let c1 = iter.next().unwrap();
-        let c2 = iter.next().unwrap();
+        let c1 = iter.next().expect("range hand must be 2 cards");
+        let c2 = iter.next().expect("range hand must be 2 cards");
 
         // Skip if either card conflicts with fixed_known, board, or prior range cards
-        if fixed_known.contains(&c1)
-            || fixed_known.contains(&c2)
-            || board_set.contains(&c1)
-            || board_set.contains(&c2)
-            || used_by_prior.contains(&c1)
-            || used_by_prior.contains(&c2)
+        if ctx.fixed_known.contains(&c1)
+            || ctx.fixed_known.contains(&c2)
+            || ctx.board_set.contains(&c1)
+            || ctx.board_set.contains(&c2)
+            || state
+                .range_assignments
+                .iter()
+                .take(depth)
+                .any(|a| a[0] == c1 || a[1] == c1 || a[0] == c2 || a[1] == c2)
         {
             continue;
         }
 
-        range_assignments[depth] = [c1, c2];
+        state.range_assignments[depth] = [c1, c2];
 
-        enumerate_ranges(
-            players,
-            range_players,
-            depth + 1,
-            range_assignments,
-            available,
-            board_set,
-            fixed_known,
-            board_cards,
-            missing_board,
-            non_range_slots,
-            wins,
-            total_combos,
-        );
+        enumerate_ranges(ctx, depth + 1, state);
     }
 }
 
